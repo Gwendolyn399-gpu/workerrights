@@ -1,0 +1,1 @@
+"""WorkerRights backend package."""

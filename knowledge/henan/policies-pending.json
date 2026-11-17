@@ -1,0 +1,113 @@
+{
+  "documents": [
+    {
+      "id": "henan-minimum-wage-pending",
+      "title": "河南省最低工资标准（资料条目·待核验）",
+      "doc_number": "待核验",
+      "issuing_authority": "河南省人民政府 / 河南省人力资源和社会保障厅（以官方公布为准）",
+      "region": "henan",
+      "region_name": "河南省",
+      "publish_date": null,
+      "effective_date": null,
+      "expiry_date": null,
+      "validity": "现行标准及适用区域待核验",
+      "official_url": "https://hrss.henan.gov.cn/",
+      "official_source_name": "河南省人力资源和社会保障厅",
+      "last_verified_at": null,
+      "verification_status": "pending",
+      "source_note": "本演示库未收录具体金额，避免使用过期数值误导用户。河南省最低工资标准按行政区域分档，请以河南省人民政府或省人社厅最新公布文件为准。",
+      "topics": ["最低工资", "河南政策"],
+      "provisions": []
+    },
+    {
+      "id": "henan-labor-supervision-guide-pending",
+      "title": "河南省劳动保障监察投诉举报办事指引（资料条目·待核验）",
+      "doc_number": "待核验",
+      "issuing_authority": "河南省人力资源和社会保障部门（以官方公布为准）",
+      "region": "henan",
+      "region_name": "河南省",
+      "publish_date": null,
+      "effective_date": null,
+      "expiry_date": null,
+      "validity": "待核验",
+      "official_url": "https://hrss.henan.gov.cn/",
+      "official_source_name": "河南省人力资源和社会保障厅",
+      "last_verified_at": null,
+      "verification_status": "pending",
+      "source_note": "以下为一般性办事路径整理，具体受理机构、材料清单、办理时限以项目所在地人社部门公布和现场告知为准。",
+      "topics": ["劳动保障监察", "欠薪投诉", "河南办事指南"],
+      "provisions": [
+        {
+          "id": "henan-supervision-guide-note",
+          "article": "办事路径说明（非法律条文）",
+          "heading": "投诉一般需要准备的材料",
+          "text": "一般可准备：本人身份证明、用工主体或包工头信息、工作地点和项目信息、工作时间和工资约定、已支付与未支付金额说明、聊天记录/考勤/工资表/转账记录等证据。具体材料清单和受理窗口以当地人社部门要求为准。",
+          "topics": ["投诉材料", "办事指南"],
+          "conditions": [],
+          "keywords": ["投诉材料", "欠薪投诉", "劳动监察", "准备什么", "河南"],
+          "verification_status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "henan-arbitration-guide-pending",
+      "title": "河南省劳动人事争议仲裁办事指南（资料条目·待核验）",
+      "doc_number": "待核验",
+      "issuing_authority": "河南省人力资源和社会保障部门 / 各级劳动人事争议仲裁委员会（以官方公布为准）",
+      "region": "henan",
+      "region_name": "河南省",
+      "publish_date": null,
+      "effective_date": null,
+      "expiry_date": null,
+      "validity": "待核验",
+      "official_url": "https://hrss.henan.gov.cn/",
+      "official_source_name": "河南省人力资源和社会保障厅",
+      "last_verified_at": null,
+      "verification_status": "pending",
+      "source_note": "仲裁管辖、申请材料、办理时限以有管辖权的劳动人事争议仲裁委员会公布为准。",
+      "topics": ["劳动仲裁", "河南办事指南"],
+      "provisions": [
+        {
+          "id": "henan-arbitration-guide-note",
+          "article": "办事路径说明（非法律条文）",
+          "heading": "申请劳动仲裁的一般路径",
+          "text": "一般需向有管辖权的劳动人事争议仲裁委员会提交仲裁申请书、身份证明、劳动关系及欠薪证据等材料。具体管辖规则和材料要求以当地仲裁委员会公布为准。",
+          "topics": ["劳动仲裁", "办事指南"],
+          "conditions": [],
+          "keywords": ["劳动仲裁", "仲裁申请", "去哪申请", "材料", "河南"],
+          "verification_status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "henan-legal-aid-guide-pending",
+      "title": "河南省法律援助申请指引（资料条目·待核验）",
+      "doc_number": "待核验",
+      "issuing_authority": "河南省司法行政部门 / 法律援助机构（以官方公布为准）",
+      "region": "henan",
+      "region_name": "河南省",
+      "publish_date": null,
+      "effective_date": null,
+      "expiry_date": null,
+      "validity": "待核验",
+      "official_url": "https://12348.gov.cn/",
+      "official_source_name": "中国法律服务网",
+      "last_verified_at": null,
+      "verification_status": "pending",
+      "source_note": "是否给予法律援助、是否核查经济困难状况由当地法律援助机构依法审核。可拨打12348咨询。",
+      "topics": ["法律援助", "河南办事指南"],
+      "provisions": [
+        {
+          "id": "henan-legal-aid-guide-note",
+          "article": "办事路径说明（非法律条文）",
+          "heading": "农民工讨薪法律援助咨询路径",
+          "text": "可拨打12348公共法律服务热线或联系项目所在地法律援助机构，说明请求支付劳动报酬的事实和家庭经济情况，由法律援助机构审核是否符合条件并告知材料清单。",
+          "topics": ["法律援助", "讨薪", "咨询"],
+          "conditions": [],
+          "keywords": ["法律援助", "12348", "没钱请律师", "农民工讨薪"],
+          "verification_status": "pending"
+        }
+      ]
+    }
+  ]
+}

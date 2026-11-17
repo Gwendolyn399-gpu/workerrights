@@ -1,0 +1,262 @@
+{
+  "id": "root-wage-platform-form",
+  "platform_name": "全国根治欠薪线索反映平台",
+  "source_note": "字段结构依据公开办事指引与常见欠薪线索表单整理，尚未逐字段在线核验；实际字段名称、必填项和上传限制以官方页面为准。本产品不代替官方平台提交。",
+  "verification_status": "pending",
+  "last_verified_at": null,
+  "official_url": "https://www.mohrss.gov.cn/",
+  "access_note": "可通过国务院客户端小程序“根治欠薪线索反映”入口或人社部官网专题进入；入口位置可能调整。",
+  "steps": [
+    {
+      "id": "step-1",
+      "title": "进入官方平台",
+      "goal": "从官方入口进入全国根治欠薪线索反映平台，避免使用来历不明的“代投诉”链接。",
+      "tips": [
+        "优先使用国务院客户端小程序或人社部官网进入。",
+        "不要向陌生人提供身份证照片、银行卡密码或短信验证码。",
+        "本产品只辅助整理信息，不会自动登录或代替你提交。"
+      ],
+      "fields": []
+    },
+    {
+      "id": "step-2",
+      "title": "选择反映入口",
+      "goal": "根据你的情况选择工程建设领域欠薪线索入口。",
+      "tips": [
+        "建筑工地、道路工程、装修工程等通常属于工程建设领域。",
+        "如果页面提供“工程建设领域”和“其他领域”选项，优先选择工程建设领域。",
+        "实际选项以平台页面为准，拿不准可先拨打12333确认。"
+      ],
+      "fields": [
+        {
+          "key": "scene_category",
+          "label": "线索类别",
+          "explanation": "告诉平台你反映的是哪一类欠薪问题。",
+          "required": true,
+          "sensitivity": "none",
+          "source_facts": ["scene"],
+          "input_type": "select",
+          "options": ["工程建设领域欠薪", "其他领域欠薪"]
+        }
+      ]
+    },
+    {
+      "id": "step-3",
+      "title": "填写反映人信息",
+      "goal": "填写真实可联系的信息，便于核查人员与你联系。",
+      "tips": [
+        "姓名、手机号、身份证号请由你本人在官方平台填写，本产品不收集身份证号。",
+        "手机号要保持畅通，注意接听属地人社部门电话。",
+        "如担心隐私，可先只填写必要联系信息，但实名信息通常有助于核查。"
+      ],
+      "fields": [
+        {
+          "key": "reporter_name",
+          "label": "反映人姓名",
+          "explanation": "填写你本人的真实姓名。",
+          "required": true,
+          "sensitivity": "personal",
+          "source_facts": [],
+          "input_type": "text",
+          "placeholder": "请在官方平台填写本人姓名"
+        },
+        {
+          "key": "reporter_phone",
+          "label": "联系电话",
+          "explanation": "填写能联系到你的手机号，方便核查人员核实情况。",
+          "required": true,
+          "sensitivity": "personal",
+          "source_facts": ["contact_phone"],
+          "input_type": "text",
+          "placeholder": "请在官方平台填写本人手机号"
+        },
+        {
+          "key": "reporter_id",
+          "label": "身份证号",
+          "explanation": "官方平台可能要求实名填写。请只在官方页面填写，不要提供给第三方。",
+          "required": false,
+          "sensitivity": "id",
+          "source_facts": [],
+          "input_type": "text",
+          "placeholder": "本产品不收集，请在官方平台填写"
+        }
+      ]
+    },
+    {
+      "id": "step-4",
+      "title": "填写欠薪单位和项目信息",
+      "goal": "尽量写清楚“哪个项目、哪家单位、哪个包工头”欠薪，方便确定管辖和核查对象。",
+      "tips": [
+        "不知道的字段不要编造，可以填写“不清楚”或留空，并在描述中说明。",
+        "项目名称可以从工地大门牌、施工公告牌、微信定位、合同或聊天记录中查找。",
+        "总承包单位、分包单位、包工头姓名和电话，知道多少填多少。"
+      ],
+      "fields": [
+        {
+          "key": "work_location",
+          "label": "用工所在地",
+          "explanation": "填写工程所在省、市、县区，必要时补充工地地址。",
+          "required": true,
+          "sensitivity": "location",
+          "source_facts": ["location_province", "location_city", "location_district", "location_detail"],
+          "input_type": "text"
+        },
+        {
+          "key": "project_name",
+          "label": "项目名称",
+          "explanation": "工地的正式工程名称，例如“XX小区二期”。不知道可以留空并说明。",
+          "required": false,
+          "sensitivity": "none",
+          "source_facts": ["project_name"],
+          "input_type": "text"
+        },
+        {
+          "key": "developer_name",
+          "label": "建设单位",
+          "explanation": "工程建设单位，通常是开发商或项目业主。不知道可以不填。",
+          "required": false,
+          "sensitivity": "none",
+          "source_facts": ["developer_name"],
+          "input_type": "text"
+        },
+        {
+          "key": "contractor_name",
+          "label": "施工总承包单位",
+          "explanation": "承接整个工程的施工总承包公司。工地公告牌、安全帽、工牌、工资表上可能有。",
+          "required": false,
+          "sensitivity": "none",
+          "source_facts": ["contractor_name"],
+          "input_type": "text"
+        },
+        {
+          "key": "subcontractor_name",
+          "label": "分包单位 / 劳务公司",
+          "explanation": "从总包或上一级单位承接劳务的公司。如果是个人包工头招用，可写“个人包工头”。",
+          "required": false,
+          "sensitivity": "none",
+          "source_facts": ["subcontractor_name", "recruiter_type"],
+          "input_type": "text"
+        },
+        {
+          "key": "foreman_name",
+          "label": "包工头 / 负责人姓名",
+          "explanation": "直接招用你、安排工作或发工资的人。",
+          "required": false,
+          "sensitivity": "personal",
+          "source_facts": ["recruiter_name", "manager_name"],
+          "input_type": "text"
+        },
+        {
+          "key": "foreman_phone",
+          "label": "包工头 / 负责人电话",
+          "explanation": "方便核查人员联系核实。没有或不方便提供可留空。",
+          "required": false,
+          "sensitivity": "personal",
+          "source_facts": ["recruiter_phone"],
+          "input_type": "text"
+        }
+      ]
+    },
+    {
+      "id": "step-5",
+      "title": "填写欠薪事实",
+      "goal": "用客观、按时间顺序的方式说明干了什么活、约定多少钱、给了多少、还欠多少。",
+      "tips": [
+        "金额不确定时写“约XX元”，不要为了显得金额大而夸大。",
+        "写清楚起止时间、工种、工资计算方式和最后一次付款时间。",
+        "只写自己亲历的事实，不猜测、不编造。"
+      ],
+      "fields": [
+        {
+          "key": "work_period",
+          "label": "工作起止时间",
+          "explanation": "从哪天开始干、干到哪天，或者大约干了多久。",
+          "required": true,
+          "sensitivity": "none",
+          "source_facts": ["work_start", "work_end", "duration_text"],
+          "input_type": "text"
+        },
+        {
+          "key": "work_type",
+          "label": "从事工种 / 工作内容",
+          "explanation": "例如钢筋工、木工、瓦工、水电工、架子工、杂工等。",
+          "required": true,
+          "sensitivity": "none",
+          "source_facts": ["work_type"],
+          "input_type": "text"
+        },
+        {
+          "key": "wage_agreement",
+          "label": "工资约定",
+          "explanation": "工资怎么算：按天、按月、计件还是按平方；单价或月薪是多少。",
+          "required": true,
+          "sensitivity": "none",
+          "source_facts": ["wage_basis", "daily_wage", "monthly_wage", "unit_price", "agreed_amount"],
+          "input_type": "text"
+        },
+        {
+          "key": "paid_amount",
+          "label": "已支付金额",
+          "explanation": "已经拿到多少钱。不确定可以写“约”。",
+          "required": false,
+          "sensitivity": "none",
+          "source_facts": ["paid_amount"],
+          "input_type": "text"
+        },
+        {
+          "key": "owed_amount",
+          "label": "拖欠金额",
+          "explanation": "目前还没拿到的工资金额。按实际估算填写，不确定可写“约XX元”。",
+          "required": true,
+          "sensitivity": "none",
+          "source_facts": ["owed_amount", "owed_amount_note"],
+          "input_type": "text"
+        },
+        {
+          "key": "description",
+          "label": "欠薪情况描述",
+          "explanation": "按时间顺序说明招用经过、工作内容、工资约定、付款情况和催要经过。",
+          "required": true,
+          "sensitivity": "none",
+          "source_facts": ["user_statement", "owed_amount", "paid_amount", "duration_text"],
+          "input_type": "textarea",
+          "generated": true
+        }
+      ]
+    },
+    {
+      "id": "step-6",
+      "title": "上传现有材料",
+      "goal": "上传能证明干活、工资约定和欠薪事实的材料。没有某项材料不代表不能反映。",
+      "tips": [
+        "优先上传原始截图，不要只上传裁剪后的图片。",
+        "聊天记录要保留对方身份信息和完整上下文。",
+        "照片、录音、工友证言可以作为辅助材料。",
+        "注意各平台对文件大小、格式和数量的限制。"
+      ],
+      "fields": [
+        {
+          "key": "evidence_list",
+          "label": "证据材料清单",
+          "explanation": "列出你准备上传的材料，以及每项材料能证明什么。",
+          "required": false,
+          "sensitivity": "none",
+          "source_facts": ["evidence"],
+          "input_type": "checklist"
+        }
+      ]
+    },
+    {
+      "id": "step-7",
+      "title": "核对并提交",
+      "goal": "提交前逐项核对，确保信息真实、金额一致、联系方式畅通。",
+      "tips": [
+        "核对姓名、手机号、项目位置和欠薪金额。",
+        "确认证据图片清晰、能打开。",
+        "提交后保存查询码或截图，记录提交时间和受理编号。",
+        "如长时间没有回应，可拨打12333或12345查询进度。"
+      ],
+      "fields": []
+    }
+  ]
+}
