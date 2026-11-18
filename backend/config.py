@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,8 +25,9 @@ class Settings(BaseSettings):
     llm_provider: str = "mock"
     llm_api_key: str = ""
     llm_base_url: str = "https://api.deepseek.com/v1"
-    llm_model: str = "deepseek-chat"
+    llm_model: str = "deepseek-flash"
     llm_timeout_seconds: float = 30.0
+    agent_max_steps: int = Field(default=6, ge=2, le=12)
 
     service_region: str = "河南省"
     max_upload_mb: int = 10

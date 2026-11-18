@@ -52,12 +52,25 @@ let metaPromise: Promise<Meta> | null = null;
 export const api = {
   getMeta(): Promise<Meta> {
     if (!metaPromise) {
-      metaPromise = fetch(`${API_BASE}/meta`, { cache: "no-store" }).then(async (response) => {
-        if (!response.ok) throw new ApiError("无法读取服务信息", response.status);
-        return (await response.json()) as Meta;
-      });
+      metaPromise = request<Meta>("/meta");
     }
     return metaPromise;
+  },
+  getAgentSettings() {
+    return request<AgentSettings>("/agent/settings");
+  },
+  async saveAgentSettings(payload: AgentSettingsInput) {
+    const result = await request<AgentSettings>("/agent/settings", {method: "PUT", body: JSON.stringify(payload)});
+    metaPromise = null;
+    return result;
+  },
+  async disableAgentModel() {
+    const result = await request<AgentSettings>("/agent/settings", {method: "DELETE"});
+    metaPromise = null;
+    return result;
+  },
+  testAgentSettings(payload: AgentSettingsInput) {
+    return request<{ok: boolean; model: string; usage: Record<string, number>; note: string}>("/agent/settings/test", {method: "POST", body: JSON.stringify(payload)});
   },
   createCase(scene = "construction_wage_arrears") {
     return request<{ case: CaseRecord }>("/cases", {
@@ -82,6 +95,49 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ content }),
     });
+  },
+  async sendMessageStream(caseId: string, content: string, onEvent: (event: AgentStreamEvent) => void, signal?: AbortSignal): Promise<SendMessageResponse> {
+    const controller = new AbortController();
+    const cancel = () => controller.abort(new Error("已停止接收回复，可检查案件记录后继续。"));
+    signal?.addEventListener("abort", cancel, {once: true});
+    if (signal?.aborted) cancel();
+    const timeout = setTimeout(() => controller.abort(new Error("本轮等待超过90秒，已停止，请稍后重试。")), 90_000);
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    try {
+    const response = await fetch(`${API_BASE}/cases/${caseId}/messages/stream`, {
+      method: "POST", headers: {"Content-Type": "application/json", "X-Session-Id": getSessionId()},
+      body: JSON.stringify({content}), signal: controller.signal,
+    });
+    if (!response.ok) {
+      const body = await response.json();
+      throw new ApiError(typeof body.detail === "string" ? body.detail : "无法开始回复", response.status);
+    }
+    if (!response.body) throw new Error("浏览器未提供可读取的数据流");
+    reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+      while (true) {
+        const chunk = await reader.read();
+        buffer += decoder.decode(chunk.value, {stream: !chunk.done});
+        buffer = buffer.replace(/\r\n/g, "\n");
+        let boundary: number;
+        while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+          const block = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 2);
+          const data = block.split("\n").filter(line => line.startsWith("data:")).map(line => line.slice(5).trimStart()).join("\n");
+          if (!data) continue;
+          const event = JSON.parse(data);
+          if (event.type === "error") throw new Error(event.message);
+          if (event.type === "done") return event.result as SendMessageResponse;
+          onEvent(event as AgentStreamEvent);
+        }
+        if (chunk.done) throw new Error("连接中断，回复尚未完成，请重试。");
+      }
+    } finally {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", cancel);
+      controller.abort();
+      reader?.releaseLock();
+    }
   },
   updateFacts(caseId: string, facts: Record<string, unknown>) {
     return request<{
@@ -136,6 +192,27 @@ export const api = {
     URL.revokeObjectURL(url);
   },
 };
+
+export interface AgentSettingsInput {
+  base_url: string;
+  model: string;
+  api_key: string;
+}
+
+export type AgentStreamEvent =
+  | {type: "status"; text: string}
+  | {type: "reply_snapshot"; text: string; citations?: Array<Record<string, unknown>>}
+  | {type: "reply_reset"}
+  | {type: "action"; action: string; ok: boolean};
+
+export interface AgentSettings {
+  mode: "ai" | "mock";
+  base_url: string;
+  model: string;
+  key_configured: boolean;
+  source: "session" | "environment";
+  storage: string;
+}
 
 export interface RegionTree {
   province: { id: string; name: string; official_code: string };

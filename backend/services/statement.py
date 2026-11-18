@@ -6,7 +6,7 @@ def _period(facts: dict) -> str:
     if facts.get("work_start") and facts.get("work_end"):
         return f"{facts['work_start']}至{facts['work_end']}"
     if facts.get("duration_text"):
-        return f"约{facts['duration_text']}"
+        return str(facts["duration_text"])
     if facts.get("work_start"):
         return f"{facts['work_start']}起（结束时间待补充）"
     return "【工作时间待补充】"
@@ -36,7 +36,7 @@ def _wage_agreement(facts: dict) -> str:
     if facts.get("unit_price"):
         parts.append(f"单价{format_amount(facts['unit_price'])}")
     if facts.get("agreed_amount"):
-        parts.append(f"应发合计约{format_amount(facts['agreed_amount'])}")
+        parts.append(f"应发合计{format_amount(facts['agreed_amount'])}")
     return "，".join(parts) if parts else "【工资约定待补充】"
 
 
@@ -78,7 +78,7 @@ def build_formal_statement(facts: dict) -> str:
         prior = "此前我尚未向有关部门投诉或反映。"
 
     return (
-        f"本人于{_period(facts)}在{location}从事{work_type}工作。"
+        f"本人在{location}从事{work_type}工作，工作时间为{_period(facts)}。"
         f"招用我的是{recruiter}，日常由{manager}安排工作。"
         f"工资约定为：{_wage_agreement(facts)}。"
         f"已支付{paid}，截至【填写日期】尚欠{owed}。"
@@ -151,7 +151,7 @@ def build_confirmation_message(facts: dict) -> str:
     owed = _owed(facts)
     return (
         f"{recruiter}，我把工资账再和您核对一下："
-        f"我于{period}在工地从事{work_type}，工资约定为{_wage_basis_text(facts)}，"
+        f"我在工地从事{work_type}，工作时间为{period}，工资约定为{_wage_basis_text(facts)}，"
         f"应发约{agreed}，已收到{paid}，目前还差{owed}。"
         "麻烦您确认一下工作天数和金额对不对，以及大概什么时候能结清。谢谢。"
     )

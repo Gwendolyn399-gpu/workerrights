@@ -41,3 +41,8 @@ visual-*.png
 .idea/
 .DS_Store
 Thumbs.db
+# 本机 Agent 调试凭据（用户授权保存，禁止提交）
+.agent-local-settings.json
+test_agent_settings.json
+.agent-settings-*.tmp
+.logs/

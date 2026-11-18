@@ -2,6 +2,7 @@ import { ClipboardCheck, HardHat, Info, UserRound } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/types/api";
+import { AssistantMessage } from "./assistant-message";
 
 export function ChatBubble({
   message,
@@ -51,7 +52,7 @@ export function ChatBubble({
                 : "border-ink-200 bg-white text-ink-700",
           )}
         >
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          <AssistantMessage content={message.content} citations={message.meta?.citations} />
         </div>
         {message.meta?.question?.helper && !isSummary && (
           <p className="mt-1.5 flex items-start gap-1 text-[11px] leading-relaxed text-ink-400">
