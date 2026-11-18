@@ -2,8 +2,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
+from backend.agents.provider import ProviderError
 
 from backend.api.router import router
+from backend.api.agent_settings import router as agent_settings_router
+from backend.api.agent_stream import router as agent_stream_router
 from backend.config import settings
 from backend.database.db import init_database
 
@@ -33,6 +39,23 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix=settings.api_prefix)
+app.include_router(agent_settings_router, prefix=settings.api_prefix)
+app.include_router(agent_stream_router, prefix=settings.api_prefix)
+
+
+@app.exception_handler(ProviderError)
+async def provider_error_handler(_request, exc: ProviderError):
+    return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+
+@app.exception_handler(RequestValidationError)
+async def settings_validation_error(request, exc: RequestValidationError):
+    if request.url.path.startswith(f"{settings.api_prefix}/agent/settings"):
+        # Validation errors can otherwise echo the entire body, including an API key.
+        return JSONResponse(status_code=422, content={"detail": [
+            {key: error[key] for key in ("loc", "msg", "type")} for error in exc.errors()
+        ]})
+    return await request_validation_exception_handler(request, exc)
 
 
 @app.get("/")

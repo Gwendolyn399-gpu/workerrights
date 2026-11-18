@@ -16,6 +16,7 @@ import {
 import { useCase } from "@/components/case/case-provider";
 import { CaseInfoPanel } from "@/components/case/case-info-panel";
 import { ChatBubble, TypingBubble } from "@/components/case/chat-message";
+import { AssistantMessage } from "@/components/case/assistant-message";
 import { FactsEditor } from "@/components/case/facts-editor";
 import { QuickReplyBar } from "@/components/case/quick-replies";
 import { Alert } from "@/components/ui/alert";
@@ -35,13 +36,18 @@ export default function ChatPage() {
   const [error, setError] = React.useState("");
   const [editOpen, setEditOpen] = React.useState(false);
   const [infoOpen, setInfoOpen] = React.useState(false);
+  const [draftReply, setDraftReply] = React.useState("");
+  const [draftCitations, setDraftCitations] = React.useState<Array<Record<string, unknown>>>([]);
+  const [streamStatus, setStreamStatus] = React.useState("");
   const bottomRef = React.useRef<HTMLDivElement | null>(null);
+  const streamController = React.useRef<AbortController | null>(null);
+  React.useEffect(() => () => streamController.current?.abort(), []);
 
   const messages = caseData?.messages || [];
 
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, sending]);
+  }, [messages.length, sending, draftReply]);
 
   const lastAssistant = [...messages].reverse().find((message) => message.role === "assistant");
   const currentQuestion =
@@ -54,6 +60,8 @@ export default function ChatPage() {
     if (!content || sending || !caseData) return;
     setError("");
     setSending(true);
+    setDraftReply(""); setDraftCitations([]); setStreamStatus("工友正在看你的消息…");
+    streamController.current = new AbortController();
     const optimistic: ChatMessage = {
       id: -Date.now(),
       role: "user",
@@ -66,7 +74,12 @@ export default function ChatPage() {
     );
     if (input.trim() === content) setInput("");
     try {
-      const result = await api.sendMessage(caseId, content);
+      const result = await api.sendMessageStream(caseId, content, event => {
+        if (event.type === "reply_snapshot") { setDraftReply(event.text); setDraftCitations(event.citations ?? []); }
+        if (event.type === "reply_reset") setDraftReply("");
+        if (event.type === "status") setStreamStatus(event.text);
+        if (event.type === "action") setStreamStatus(event.action === "search_law" ? "已查到资料，正在组织回答…" : "正在整理…");
+      }, streamController.current.signal);
       setCaseData(result.case);
     } catch (err) {
       setCaseData((current) =>
@@ -78,6 +91,8 @@ export default function ChatPage() {
       setInput(content);
     } finally {
       setSending(false);
+      streamController.current = null;
+      setDraftReply(""); setStreamStatus("");
     }
   };
 
@@ -115,7 +130,7 @@ export default function ChatPage() {
                 {meta?.provider.is_mock ? "演示模式 · 本地规则引擎" : meta?.provider.display_name}
               </span>
             </div>
-            <span className="hidden text-[10px] text-ink-400 sm:inline">每次只问一个问题</span>
+            <span className="hidden text-[10px] text-ink-400 sm:inline">慢慢说，我们一起理清楚</span>
           </div>
 
           <div className="max-h-[38vh] min-h-[240px] space-y-4 overflow-y-auto px-3 py-4 sm:max-h-[46vh] sm:px-5 lg:max-h-[calc(100vh-24rem)] lg:min-h-[440px]">
@@ -128,7 +143,7 @@ export default function ChatPage() {
                 }
               />
             ))}
-            {sending && <TypingBubble />}
+            {sending && (draftReply ? <div className="mr-6 rounded-2xl border border-ink-200 bg-white px-4 py-3 text-sm leading-7 text-ink-800"><AssistantMessage content={draftReply} citations={draftCitations} /></div> : <><TypingBubble /><p className="text-xs text-ink-500">{streamStatus}</p></>)}
             <div ref={bottomRef} />
           </div>
 
@@ -222,6 +237,7 @@ export default function ChatPage() {
               <Button type="submit" size="icon" disabled={!input.trim() || sending} aria-label="发送">
                 <Send className="h-4 w-4" />
               </Button>
+              {sending && <Button type="button" variant="outline" onClick={() => streamController.current?.abort()}>停止</Button>}
             </form>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-ink-400">
               <span className="inline-flex items-center gap-1">

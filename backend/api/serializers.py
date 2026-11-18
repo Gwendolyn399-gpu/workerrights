@@ -25,6 +25,9 @@ def serialize_case(case: Case, include_messages: bool = True) -> dict:
             "confirmed": bool((case.intake or {}).get("confirmed")),
             "unknowns": (case.intake or {}).get("unknowns", {}),
             "skipped": (case.intake or {}).get("skipped", []),
+            "agent_memory": (case.intake or {}).get("agent_memory", {}),
+            "agent_materials": (case.intake or {}).get("agent_materials", {}),
+            "agent_stage": (case.intake or {}).get("agent_stage"),
         },
         "progress": required_progress(case.facts, case.intake or {}),
         "step_progress": {

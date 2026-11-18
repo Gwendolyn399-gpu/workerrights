@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from backend.agents.orchestrator import AgentOrchestrator
 from backend.agents.provider import build_provider, provider_payload
+from backend.agents.session_settings import session_provider
 from backend.api.deps import get_owned_case, get_session_id
 from backend.api.schemas import (
     CreateCaseRequest,
@@ -27,6 +28,10 @@ from backend.services.fact_extractor import NEW_CASE_FACTS
 from backend.services.facts import build_case_title, required_progress
 
 router = APIRouter()
+
+
+def _provider(session_id: str):
+    return session_provider(session_id) or build_provider()
 
 EDITABLE_FACTS = set(NEW_CASE_FACTS.keys()) - {"scene"}
 NUMERIC_FACTS = {
@@ -99,8 +104,10 @@ def health() -> dict:
 
 
 @router.get("/meta")
-def meta() -> dict:
-    provider = build_provider()
+def meta(x_session_id: str | None = Header(default=None)) -> dict:
+    if x_session_id is not None:
+        get_session_id(x_session_id)
+    provider = _provider(x_session_id) if x_session_id else build_provider()
     return {
         "product_name": "工友权益助手",
         "service_region": "河南省",
@@ -135,7 +142,7 @@ def create_case(
     scene = payload.scene if payload else "construction_wage_arrears"
     if scene != "construction_wage_arrears":
         raise HTTPException(status_code=400, detail="首期仅完整支持建筑工地欠薪场景。")
-    orchestrator = AgentOrchestrator(db)
+    orchestrator = AgentOrchestrator(db, _provider(session_id))
     case = orchestrator.create_case(session_id, scene)
     return {"case": serialize_case(case), "provider": orchestrator.provider.health()}
 
@@ -182,11 +189,15 @@ def send_message(
     session_id: str = Depends(get_session_id),
     db: Session = Depends(get_db),
 ) -> dict:
+    return process_message(case_id, payload, session_id, db)
+
+
+def process_message(case_id, payload, session_id, db, emit=None) -> dict:
     case = get_owned_case(db, case_id, session_id)
     content = payload.content.strip()
     if not content:
         raise HTTPException(status_code=422, detail="消息不能为空。")
-    provider = build_provider()
+    provider = _provider(session_id)
     user_message = Message(
         case_id=case.id,
         role="user",
@@ -197,7 +208,7 @@ def send_message(
     db.flush()
     orchestrator = AgentOrchestrator(db, provider)
     try:
-        result = orchestrator.handle_message(case, content)
+        result = orchestrator.handle_message(case, content, emit=emit)
     except Exception:
         db.rollback()
         raise
@@ -302,9 +313,13 @@ def update_facts(
         case.intake = {**intake, "confirmed": False}
         case.status = "collecting"
 
-    orchestrator = AgentOrchestrator(db)
+    orchestrator = AgentOrchestrator(db, _provider(session_id))
     next_question = None
-    if case.status == "collecting":
+    if not orchestrator.provider.is_mock:
+        case.intake = {**case.intake, "confirmed": False, "agent_stage": "waiting_user"}
+        case.status = "collecting"
+        case.plan_generated_at = None
+    elif case.status == "collecting":
         question = orchestrator.intake.next_question(case)
         next_question = question
         case.intake["last_question_key"] = question["key"] if question else None
@@ -359,7 +374,7 @@ def legal_basis(
     db: Session = Depends(get_db),
 ) -> dict:
     case = get_owned_case(db, case_id, session_id)
-    return AgentOrchestrator(db).get_legal_basis(case)
+    return AgentOrchestrator(db, _provider(session_id)).get_legal_basis(case)
 
 
 @router.get("/cases/{case_id}/analysis")
@@ -369,7 +384,7 @@ def get_analysis(
     db: Session = Depends(get_db),
 ) -> dict:
     case = get_owned_case(db, case_id, session_id)
-    analysis = AgentOrchestrator(db).get_analysis(case)
+    analysis = AgentOrchestrator(db, _provider(session_id)).get_analysis(case)
     analysis["preliminary"] = not bool((case.intake or {}).get("confirmed"))
     if analysis["preliminary"]:
         analysis["preliminary_note"] = "案件信息尚未确认，以下分析会随后续补充和修改更新。"
@@ -383,7 +398,7 @@ def get_action_plan(
     db: Session = Depends(get_db),
 ) -> dict:
     case = get_owned_case(db, case_id, session_id)
-    orchestrator = AgentOrchestrator(db)
+    orchestrator = AgentOrchestrator(db, _provider(session_id))
     plan = orchestrator.ensure_action_plan(case)
     plan["preliminary"] = not bool((case.intake or {}).get("confirmed"))
     if plan["preliminary"]:
@@ -435,7 +450,7 @@ def get_form_assistant(
     db: Session = Depends(get_db),
 ) -> dict:
     case = get_owned_case(db, case_id, session_id)
-    form = AgentOrchestrator(db).get_form_assistant(case)
+    form = AgentOrchestrator(db, _provider(session_id)).get_form_assistant(case)
     form["preliminary"] = not bool((case.intake or {}).get("confirmed"))
     if form["preliminary"]:
         form["preliminary_note"] = "案件信息尚未确认，部分字段会显示为待补充或待核实。"
@@ -450,7 +465,7 @@ def export_case(
     db: Session = Depends(get_db),
 ) -> Response:
     case = get_owned_case(db, case_id, session_id)
-    orchestrator = AgentOrchestrator(db)
+    orchestrator = AgentOrchestrator(db, _provider(session_id))
     analysis = orchestrator.get_analysis(case)
     plan = orchestrator.ensure_action_plan(case)
     if fmt == "docx":

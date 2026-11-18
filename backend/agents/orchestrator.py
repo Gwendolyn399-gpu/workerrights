@@ -4,6 +4,7 @@ from backend.agents.action_planning import ActionPlanningAgent
 from backend.agents.case_analysis import CaseAnalysisAgent
 from backend.agents.form_assistant import FormAssistantAgent
 from backend.agents.intake import IntakeAgent
+from backend.agents.agent_v1.intake import AgentIntake
 from backend.agents.legal_research import LegalResearchAgent
 from backend.agents.provider import AgentProvider, build_provider
 from backend.models.case import Case, utcnow
@@ -16,7 +17,7 @@ class AgentOrchestrator:
     def __init__(self, db: Session, provider: AgentProvider | None = None) -> None:
         self.db = db
         self.provider = provider or build_provider()
-        self.intake = IntakeAgent(db, self.provider)
+        self.intake = IntakeAgent(db, self.provider) if self.provider.is_mock else AgentIntake(db, self.provider)
         self.legal = LegalResearchAgent(db)
         self.analysis = CaseAnalysisAgent(db)
         self.action = ActionPlanningAgent(db)
@@ -42,8 +43,8 @@ class AgentOrchestrator:
         self.db.refresh(case)
         return case
 
-    def handle_message(self, case: Case, text: str) -> dict:
-        result = self.intake.handle_message(case, text)
+    def handle_message(self, case: Case, text: str, emit=None) -> dict:
+        result = self.intake.handle_message(case, text) if self.provider.is_mock else self.intake.handle_message(case, text, emit=emit)
         self.db.commit()
         self.db.refresh(case)
         result["facts"] = case.facts

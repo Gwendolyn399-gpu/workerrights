@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -44,20 +45,110 @@ class MockProvider(AgentProvider):
 
 
 class OpenAICompatibleProvider(AgentProvider):
-    """DeepSeek / OpenAI-compatible chat completion adapter.
-
-    API keys are read from server-side environment variables only. This adapter
-    is intentionally limited to wording polish; facts, law retrieval and action
-    planning remain rule/data driven.
-    """
+    """Server-side Chat Completions adapter for the tool loop and legacy polish."""
 
     provider_id = "openai_compatible"
     is_mock = False
 
-    def __init__(self) -> None:
-        if not settings.llm_api_key:
+    def __init__(self, *, api_key: str | None = None, base_url: str | None = None, model: str | None = None) -> None:
+        self.api_key = api_key if api_key is not None else settings.llm_api_key
+        self.base_url = base_url if base_url is not None else settings.llm_base_url
+        self.model = model if model is not None else settings.llm_model
+        if not self.api_key:
             raise ProviderError("已配置大模型 Provider，但缺少服务端 LLM_API_KEY。")
-        self.display_name = f"{settings.llm_model}（语言润色适配器，当前流程未调用）"
+        self.display_name = f"{self.model}（Agent v1）"
+
+    def _payload(self, messages: list[dict], tools: list[dict], *, final: bool) -> dict:
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "tools": tools,
+            "tool_choice": {"type": "function", "function": {"name": "respond"}} if final else "required",
+            "parallel_tool_calls": False,
+            "max_tokens": 2048,
+            "temperature": 0.3,
+        }
+        # DeepSeek defaults to thinking mode; explicit tool_choice requires non-thinking.
+        if urlsplit(self.base_url).hostname == "api.deepseek.com":
+            payload["thinking"] = {"type": "disabled"}
+        return payload
+
+    def stream_complete(self, messages, tools, *, final, emit):
+        from backend.agents.agent_v1.streaming import partial_reply
+
+        payload = {**self._payload(messages, tools, final=final), "stream": True, "stream_options": {"include_usage": True}}
+        calls: dict[int, dict] = {}
+        message = {"role": "assistant", "content": ""}
+        usage = {}
+        finished = False
+        previous_reply = ""
+        try:
+            with httpx.stream("POST", f"{self.base_url.rstrip('/')}/chat/completions",
+                              headers={"Authorization": f"Bearer {self.api_key}"},
+                              json=payload, timeout=settings.llm_timeout_seconds) as response:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    data = line[5:].strip()
+                    if data == "[DONE]":
+                        break
+                    chunk = json.loads(data)
+                    if chunk.get("error"):
+                        raise ProviderError("模型数据流返回错误；本轮未保存。")
+                    if chunk.get("usage"):
+                        usage = chunk["usage"]
+                    for choice in chunk.get("choices", []):
+                        delta = choice.get("delta", {})
+                        message["content"] += delta.get("content") or ""
+                        if delta.get("content") and not calls:
+                            emit({"type": "reply_snapshot", "text": message["content"]})
+                        if delta.get("reasoning_content"):
+                            message["reasoning_content"] = message.get("reasoning_content", "") + delta["reasoning_content"]
+                        for item in delta.get("tool_calls") or []:
+                            call = calls.setdefault(item["index"], {"id": "", "type": "function", "function": {"name": "", "arguments": ""}})
+                            if item.get("id"):
+                                call["id"] = item["id"]
+                            function = item.get("function", {})
+                            call["function"]["name"] += function.get("name") or ""
+                            call["function"]["arguments"] += function.get("arguments") or ""
+                            if call["function"]["name"] == "respond":
+                                reply = partial_reply(call["function"]["arguments"])
+                                if reply != previous_reply:
+                                    emit({"type": "reply_snapshot", "text": reply})
+                                    previous_reply = reply
+                        if choice.get("finish_reason") in {"length", "content_filter"}:
+                            raise ProviderError("模型输出被截断，未保存本轮，请缩短消息或检查模型限制。")
+                        if choice.get("finish_reason"):
+                            finished = True
+            if not finished:
+                raise ProviderError("模型数据流中断，未保存本轮。")
+            message["tool_calls"] = [calls[index] for index in sorted(calls)]
+            return {"message": message, "usage": usage}
+        except httpx.HTTPStatusError as exc:
+            raise ProviderError(f"模型服务返回 HTTP {exc.response.status_code}，请检查权限、余额与流式支持。") from exc
+        except (httpx.HTTPError, KeyError, TypeError, ValueError) as exc:
+            raise ProviderError(f"读取模型数据流失败：{exc.__class__.__name__}") from exc
+
+    def complete(self, messages: list[dict], tools: list[dict], *, final: bool) -> dict:
+        payload = self._payload(messages, tools, final=final)
+        try:
+            response = httpx.post(
+                f"{self.base_url.rstrip('/')}/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                json=payload,
+                timeout=settings.llm_timeout_seconds,
+            )
+            response.raise_for_status()
+            data = response.json()
+            message = data["choices"][0]["message"]
+            # reasoning_content is protocol context only; never returned to UI or persisted.
+            return {"message": {key: message[key] for key in ("role", "content", "tool_calls", "reasoning_content") if key in message},
+                    "usage": data.get("usage", {})}
+        except httpx.HTTPStatusError as exc:
+            raise ProviderError(f"模型服务返回 HTTP {exc.response.status_code}，请检查权限、余额与模型配置。") from exc
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
+            raise ProviderError(f"模型调用或响应解析失败：{exc.__class__.__name__}") from exc
 
     def polish_statement(self, draft: str, facts: dict) -> str:
         system = (
@@ -65,7 +156,7 @@ class OpenAICompatibleProvider(AgentProvider):
             "法律条文或承诺结果。保留所有【待补充】占位符。输出中文正式陈述，不超过600字。"
         )
         payload = {
-            "model": settings.llm_model,
+            "model": self.model,
             "temperature": 0.1,
             "messages": [
                 {"role": "system", "content": system},
@@ -74,8 +165,8 @@ class OpenAICompatibleProvider(AgentProvider):
         }
         try:
             response = httpx.post(
-                f"{settings.llm_base_url.rstrip('/')}/chat/completions",
-                headers={"Authorization": f"Bearer {settings.llm_api_key}"},
+                f"{self.base_url.rstrip('/')}/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}"},
                 json=payload,
                 timeout=settings.llm_timeout_seconds,
             )
@@ -93,17 +184,16 @@ class OpenAICompatibleProvider(AgentProvider):
             "provider_id": self.provider_id,
             "display_name": self.display_name,
             "is_mock": False,
-            "note": "适配器已配置，但当前业务流程未调用云端润色；事实、法条和行动步骤仍由规则与知识库生成。",
+            "note": "已配置 Agent v1 工具循环；是否成功调用以具体消息和动作记录为准。分析/行动/表单页面仍使用原有规则模块。",
         }
 
 
 def build_provider() -> AgentProvider:
     if settings.llm_provider in ("deepseek", "openai", "openai_compatible"):
-        try:
-            return OpenAICompatibleProvider()
-        except ProviderError:
-            return MockProvider()
-    return MockProvider()
+        return OpenAICompatibleProvider()
+    if settings.llm_provider == "mock":
+        return MockProvider()
+    raise ProviderError("未知 LLM_PROVIDER；使用 mock 或 openai_compatible。")
 
 
 def provider_payload(provider: AgentProvider) -> dict:

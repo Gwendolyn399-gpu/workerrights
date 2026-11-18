@@ -23,6 +23,11 @@ export interface MessageMeta {
   provider?: string;
   provider_is_mock?: boolean;
   demo?: boolean;
+  agent_stage?: string;
+  run_id?: string;
+  agent_trace?: Array<{ step: number; action: string; ok: boolean; elapsed_ms: number }>;
+  usage?: Record<string, number>;
+  citations?: Array<Record<string, unknown>>;
 }
 
 export interface ChatMessage {
@@ -91,6 +96,9 @@ export interface CaseRecord {
     confirmed: boolean;
     unknowns: Record<string, string>;
     skipped: string[];
+    agent_memory?: Record<string, unknown>;
+    agent_materials?: Record<string, unknown>;
+    agent_stage?: string | null;
   };
   progress: Progress;
   step_progress: {
