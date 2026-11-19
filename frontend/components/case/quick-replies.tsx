@@ -52,24 +52,24 @@ export function QuickReplyBar({
   if (!options.length && !question.optional) return null;
 
   return (
-    <div className="border-t border-ink-100 bg-ink-50/70 px-3 py-2.5 sm:px-4">
-      <div className="flex items-center justify-between gap-2 pb-2">
-        <p className="text-[10px] font-medium text-ink-400">
-          {multi ? "可以多选，选好后发送" : "点击选项可以直接回答"}
-        </p>
-        {question.optional && (
-          <button
-            type="button"
-            onClick={() => onSend("跳过")}
-            disabled={disabled}
-            className="inline-flex items-center gap-1 text-[10px] font-medium text-ink-400 transition hover:text-ink-700 disabled:opacity-50"
-          >
-            <SkipForward className="h-3 w-3" />
-            跳过这个问题
-          </button>
-        )}
-      </div>
-      <div className="flex flex-wrap gap-1.5">
+    <div className="border-t border-rule bg-surface px-4 py-3">
+      {(multi || question.optional) && (
+        <div className="flex items-center justify-between gap-2 pb-2">
+          <p className="text-xs text-muted">{multi ? "可以多选" : ""}</p>
+          {question.optional && (
+            <button
+              type="button"
+              onClick={() => onSend("跳过")}
+              disabled={disabled}
+              className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-muted transition hover:text-ink disabled:opacity-50"
+            >
+              <SkipForward className="h-3 w-3" />
+              跳过
+            </button>
+          )}
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const active = selected.includes(option.label);
           return (
@@ -79,13 +79,13 @@ export function QuickReplyBar({
               disabled={disabled}
               onClick={() => (multi ? toggle(option.label) : sendSingle(option.label, option.value))}
               className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50",
+                "inline-flex min-h-11 items-center gap-1.5 rounded-control border px-3 py-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-50",
                 active
-                  ? "border-brand-700 bg-brand-800 text-white"
-                  : "border-ink-200 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-800",
+                  ? "border-ink bg-ink text-surface"
+                  : "border-rule bg-surface text-ink hover:bg-sand",
               )}
             >
-              {multi && active && <Check className="h-3 w-3" />}
+              {multi && active && <Check className="h-3.5 w-3.5" />}
               {option.label}
             </button>
           );
@@ -95,6 +95,7 @@ export function QuickReplyBar({
         <div className="mt-2 flex justify-end">
           <Button
             size="sm"
+            className="h-11"
             disabled={disabled || selected.length === 0}
             onClick={() => onSend(selected.join("、"))}
           >

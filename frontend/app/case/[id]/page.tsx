@@ -2,29 +2,20 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  ClipboardList,
-  Info,
-  MapPin,
-  Mic,
-  MicOff,
-  Send,
-  Settings2,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Check, Loader2, Mic, MicOff, PencilLine, RefreshCw, Send } from "lucide-react";
 
 import { useCase } from "@/components/case/case-provider";
 import { CaseInfoPanel } from "@/components/case/case-info-panel";
-import { ChatBubble, TypingBubble } from "@/components/case/chat-message";
+import { AssistantBubble, ChatBubble, TypingBubble } from "@/components/case/chat-message";
 import { AssistantMessage } from "@/components/case/assistant-message";
 import { FactsEditor } from "@/components/case/facts-editor";
 import { QuickReplyBar } from "@/components/case/quick-replies";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/input";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { factRows, locationValue } from "@/lib/facts";
+import { locationValue } from "@/lib/facts";
 import { cn, formatAmount } from "@/lib/utils";
 import { api } from "@/services/api";
 import type { ChatMessage } from "@/types/api";
@@ -34,8 +25,9 @@ export default function ChatPage() {
   const [input, setInput] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [retryText, setRetryText] = React.useState("");
   const [editOpen, setEditOpen] = React.useState(false);
-  const [infoOpen, setInfoOpen] = React.useState(false);
+  const [dossierOpen, setDossierOpen] = React.useState(false);
   const [draftReply, setDraftReply] = React.useState("");
   const [draftCitations, setDraftCitations] = React.useState<Array<Record<string, unknown>>>([]);
   const [streamStatus, setStreamStatus] = React.useState("");
@@ -50,8 +42,7 @@ export default function ChatPage() {
   }, [messages.length, sending, draftReply]);
 
   const lastAssistant = [...messages].reverse().find((message) => message.role === "assistant");
-  const currentQuestion =
-    !sending && lastAssistant?.meta?.question ? lastAssistant.meta.question : null;
+  const currentQuestion = !sending && lastAssistant?.meta?.question ? lastAssistant.meta.question : null;
 
   const speech = useSpeechRecognition((text) => setInput(text));
 
@@ -59,8 +50,11 @@ export default function ChatPage() {
     const content = text.trim();
     if (!content || sending || !caseData) return;
     setError("");
+    setRetryText("");
     setSending(true);
-    setDraftReply(""); setDraftCitations([]); setStreamStatus("工友正在看你的消息…");
+    setDraftReply("");
+    setDraftCitations([]);
+    setStreamStatus("正在看你的消息…");
     streamController.current = new AbortController();
     const optimistic: ChatMessage = {
       id: -Date.now(),
@@ -74,12 +68,22 @@ export default function ChatPage() {
     );
     if (input.trim() === content) setInput("");
     try {
-      const result = await api.sendMessageStream(caseId, content, event => {
-        if (event.type === "reply_snapshot") { setDraftReply(event.text); setDraftCitations(event.citations ?? []); }
-        if (event.type === "reply_reset") setDraftReply("");
-        if (event.type === "status") setStreamStatus(event.text);
-        if (event.type === "action") setStreamStatus(event.action === "search_law" ? "已查到资料，正在组织回答…" : "正在整理…");
-      }, streamController.current.signal);
+      const result = await api.sendMessageStream(
+        caseId,
+        content,
+        (event) => {
+          if (event.type === "reply_snapshot") {
+            setDraftReply(event.text);
+            setDraftCitations(event.citations ?? []);
+          }
+          if (event.type === "reply_reset") setDraftReply("");
+          if (event.type === "status") setStreamStatus(event.text);
+          if (event.type === "action") {
+            setStreamStatus(event.action === "search_law" ? "已查到资料，正在组织回答…" : "正在整理…");
+          }
+        },
+        streamController.current.signal,
+      );
       setCaseData(result.case);
     } catch (err) {
       setCaseData((current) =>
@@ -88,92 +92,136 @@ export default function ChatPage() {
           : current,
       );
       setError(err instanceof Error ? err.message : "发送失败，请稍后重试。");
+      setRetryText(content);
       setInput(content);
     } finally {
       setSending(false);
       streamController.current = null;
-      setDraftReply(""); setStreamStatus("");
+      setDraftReply("");
+      setStreamStatus("");
     }
   };
 
   if (!caseData) return null;
   const facts = caseData.facts;
-  const catalog = meta?.evidence_catalog || [];
-  const mobileRows = factRows(facts, catalog);
+  const awaitingConfirmation =
+    !caseData.intake.confirmed &&
+    (currentQuestion?.key === "confirm" || caseData.intake.agent_stage === "awaiting_confirmation");
+  const providerIsMock = lastAssistant?.meta?.provider_is_mock ?? meta?.provider.is_mock ?? true;
+  const providerLabel = providerIsMock
+    ? "本地规则整理 · 不是在线大模型"
+    : `当前模式：${lastAssistant?.meta?.provider ?? meta?.provider.display_name ?? "本地服务"}`;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
       <div className="min-w-0">
-        <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-ink-200 bg-white px-3 py-2.5 shadow-sm lg:hidden">
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-card border border-rule bg-surface px-3 py-2.5 lg:hidden">
           <div className="min-w-0">
-            <p className="truncate text-xs font-semibold text-ink-800">{locationValue(facts)}</p>
-            <p className="mt-0.5 text-[10px] text-ink-400">
-              {facts.owed_amount
-                ? `陈述欠薪 ${formatAmount(facts.owed_amount, facts.owed_amount_approx)}`
-                : "欠薪金额待核实"}
-              {" · "}
-              {caseData.progress.done}/{caseData.progress.total} 项信息
+            <p className="truncate text-sm font-extrabold text-ink">{locationValue(facts)}</p>
+            <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted">
+              <span className={cn(facts.owed_amount && "font-bold text-signal-deep")}>
+                {facts.owed_amount
+                  ? `欠薪 ${formatAmount(facts.owed_amount, facts.owed_amount_approx)}`
+                  : "欠薪金额待核实"}
+              </span>
+              <span>
+                已整理 {caseData.progress.done}/{caseData.progress.total} 项
+              </span>
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setInfoOpen(true)}>
-            <Settings2 className="h-3.5 w-3.5" />
-            案件信息
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-11 shrink-0"
+            onClick={() => setDossierOpen(true)}
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            案件档案
           </Button>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card">
-          <div className="flex items-center justify-between gap-3 border-b border-ink-100 px-4 py-3 sm:px-5">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-              <p className="text-xs font-semibold text-ink-800">AI 劳动权益助手</p>
-              <span className="text-[10px] text-ink-400">
-                {meta?.provider.is_mock ? "演示模式 · 本地规则引擎" : meta?.provider.display_name}
-              </span>
-            </div>
-            <span className="hidden text-[10px] text-ink-400 sm:inline">慢慢说，我们一起理清楚</span>
-          </div>
-
-          <div className="max-h-[38vh] min-h-[240px] space-y-4 overflow-y-auto px-3 py-4 sm:max-h-[46vh] sm:px-5 lg:max-h-[calc(100vh-24rem)] lg:min-h-[440px]">
+        <div className="flex h-[calc(100dvh-17rem)] min-h-[380px] flex-col overflow-hidden rounded-card border border-rule bg-surface lg:h-[calc(100vh-13rem)]">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
+            {messages.length === 0 && !sending && (
+              <p className="py-8 text-center text-sm text-muted">从下面说第一句话开始，我会一次问一个问题。</p>
+            )}
             {messages.map((message, index) => (
-              <ChatBubble
-                key={`${message.id}-${index}`}
-                message={message}
-                showProvider={
-                  index === messages.findIndex((item) => item.role === "assistant")
-                }
-              />
+              <ChatBubble key={`${message.id}-${index}`} message={message} />
             ))}
-            {sending && (draftReply ? <div className="mr-6 rounded-2xl border border-ink-200 bg-white px-4 py-3 text-sm leading-7 text-ink-800"><AssistantMessage content={draftReply} citations={draftCitations} /></div> : <><TypingBubble /><p className="text-xs text-ink-500">{streamStatus}</p></>)}
+            {sending &&
+              (draftReply ? (
+                <AssistantBubble>
+                  <AssistantMessage content={draftReply} citations={draftCitations} />
+                </AssistantBubble>
+              ) : (
+                <>
+                  <TypingBubble />
+                  <p className="text-xs text-muted">{streamStatus}</p>
+                </>
+              ))}
             <div ref={bottomRef} />
           </div>
 
+          {awaitingConfirmation && (
+            <div className="border-t border-rule bg-sand px-4 py-3 sm:px-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-extrabold text-ink">请核对案件档案</p>
+                  <p className="mt-1 text-xs leading-5 text-muted">
+                    已整理 {caseData.progress.done}/{caseData.progress.total} 项。确认后，再生成案件分析和行动步骤。
+                  </p>
+                </div>
+                <span className="shrink-0 font-mono text-sm font-bold text-ink">
+                  {caseData.progress.done}/{caseData.progress.total}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Button onClick={() => void send("信息无误，生成分析")} disabled={sending} className="h-11">
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  确认信息，生成分析
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setEditOpen(true)}
+                  disabled={sending}
+                  className="h-11"
+                >
+                  <PencilLine className="h-3.5 w-3.5" />
+                  发现不对，修改档案
+                </Button>
+              </div>
+            </div>
+          )}
+
           {caseData.intake.confirmed && (
-            <div className="border-t border-emerald-200 bg-emerald-50 px-4 py-3 sm:px-5">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs font-medium text-emerald-900">
-                  案件信息已确认。你可以查看分析，或直接生成行动指南。
-                </p>
-                <div className="flex gap-2">
+            <div className="border-t border-rule bg-field-wash px-4 py-3 sm:px-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-extrabold text-field">信息已确认</p>
+                  <p className="mt-1 text-xs leading-5 text-field">
+                    下一步：看分析，或直接按行动步骤办理。
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Link
                     href={`/case/${caseId}/analysis`}
-                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800"
+                    className={cn(buttonVariants({ size: "sm" }), "h-11 justify-center")}
                   >
-                    <ClipboardList className="h-3.5 w-3.5" />
-                    案件分析
+                    下一步：看案件分析
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                   <Link
                     href={`/case/${caseId}/action-plan`}
-                    className="inline-flex items-center gap-1 rounded-lg bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white"
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-11 justify-center")}
                   >
-                    行动指南
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    直接看行动步骤
                   </Link>
                 </div>
               </div>
             </div>
           )}
 
-          {currentQuestion && (
+          {currentQuestion && !awaitingConfirmation && (
             <QuickReplyBar
               question={currentQuestion}
               onSend={send}
@@ -182,10 +230,25 @@ export default function ChatPage() {
             />
           )}
 
-          <div className="border-t border-ink-100 bg-white px-3 py-3 sm:px-4">
+          <div className="shrink-0 border-t border-rule px-4 py-3 sm:px-5">
             {error && (
-              <Alert variant="danger" className="mb-2 py-2 text-xs">
-                {error}
+              <Alert
+                variant="danger"
+                className="mb-2 py-2 text-xs"
+                action={
+                  retryText && !sending ? (
+                    <button
+                      type="button"
+                      onClick={() => void send(retryText)}
+                      className="inline-flex shrink-0 items-center gap-1 self-center text-xs font-bold underline underline-offset-4"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      重试
+                    </button>
+                  ) : undefined
+                }
+              >
+                {error} 内容已保留在输入框。
               </Alert>
             )}
             {speech.error && (
@@ -205,7 +268,7 @@ export default function ChatPage() {
                   value={input}
                   onChange={(event) => setInput(event.target.value.slice(0, 2000))}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
+                    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                       event.preventDefault();
                       void send(input);
                     }
@@ -213,10 +276,10 @@ export default function ChatPage() {
                   rows={1}
                   placeholder={
                     caseData.intake.confirmed
-                      ? "还有补充或问题？可以继续告诉我…"
-                      : "用平时说话的方式回答，不用懂法律…"
+                      ? "还有补充或问题？继续告诉我…"
+                      : "用平时说话的方式回答…"
                   }
-                  className="min-h-[48px] max-h-32 resize-none pr-14"
+                  className="min-h-12 max-h-32 resize-none py-3 pr-12 leading-6"
                   aria-label="输入你的回答"
                 />
                 <button
@@ -224,75 +287,63 @@ export default function ChatPage() {
                   onClick={() => (speech.listening ? speech.stop() : speech.start())}
                   title={speech.supported ? "语音输入（Chrome/Edge）" : "当前浏览器不支持语音输入"}
                   className={cn(
-                    "absolute bottom-2 right-2 rounded-lg p-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+                    "absolute bottom-0.5 right-0.5 inline-flex h-11 w-11 items-center justify-center rounded-control transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90",
                     speech.listening
-                      ? "bg-red-50 text-red-600"
-                      : "text-ink-400 hover:bg-ink-100 hover:text-ink-700",
+                      ? "bg-signal-wash text-signal-deep"
+                      : "text-muted hover:bg-sand hover:text-ink",
                   )}
                   aria-label={speech.listening ? "停止语音输入" : "开始语音输入"}
                 >
                   {speech.listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </button>
               </div>
-              <Button type="submit" size="icon" disabled={!input.trim() || sending} aria-label="发送">
+              <Button
+                type="submit"
+                size="icon"
+                className="h-12 w-12"
+                disabled={!input.trim() || sending}
+                aria-label="发送"
+              >
                 <Send className="h-4 w-4" />
               </Button>
-              {sending && <Button type="button" variant="outline" onClick={() => streamController.current?.abort()}>停止</Button>}
+              {sending && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12"
+                  onClick={() => streamController.current?.abort()}
+                >
+                  停止
+                </Button>
+              )}
             </form>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-ink-400">
-              <span className="inline-flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                AI 辅助整理，不构成正式法律意见；重要决定请咨询 12348。
-              </span>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] leading-5 text-muted">{providerLabel}</p>
               <button
                 type="button"
                 onClick={() => setEditOpen(true)}
-                className="font-medium text-brand-800 hover:underline"
+                className="inline-flex min-h-11 items-center text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
               >
                 修改案件信息
               </button>
             </div>
           </div>
         </div>
-
-        <div className="mt-3 flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-[10px] text-ink-400">
-          <MapPin className="h-3.5 w-3.5 text-brand-700" />
-          服务范围：河南省 · 建筑工地欠薪。语音输入依赖浏览器能力，不会上传音频到本产品服务器。
-        </div>
       </div>
 
       <aside className="hidden lg:block">
-        <div className="sticky top-40">
+        <div className="sticky top-36 max-h-[calc(100vh-10rem)] overflow-y-auto">
           <CaseInfoPanel />
         </div>
       </aside>
 
       <Modal
-        open={infoOpen}
-        onClose={() => setInfoOpen(false)}
-        title="案件信息"
-        description="这些信息只对当前浏览器会话可见。"
+        open={dossierOpen}
+        onClose={() => setDossierOpen(false)}
+        title="案件档案"
+        description="确认前先核对；不清楚的项可以留作待核实。"
       >
-        <div className="mb-4 grid grid-cols-2 gap-2">
-          {mobileRows.slice(0, 4).map((row) => (
-            <div key={row.key} className="rounded-lg bg-ink-50 px-3 py-2">
-              <p className="text-[10px] text-ink-400">{row.label}</p>
-              <p className="mt-0.5 truncate text-xs font-semibold text-ink-800">{row.value}</p>
-            </div>
-          ))}
-        </div>
-        <CaseInfoPanel compact />
-        <Button
-          className="mt-4 w-full"
-          variant="outline"
-          onClick={() => {
-            setInfoOpen(false);
-            setEditOpen(true);
-          }}
-        >
-          <Settings2 className="h-4 w-4" />
-          修改案件信息
-        </Button>
+        <CaseInfoPanel bare />
       </Modal>
 
       <FactsEditor open={editOpen} onClose={() => setEditOpen(false)} />

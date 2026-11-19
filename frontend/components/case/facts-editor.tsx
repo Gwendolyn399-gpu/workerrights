@@ -4,6 +4,7 @@ import * as React from "react";
 import { Loader2, Save } from "lucide-react";
 
 import { useCase } from "@/components/case/case-provider";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -158,16 +159,14 @@ export function FactsEditor({ open, onClose }: { open: boolean; onClose: () => v
     >
       <div className="space-y-6">
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
+          <Alert variant="danger">{error}</Alert>
         )}
 
         <section>
-          <h3 className="text-sm font-bold text-ink-900">工作地点</h3>
+          <h3 className="text-sm font-extrabold text-ink">工作地点</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-ink-500">城市</span>
+              <span className="mb-1.5 block text-xs font-bold text-muted">城市</span>
               <Select
                 value={String(form.location_city || "")}
                 onChange={(event) => {
@@ -182,7 +181,7 @@ export function FactsEditor({ open, onClose }: { open: boolean; onClose: () => v
               </Select>
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-ink-500">区 / 县</span>
+              <span className="mb-1.5 block text-xs font-bold text-muted">区 / 县</span>
               <Select
                 value={String(form.location_district || "")}
                 onChange={(event) => setValue("location_district", event.target.value)}
@@ -195,7 +194,7 @@ export function FactsEditor({ open, onClose }: { open: boolean; onClose: () => v
               </Select>
             </label>
             <label className="block sm:col-span-2">
-              <span className="mb-1.5 block text-xs font-medium text-ink-500">工地位置 / 项目地址</span>
+              <span className="mb-1.5 block text-xs font-bold text-muted">工地位置 / 项目地址</span>
               <Input
                 value={String(form.location_detail || "")}
                 onChange={(event) => setValue("location_detail", event.target.value)}
@@ -206,7 +205,7 @@ export function FactsEditor({ open, onClose }: { open: boolean; onClose: () => v
         </section>
 
         <section>
-          <h3 className="text-sm font-bold text-ink-900">工作和工资</h3>
+          <h3 className="text-sm font-extrabold text-ink">工作和工资</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="工种">
               <Input value={String(form.work_type || "")} onChange={(e) => setValue("work_type", e.target.value)} placeholder="钢筋工、木工、瓦工…" />
@@ -257,7 +256,7 @@ export function FactsEditor({ open, onClose }: { open: boolean; onClose: () => v
         </section>
 
         <section>
-          <h3 className="text-sm font-bold text-ink-900">招用和管理</h3>
+          <h3 className="text-sm font-extrabold text-ink">招用和管理</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="招用方式">
               <Select value={String(form.recruiter_type || "")} onChange={(e) => setValue("recruiter_type", e.target.value)}>
@@ -292,7 +291,7 @@ export function FactsEditor({ open, onClose }: { open: boolean; onClose: () => v
         </section>
 
         <section>
-          <h3 className="text-sm font-bold text-ink-900">项目和单位（不知道可留空）</h3>
+          <h3 className="text-sm font-extrabold text-ink">项目和单位（不知道可留空）</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="项目名称">
               <Input value={String(form.project_name || "")} onChange={(e) => setValue("project_name", e.target.value)} />
@@ -310,8 +309,8 @@ export function FactsEditor({ open, onClose }: { open: boolean; onClose: () => v
         </section>
 
         <section>
-          <h3 className="text-sm font-bold text-ink-900">已有材料</h3>
-          <p className="mt-1 text-xs text-ink-500">没有某项材料也没关系，缺少材料不等于不能维权。</p>
+          <h3 className="text-sm font-extrabold text-ink">已有材料</h3>
+          <p className="mt-1 text-xs text-muted">没有某项材料也没关系，缺少材料不等于不能维权。</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {evidenceOptions.map((item) => (
               <Checkbox
@@ -342,7 +341,7 @@ export function FactsEditor({ open, onClose }: { open: boolean; onClose: () => v
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-ink-500">{label}</span>
+      <span className="mb-1.5 block text-xs font-bold text-muted">{label}</span>
       {children}
     </label>
   );
