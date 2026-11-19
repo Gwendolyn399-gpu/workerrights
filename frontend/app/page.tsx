@@ -30,10 +30,10 @@ const cities = [
 ];
 
 const laws = [
-  ["中华人民共和国劳动合同法", "劳动报酬 · 书面合同 · 二倍工资"],
-  ["中华人民共和国劳动争议调解仲裁法", "仲裁范围 · 一年时效"],
-  ["保障农民工工资支付条例", "工程建设 · 总包先行清偿 · 实名制"],
-  ["劳动保障监察条例", "投诉举报 · 责令支付 · 两年查处时效"],
+  ["中华人民共和国劳动合同法", "劳动报酬 · 书面合同 · 未签合同时的赔偿争议"],
+  ["中华人民共和国劳动争议调解仲裁法", "仲裁受理范围 · 申请时限"],
+  ["保障农民工工资支付条例", "工程建设领域 · 工资支付责任主体 · 实名制"],
+  ["劳动保障监察条例", "投诉举报 · 责令支付 · 查处时限"],
   ["中华人民共和国法律援助法", "劳动报酬 · 确认劳动关系"],
 ];
 
@@ -56,7 +56,7 @@ const steps = [
   {
     icon: ClipboardCheck,
     title: "照着步骤去办",
-    description: "生成行动清单、证据目录、正式陈述和官方平台逐字段填报参考，材料可复制下载。",
+    description: "生成行动清单、证据目录、正式陈述和逐字段材料整理参考，内容可复制、可下载，提交仍由你在官方平台完成。",
   },
 ];
 
@@ -72,7 +72,7 @@ export default function HomePage() {
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="default">
                   <MapPin className="h-3 w-3" />
-                  河南首期 · 建筑工地欠薪
+                  河南首期 · 劳动权益
                 </Badge>
                 <span className="text-xs font-medium text-ink-400">Hack4Good · 技术向善</span>
               </div>
@@ -206,10 +206,9 @@ export default function HomePage() {
                   先从最要紧的一件事开始
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-500">
-                  首期完整支持建筑工地欠薪。其他场景正在整理法律依据和办事规则，暂不提供半成品功能。
+                  选一个最接近你遇到的情况，用大白话说说经过，Agent 会一步步帮你理清。
                 </p>
               </div>
-              <span className="text-xs font-medium text-ink-400">当前：河南省 · 建筑工地欠薪</span>
             </div>
             <div className="mt-8">
               <SceneGrid />
@@ -228,7 +227,7 @@ export default function HomePage() {
                 不是给你一篇法律文章，是陪你走完一段路
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-ink-500">
-                接待、法律检索、案件分析、行动规划、官方填报辅助由不同 Agent 分工完成。每次只问当前最需要的一个问题。
+                接待、法律检索、案件分析、行动规划、材料整理参考由不同 Agent 分工完成。每次只问当前最需要的一个问题。
               </p>
             </div>
             <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -339,7 +338,14 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <p className="mt-3 text-[11px] leading-relaxed text-ink-400">
+              上面只是每部文件涉及的主题，不是对你案件的结论。时限从哪天算、适用多久，
+              取决于你的具体事实，以官方受理机构的答复为准。
+            </p>
+            <p className="mt-6 text-xs font-semibold text-ink-500">
+              以下是这些机构的官网首页，不是某个具体办事页面。办理入口请在官网内查找，或先电话确认。
+            </p>
+            <div className="mt-3 grid gap-4 md:grid-cols-3">
               <a
                 href="https://flk.npc.gov.cn/"
                 target="_blank"
@@ -347,7 +353,10 @@ export default function HomePage() {
                 className="flex items-center justify-between rounded-xl border border-ink-200 px-4 py-3 text-sm font-medium text-ink-700 transition hover:border-brand-300 hover:text-brand-800"
               >
                 国家法律法规数据库
-                <ExternalLink className="h-4 w-4" />
+                <span className="flex items-center gap-1">
+                  官网首页
+                  <ExternalLink className="h-4 w-4" />
+                </span>
               </a>
               <a
                 href="https://hrss.henan.gov.cn/"
@@ -356,7 +365,10 @@ export default function HomePage() {
                 className="flex items-center justify-between rounded-xl border border-ink-200 px-4 py-3 text-sm font-medium text-ink-700 transition hover:border-brand-300 hover:text-brand-800"
               >
                 河南省人社厅
-                <ExternalLink className="h-4 w-4" />
+                <span className="flex items-center gap-1">
+                  官网首页
+                  <ExternalLink className="h-4 w-4" />
+                </span>
               </a>
               <a
                 href="https://12348.gov.cn/"
@@ -365,7 +377,10 @@ export default function HomePage() {
                 className="flex items-center justify-between rounded-xl border border-ink-200 px-4 py-3 text-sm font-medium text-ink-700 transition hover:border-brand-300 hover:text-brand-800"
               >
                 中国法律服务网
-                <ExternalLink className="h-4 w-4" />
+                <span className="flex items-center gap-1">
+                  官网首页
+                  <ExternalLink className="h-4 w-4" />
+                </span>
               </a>
             </div>
           </div>
@@ -417,11 +432,11 @@ export default function HomePage() {
                     先用一个郑州工地欠薪案例，把流程完整走一遍
                   </h2>
                   <p className="mt-3 max-w-2xl text-sm leading-relaxed text-brand-100">
-                    对话追问、案件事实、用工关系图、证据缺口、法律依据、行动步骤和官方填报参考，全部可实际操作。
+                    对话追问、案件事实、用工关系图、证据缺口、法律依据、行动步骤和材料整理参考，全部可实际操作。
                     演示中的人物、项目、公司均为虚构。
                   </p>
                   <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-brand-200">
-                    <span className="inline-flex items-center gap-1.5"><Route className="h-3.5 w-3.5" />对话 → 分析 → 行动 → 填报</span>
+                    <span className="inline-flex items-center gap-1.5"><Route className="h-3.5 w-3.5" />对话 → 分析 → 行动 → 材料整理</span>
                     <span className="inline-flex items-center gap-1.5"><ArrowUpRight className="h-3.5 w-3.5" />支持 DOCX / PDF 导出</span>
                   </div>
                 </div>

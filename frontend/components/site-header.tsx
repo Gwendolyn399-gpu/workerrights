@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, FolderOpen } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
 import { buttonVariants } from "@/components/ui/button";
+import { PressLink } from "@/components/ui/press-feedback";
 import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
@@ -33,10 +36,10 @@ export function SiteHeader() {
           >
             <FolderOpen className="h-5 w-5" />
           </Link>
-          <Link href="/#scenes" className={cn(buttonVariants({ size: "sm" }), "h-10 px-4")}>
+          <PressLink href="/#scenes" className={cn(buttonVariants({ size: "sm" }), "h-10 px-4")}>
             开始咨询
             <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          </PressLink>
         </div>
       </div>
     </header>

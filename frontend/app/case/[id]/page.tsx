@@ -23,8 +23,10 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/input";
+import { PressRipples, pressClass, usePressFeedback } from "@/components/ui/press-feedback";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { factRows, locationValue } from "@/lib/facts";
+import { intakeStage } from "@/lib/intake-progress";
 import { cn, formatAmount } from "@/lib/utils";
 import { api } from "@/services/api";
 import type { ChatMessage } from "@/types/api";
@@ -40,8 +42,9 @@ export default function ChatPage() {
   const [draftCitations, setDraftCitations] = React.useState<Array<Record<string, unknown>>>([]);
   const [streamStatus, setStreamStatus] = React.useState("");
   const bottomRef = React.useRef<HTMLDivElement | null>(null);
-  const streamController = React.useRef<AbortController | null>(null);
+const streamController = React.useRef<AbortController | null>(null);
   React.useEffect(() => () => streamController.current?.abort(), []);
+  const micPress = usePressFeedback();
 
   const messages = caseData?.messages || [];
 
@@ -100,6 +103,7 @@ export default function ChatPage() {
   const facts = caseData.facts;
   const catalog = meta?.evidence_catalog || [];
   const mobileRows = factRows(facts, catalog);
+  const stage = intakeStage(caseData.progress, caseData.intake, messages, caseData.status);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -112,7 +116,7 @@ export default function ChatPage() {
                 ? `陈述欠薪 ${formatAmount(facts.owed_amount, facts.owed_amount_approx)}`
                 : "欠薪金额待核实"}
               {" · "}
-              {caseData.progress.done}/{caseData.progress.total} 项信息
+              {stage.headline}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => setInfoOpen(true)}>
@@ -228,9 +232,16 @@ export default function ChatPage() {
                     speech.listening
                       ? "bg-red-50 text-red-600"
                       : "text-ink-400 hover:bg-ink-100 hover:text-ink-700",
+                    pressClass(micPress),
                   )}
+                  onPointerDown={micPress.handlers.onPointerDown}
+                  onPointerUp={micPress.handlers.onPointerUp}
+                  onPointerCancel={micPress.handlers.onPointerCancel}
+                  onPointerLeave={micPress.handlers.onPointerLeave}
+                  onAnimationEnd={micPress.onAnimationEnd}
                   aria-label={speech.listening ? "停止语音输入" : "开始语音输入"}
                 >
+                  <PressRipples ripples={micPress.ripples} onDone={micPress.removeRipple} />
                   {speech.listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </button>
               </div>
@@ -257,7 +268,7 @@ export default function ChatPage() {
 
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-[10px] text-ink-400">
           <MapPin className="h-3.5 w-3.5 text-brand-700" />
-          服务范围：河南省 · 建筑工地欠薪。语音输入依赖浏览器能力，不会上传音频到本产品服务器。
+          服务范围：河南省。语音输入依赖浏览器能力，不会上传音频到本产品服务器。
         </div>
       </div>
 

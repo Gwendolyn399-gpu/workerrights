@@ -26,6 +26,60 @@ body {
   color: #081e38;
 }
 
+@layer components {
+  .pressable {
+    position: relative;
+    overflow: hidden;
+    touch-action: manipulation;
+    transform: scale(1);
+    transition: transform 140ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  .press-down {
+    transform: scale(0.96);
+  }
+  .press-spring {
+    animation: press-spring 460ms cubic-bezier(0.22, 0.9, 0.28, 1) both;
+  }
+  .press-ripple {
+    position: absolute;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0);
+    animation: press-ripple 560ms ease-out forwards;
+  }
+}
+
+@keyframes press-spring {
+  0% {
+    transform: scale(0.96);
+  }
+  45% {
+    transform: scale(1.045);
+  }
+  72% {
+    transform: scale(0.992);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes press-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.24;
+  }
+  60% {
+    opacity: 0.14;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -106,7 +106,7 @@ export default function CasesPage() {
             </span>
             <h2 className="mt-4 text-lg font-bold text-ink-900">还没有案件</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-500">
-              用日常语言说说遇到的欠薪情况，Agent 会一次问一个问题，帮你整理成可用的维权材料。
+              用日常语言说说遇到的问题，Agent 会一次问一个问题，帮你整理成可用的维权材料。
             </p>
             <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <StartCaseButton />
@@ -150,7 +150,7 @@ export default function CasesPage() {
                     <div className="mt-3 flex max-w-sm items-center gap-2">
                       <Progress value={item.progress.percent} className="h-1.5" />
                       <span className="shrink-0 text-[10px] font-medium text-ink-400">
-                        {item.progress.done}/{item.progress.total}
+                        核心事实 {item.progress.done}/{item.progress.total}
                       </span>
                     </div>
                   </div>
