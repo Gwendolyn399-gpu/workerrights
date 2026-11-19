@@ -1,0 +1,218 @@
+[
+  {
+    "size": "desktop",
+    "surface": "home",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      1096
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [],
+    "navLabels": [],
+    "h1": "工资被拖欠了？慢慢说，我们先把事实理清。"
+  },
+  {
+    "size": "desktop",
+    "surface": "cases-empty",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      900
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [],
+    "navLabels": [],
+    "h1": "我的案件"
+  },
+  {
+    "size": "desktop",
+    "surface": "case-shell",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      938
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [
+      "信息完整度",
+      "办理进度"
+    ],
+    "navLabels": [
+      "对话",
+      "案件分析",
+      "行动步骤",
+      "填报参考",
+      "对话",
+      "案件分析",
+      "行动步骤",
+      "填报参考"
+    ],
+    "h1": "郑州金水区建筑工地欠薪（虚构演示）"
+  },
+  {
+    "size": "desktop",
+    "surface": "cases-list",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      900
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [],
+    "navLabels": [],
+    "h1": "我的案件"
+  },
+  {
+    "size": "desktop",
+    "surface": "analysis-shell",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      3656
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [
+      "信息完整度",
+      "办理进度"
+    ],
+    "navLabels": [
+      "对话",
+      "案件分析",
+      "行动步骤",
+      "填报参考",
+      "对话",
+      "案件分析",
+      "行动步骤",
+      "填报参考"
+    ],
+    "h1": "郑州金水区建筑工地欠薪（虚构演示）"
+  },
+  {
+    "size": "desktop",
+    "errors": []
+  },
+  {
+    "size": "mobile",
+    "surface": "home",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      1864
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [],
+    "navLabels": [],
+    "h1": "工资被拖欠了？慢慢说，我们先把事实理清。"
+  },
+  {
+    "size": "mobile",
+    "surface": "cases-empty",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      861
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [],
+    "navLabels": [],
+    "h1": "我的案件"
+  },
+  {
+    "size": "mobile",
+    "surface": "case-shell",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      933
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [
+      "信息完整度",
+      "办理进度"
+    ],
+    "navLabels": [
+      "对话",
+      "案件分析",
+      "行动步骤",
+      "填报参考",
+      "对话",
+      "案件分析",
+      "行动步骤",
+      "填报参考"
+    ],
+    "h1": "郑州金水区建筑工地欠薪（虚构演示）"
+  },
+  {
+    "size": "mobile",
+    "surface": "cases-list",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      881
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [],
+    "navLabels": [],
+    "h1": "我的案件"
+  },
+  {
+    "size": "mobile",
+    "surface": "analysis-shell",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      6487
+    ],
+    "horizontalOverflow": 0,
+    "progressLabels": [
+      "信息完整度",
+      "办理进度"
+    ],
+    "navLabels": [
+      "对话",
+      "案件分析",
+      "行动步骤",
+      "填报参考",
+      "对话",
+      "案件分析",
+      "行动步骤",
+      "填报参考"
+    ],
+    "h1": "郑州金水区建筑工地欠薪（虚构演示）"
+  },
+  {
+    "size": "mobile",
+    "errors": []
+  }
+]

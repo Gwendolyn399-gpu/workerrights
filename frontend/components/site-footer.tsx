@@ -1,68 +1,35 @@
-import Link from "next/link";
-import { ExternalLink, ShieldCheck } from "lucide-react";
-
-import { BrandLogo } from "@/components/brand-logo";
-
 const sources = [
   { label: "国家法律法规数据库", href: "https://flk.npc.gov.cn/" },
   { label: "人力资源社会保障部", href: "https://www.mohrss.gov.cn/" },
-  { label: "河南省人力资源和社会保障厅", href: "https://hrss.henan.gov.cn/" },
+  { label: "河南省人社厅", href: "https://hrss.henan.gov.cn/" },
   { label: "中国法律服务网", href: "https://12348.gov.cn/" },
 ];
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-ink-200 bg-white">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_1fr_1fr]">
-        <div>
-          <BrandLogo />
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-500">
-            让不懂法律的劳动者，也能知道自己的权益、找到正确的维权渠道，并知道具体应该怎么做。
-          </p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink-200 bg-ink-50 px-3 py-1.5 text-xs text-ink-600">
-            <ShieldCheck className="h-3.5 w-3.5 text-brand-700" />
-            本地演示版 · 未部署公网 · 不自动提交官方平台
-          </div>
+    <footer className="border-t border-rule bg-paper">
+      <div className="mx-auto max-w-[1180px] px-4 py-8 sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+          <span className="font-bold text-ink">官方来源</span>
+          {sources.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-muted underline-offset-4 hover:text-signal-deep hover:underline"
+            >
+              {item.label}
+            </a>
+          ))}
         </div>
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-ink-400">官方信息来源</h3>
-          <ul className="mt-3 space-y-2">
-            {sources.map((item) => (
-              <li key={item.href}>
-                <a
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex items-center gap-1.5 text-sm text-ink-600 transition hover:text-brand-800"
-                >
-                  {item.label}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-ink-400">产品说明</h3>
-          <ul className="mt-3 space-y-2 text-sm text-ink-600">
-            <li>
-              <Link href="/#how" className="hover:text-brand-800">工作原理</Link>
-            </li>
-            <li>
-              <Link href="/#scope" className="hover:text-brand-800">服务范围</Link>
-            </li>
-            <li>
-              <Link href="/cases" className="hover:text-brand-800">我的案件</Link>
-            </li>
-            <li>法条核验状态：国家法条待逐条核验，河南政策待核验</li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-ink-100">
-        <div className="mx-auto max-w-6xl px-4 py-5 text-xs leading-relaxed text-ink-400 sm:px-6">
-          免责声明：本产品提供信息整理、法律资料检索和办事路径参考，不构成正式法律意见，不承诺追回工资或胜诉。
-          复杂或不确定案件请拨打12348或咨询专业律师。法律条文与地方政策请以官方最新公布为准。
-        </div>
+        <p className="mt-4 max-w-3xl text-xs leading-6 text-muted">
+          本产品提供信息整理、法律资料检索和办事路径参考，不构成正式法律意见，不承诺追回工资或胜诉，不自动向政府平台提交。
+          法律条文与地方政策以官方最新公布为准；复杂或紧急案件请拨打 12348 或咨询专业律师。
+        </p>
+        <p className="mt-2 text-xs text-muted">
+          服务范围：河南省 · 建筑工地欠薪。当前为本地开发预览，未部署公网。
+        </p>
       </div>
     </footer>
   );
