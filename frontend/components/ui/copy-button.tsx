@@ -57,13 +57,13 @@ export function CopyButton({
         }
       }}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-2.5 py-1.5 text-xs font-medium text-ink-600 transition hover:border-brand-300 hover:text-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
-        compact && "px-2 py-1",
+        "inline-flex min-h-[36px] items-center gap-1.5 rounded-control border border-rule bg-surface font-bold text-muted transition hover:bg-sand hover:text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90 focus-visible:ring-offset-[3px] focus-visible:ring-offset-paper",
+        compact ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-xs",
         className,
       )}
     >
-      {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-      {copied ? copiedLabel : label}
+      {copied ? <Check className="h-3.5 w-3.5 text-field" /> : <Copy className="h-3.5 w-3.5" />}
+      <span aria-live="polite">{copied ? copiedLabel : label}</span>
     </button>
   );
 }

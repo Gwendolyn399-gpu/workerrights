@@ -10,65 +10,77 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: "#eef4fb",
-          100: "#d9e7f6",
-          200: "#b7d1ec",
-          300: "#8ab4dd",
-          400: "#4f8ec7",
-          500: "#2f6fae",
-          600: "#1f5794",
-          700: "#17457a",
-          800: "#123a66",
-          900: "#0e2f54",
-          950: "#081e38"
+        paper: "#f4efe2",
+        surface: "#fffdf8",
+        sand: "#eae1d0",
+        rule: "#d9ccb4",
+        muted: "#5d574d",
+        signal: {
+          DEFAULT: "#c23b2a",
+          deep: "#8f291c",
+          wash: "#f6dad3",
+        },
+        field: {
+          DEFAULT: "#2e6b4f",
+          wash: "#ddeBdf",
+        },
+        note: {
+          DEFAULT: "#8c5a00",
+          wash: "#f4e6bd",
+        },
+        route: {
+          DEFAULT: "#2e6f72",
+          wash: "#d8e7e3",
         },
         ink: {
-          50: "#f7f9fc",
-          100: "#eef2f7",
-          200: "#dde4ee",
-          300: "#c3cedd",
-          400: "#8d9bb3",
-          500: "#64748b",
-          600: "#475569",
-          700: "#334155",
-          800: "#1e293b",
-          900: "#0f172a"
+          DEFAULT: "#171717",
+          50: "#f7f2e7",
+          100: "#ece3d4",
+          200: "#d9ccb4",
+          300: "#b8ad9c",
+          400: "#8a8274",
+          500: "#6b655a",
+          600: "#5d574d",
+          700: "#3d3a33",
+          800: "#2b2923",
+          900: "#171717",
         },
-        accent: {
-          50: "#fff7ed",
-          100: "#ffedd5",
-          500: "#f97316",
-          600: "#ea580c",
-          700: "#c2410c"
-        }
+        brand: {
+          50: "#f4efe2",
+          100: "#eae1d0",
+          200: "#d9ccb4",
+          300: "#b8ad9c",
+          600: "#c23b2a",
+          700: "#171717",
+          800: "#8f291c",
+          900: "#171717",
+        },
+      },
+      borderRadius: {
+        control: "2px",
+        card: "4px",
       },
       boxShadow: {
-        card: "0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.12)",
-        lift: "0 12px 32px -12px rgba(14, 47, 84, 0.22)"
+        overlay: "0 0 0 1px rgba(23, 23, 23, 0.12)",
+        header: "0 1px 0 rgba(23, 23, 23, 0.06)",
       },
       keyframes: {
         "fade-up": {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" }
+          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "pulse-dot": {
           "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.35" }
+          "50%": { opacity: "0.3" },
         },
-        "sheet-in": {
-          "0%": { opacity: "0", transform: "translateY(16px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" }
-        }
       },
       animation: {
-        "fade-up": "fade-up 280ms ease-out both",
-        "pulse-dot": "pulse-dot 1.4s ease-in-out infinite",
-        "sheet-in": "sheet-in 220ms ease-out both"
-      }
-    }
+        "fade-up": "fade-up 200ms ease-out both",
+        "pulse-dot": "pulse-dot 1.2s ease-in-out infinite",
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 };
 
 export default config;

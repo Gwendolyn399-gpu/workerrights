@@ -4,7 +4,16 @@
 
 :root {
   color-scheme: light;
-  --brand: #123a66;
+  --paper: #f4efe2;
+  --surface: #fffdf8;
+  --sand: #eae1d0;
+  --ink: #171717;
+  --muted: #5d574d;
+  --rule: #d9ccb4;
+  --signal: #c23b2a;
+  --signal-deep: #8f291c;
+  --signal-wash: #f6dad3;
+  --route: #2e6f72;
 }
 
 html {
@@ -12,26 +21,53 @@ html {
 }
 
 body {
-  background-color: #f6f8fb;
-  color: #0f172a;
+  background-color: var(--paper);
+  color: var(--ink);
   font-family:
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
+    "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     "Source Han Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  caret-color: var(--ink);
 }
 
 ::selection {
-  background: #cfe0f2;
-  color: #081e38;
+  background: var(--signal-wash);
+  color: var(--signal-deep);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b8ad9c transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #c3b7a5;
+  border-radius: 2px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #a89a86;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+  .text-pretty {
+    text-wrap: pretty;
+  }
   .safe-bottom {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
@@ -40,19 +76,17 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .bg-dots {
-    background-image: radial-gradient(rgba(18, 58, 102, 0.12) 1px, transparent 1px);
-    background-size: 18px 18px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-fade-up,
+  .animate-pulse-dot {
+    animation: none;
+  }
+  * {
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }
