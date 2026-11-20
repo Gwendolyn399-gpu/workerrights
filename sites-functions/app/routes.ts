@@ -320,7 +320,7 @@ function streamTurn(deps: AppDeps, caseRow: CaseRow, content: string, key: strin
         }
         const bindings = await deps.qca!.ensureBindings();
         const td = turnDeps(deps, bindings, retriever);
-        const outcome = await driveTurn(td, resolved.intent!.id, content, emit, Date.now() + 50_000);
+        const outcome = await driveTurn(td, resolved.intent!.id, content, emit, Date.now() + 90_000);
         if (outcome.status === "pending") emit({ type: "pending" });
       } catch (error) {
         const { body } = errorBody(error);

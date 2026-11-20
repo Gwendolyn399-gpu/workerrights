@@ -36,7 +36,7 @@ export function HomeComposer() {
         caseId = result.case.id;
         draftCase.current = caseId;
       }
-      await api.sendMessage(caseId, content);
+      await api.sendMessageStream(caseId, content, () => {});
       router.push(`/case/${caseId}`);
     } catch {
       setError("这句话还在。暂时没能打开对话，可以再试一次。");

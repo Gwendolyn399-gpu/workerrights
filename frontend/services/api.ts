@@ -49,6 +49,9 @@ function delay(ms: number, signal?: AbortSignal): Promise<void> {
 // (qca_turn_failed / qca_scope_invalid) are intentionally excluded.
 const TRANSIENT_QCA_CODES = new Set([
   "qca_unavailable", "qca_initialization_pending", "qca_busy", "qca_rate_limited", "service_unavailable",
+  // Another turn for this case still holds the server lock (e.g. after the user
+  // stopped watching a reply that is still finishing). Wait it out and resume.
+  "lock_busy",
 ]);
 function isTransientQcaError(err: unknown): boolean {
   return err instanceof ApiError && typeof err.code === "string" && TRANSIENT_QCA_CODES.has(err.code);
@@ -221,9 +224,10 @@ export const api = {
         try {
           outcome = await streamOnce(caseId, content, key, onEvent, controller.signal);
         } catch (err) {
-          if ((isTransientQcaError(err) || isTransportFailure(err)) && !controller.signal.aborted && Date.now() <= deadline && attempt < 8) {
+          if ((isTransientQcaError(err) || isTransportFailure(err)) && !controller.signal.aborted && Date.now() <= deadline && attempt < 90) {
             onEvent({type: "status", text: "正在继续生成回复…"});
-            await delay(800, controller.signal);
+            const busy = err instanceof ApiError && err.code === "lock_busy";
+            await delay(busy ? 2000 : 800, controller.signal);
             continue;
           }
           throw err;
