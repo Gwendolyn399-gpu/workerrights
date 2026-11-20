@@ -1,265 +1,100 @@
 # 工友权益助手（WorkerRights）
 
-> **2026-11-17 Agent v1 更新：** 已增加真实模型工具循环、独立终端和 `/agent-lab` 调试台，使用方法见 [Agent v1](docs/agent-v1.md)。默认仍为 `mock`，尚未配置真实模型密钥。下文原型说明中的“真实模型未实现/适配器未调用”描述仅对应旧规则版本；Agent v1 在 `LLM_PROVIDER=openai_compatible` 时启用。分析、行动和填报页面仍沿用规则模块，真实模型效果尚待配置后验收。
+2026 Qoder 高校创造力大赛 · Hack4Good 技术向善赛道作品。首期面向河南建筑工地欠薪场景。
 
-面向河南建筑工地欠薪场景的本地全栈原型，为 Hack4Good 准备。产品把“不会写、不知道找谁、材料说不清”的欠薪咨询拆成五步：对话式接待、法律检索、案件分析、行动规划、官方平台填报辅助。
+**在线体验：[打开工友权益助手](https://workerrights-4uqvdfi8onc.qoder.zone/)**  
+Qoder Sites 公开部署，访客无需登录或填写 API Key。首次体验可在首页打开虚构演示案件。
 
-> **当前状态：本地原型 + Qoder Sites 线上部署并行。**
-> - 本地全栈原型默认仍为规则引擎（`mock`），界面标注“演示，未连接大模型”；启动方式见第 4 节。
-> - 线上部署已发布到 Qoder Sites（**公开访问**），欠薪咨询由 Qoder Cloud Agents（QCA）驱动，详见第 0 节。
-> - 不自动登录或提交任何政府网站，不收集身份证号，不承诺胜诉或追回工资。
-> - 法律知识库中的河南地方资料仍待逐条核验，不能作为最终法律依据。
+工资拖着没发、手里只有聊天记录、不知道先找谁时，可以先用自己的话说清经过。助手会帮你核对还有多少钱没到账、整理手上的材料，并列出可以继续做的事。
 
-## 0. Qoder Sites 线上部署（QCA 真实咨询）
+## 功能
 
-- **正式地址**：<https://workerrights-4uqvdfi8onc.qoder.zone>
-- **访问范围**：公开（public），任何人无需登录即可访问；案件按浏览器匿名会话隔离。2026-11-20 经所有者确认由私有改为公开。服务端身份解析（`sites-functions/app/identity.ts`）：有平台登录态用平台 `user_id`；匿名访客用严格校验（`^[A-Za-z0-9_-]{8,64}$`）后的浏览器 `X-Session-Id` 派生 `anon:<session>` 身份，加前缀避免与平台 ID 碰撞；无会话头才返回 401。
-- **部署分支**：`deploy/sites-qca`。后端为 Sites Functions（Deno Edge，`sites-functions/app/`）+ 平台数据库；前端为 Vite 构建的 SPA（`frontend/sites/` 入口，`npm run build:sites`，构建模式 `sites` 自动指向 `/functions/v1/app/api/py`）。本地 Next.js + FastAPI 开发仍走 `/api/py`，不受影响。
-- **线上咨询由 QCA 驱动**：保留原有人设、范围与程序化边界，口语化回复、按案件记忆、流式输出；现有工具由站点服务端校验执行，并按调用 ID 向 QCA 回传结果。QCA 失败时返回可重试错误，不回退到 DeepSeek 或 mock 掩盖问题。
-- **隔离与幂等**：案件数据与 QCA 会话按用户（匿名会话）及案件隔离；消息以幂等键恢复同一持久意图，重试不重复入账。浏览器只收到业务数据与用户可见回复。
-- **密钥**：仅存于服务端 Secrets（`QODER_PAT`），访客无需填写 API Key；不提交任何 `.env`、日志或本机案件库。
+- **欠薪咨询** — Qoder Cloud Agents（QCA）提供流式多轮对话，结合当前案件已记录的事实追问。
+- **工资与证据整理** — 记录工期、工种、应发、已付和欠付工资，区分答应付款与实际到账，梳理聊天记录、记工和转账等材料。
+- **案件分析** — 汇总用工关系、证据缺口、相关条文和可参考的办理渠道，保留来源和核验状态。
+- **行动指南** — 按步骤准备材料，生成可编辑的沟通草稿、事实陈述和证据目录。
+- **填报参考与导出** — 整理官方平台所需字段，支持逐项复制及 TXT、DOCX、PDF 导出，由用户自行核对和提交。
+- **案件管理** — 在同一浏览器继续整理案件，也可删除案件或打开虚构演示。桌面和手机均可使用。
 
-### 0.1 已实测（正式地址，虚构案件）
+## 界面预览
 
-- 新建案件 → 多轮流式咨询 → 更新事实；自定义工具调用与按 ID 回传；两轮记忆（第二轮复述第一轮全部事实）。
-- 事实更正后旧结果失效：分析/行动/填报 GET 保留旧快照，导出与行动勾选返回 409。
-- 案件列表与删除、演示案件复用、案件分析、行动计划（8 步）、填报参考、导出（TXT/DOCX/PDF 均实测可生成）。
-- 案件深链直接打开、刷新后持久化；桌面与移动（386px 宽无横向溢出）布局；首页图片与路由正常。
-- 瞬时故障可自动恢复：QCA 事件读取偶发 404、传输中断时，服务端对事件读取做有限重试、前端按同一幂等键续传，实测第四轮咨询平滑完成、无重复入账。
-- 提速与撞锁恢复（2026-11-20）：回复先显示、范围审查改后台事后校验，回复首次可见约 15.8s（原约 30–60s）；停止后再发或确认撞锁（`lock_busy`）时按同一幂等键自动等锁续发，不再报错；确认按钮在回合进行中改为排队自动触发；流式驱动时限提至 90s，较重一轮约 36.6s 干净完成。
-- 公开匿名免登录（2026-11-20，正式地址、无登录态原始请求实测）：带合法 `X-Session-Id` 匿名新建案件、案件列表均 200；跨会话读取 404、本会话 200；匿名两轮 QCA 流式咨询真实回复、中文存储正常、第二轮复述第一轮事实并算账追问证据；无会话头返回 401。修复前匿名访客因后端只认平台登录态而被 401「请先登录后使用」拦下。
+以下为仓库留存的界面验收截图，最新页面请以在线体验为准。更多截图见 [设计验收记录](docs/redesign/)。
 
-### 0.2 仍未通过 / 待确认
+| 对话接待 | 行动指南 | 填报参考 |
+| --- | --- | --- |
+| ![对话接待](docs/redesign/m3/desktop-chat-answer.png) | ![行动指南](docs/redesign/m1/desktop-action.png) | ![填报参考](docs/redesign/m1/desktop-form.png) |
 
-- **跨账号隔离**：当前仅有一个可用账号，跨账号读取拒绝由 `owner_id` 谓词与本地测试结构性保证，尚缺第二账号在正式环境的实测。
-- 河南地方政策资料仍待逐条核验（见第 7 节），不能作为最终法律依据。
-
-### 0.3 本地验证（Sites 分支）
-
-```bash
-cd frontend
-npm test                              # 前端 24 项（含流式幂等续传、lock_busy 重试）
-npx tsc --noEmit                      # 类型检查
-npm run build:sites                   # 生成 frontend/dist（不提交）
-cd ..
-node --experimental-strip-types --test sites-functions/dev/*.test.mjs   # 后端 71 项
-```
-
-## 1. 已实现能力
-
-- **首页**：产品定位、适用地区、五步流程、场景入口、隐私说明、虚构演示入口。
-- **对话式接待**：一次只问一个问题；支持快捷回复、语音输入（浏览器 Web Speech API，不可用时自动隐藏）、事实修改、进度展示、法律来源入口。
-- **事实整理**：从自然语言中保守抽取地点、工种、工期、招用/管理主体、工资算法、应发/已付/欠发、合同、证据、项目信息、此前投诉情况。金额不确定时保留“约”，不知道的字段保持待核实。
-- **五 Agent 模块**：接待、法律检索、案件分析、行动规划、填报助手，各有独立职责，不使用巨型系统提示词。
-- **法律检索**：本地 JSON 知识库 + SQLite 种子数据 + 中文 bigram/BM25 风格检索；每条结论带法律名称、条文、发布机关、文号、地区、时效、官方链接和核验状态。
-- **案件分析**：基本信息、用工关系图、证据四分类（已有/可补/需要固定/暂缺）、权利主张、可能适用法条、风险提示、管辖与渠道建议。
-- **行动指南**：8 个可勾选步骤、期限与风险提示、投诉渠道、微信沟通草稿、正式事实陈述、证据目录。
-- **填报辅助**：全国根治欠薪线索反映平台的 7 步/18 字段整理，逐字段说明、值、状态、复制操作；只辅助整理，不自动提交。
-- **导出**：DOCX、PDF、TXT（中文 PDF 已实测可渲染）。
-- **隐私隔离**：匿名 `X-Session-Id`，跨会话读取返回 404；支持删除案件；不收集身份证号；密钥只在服务端环境变量。
-
-## 2. 技术栈
-
-| 层 | 实现 |
-| --- | --- |
-| 前端 | Next.js 15 App Router、React 19、TypeScript、Tailwind CSS 3、手写 shadcn 风格组件、lucide-react |
-| 后端 | FastAPI、SQLAlchemy 2、Pydantic v2、Uvicorn |
-| 数据库 | 默认 SQLite（`workerrights.db`）；PostgreSQL + pgvector 为文档化升级路径，本机未启用 |
-| 知识库 | `knowledge/` JSON → SQLite；中文检索，不依赖模型记忆生成法条 |
-| 文书导出 | python-docx、ReportLab（STSong-Light 中文字体） |
-| 测试 | pytest（后端）、Vitest（前端工具函数）、Playwright 脚本（可选浏览器流程验证） |
-
-## 3. 目录结构
+## 仓库结构
 
 ```text
-Qoder-innovation/
-├─ backend/
-│  ├─ agents/            # 五个 Agent、编排器、模型适配层、问题定义
-│  ├─ api/               # 路由、会话依赖、序列化、请求模型
-│  ├─ database/          # 引擎、初始化、种子数据、pgvector 升级说明
-│  ├─ legal/             # 知识库加载与中文检索
-│  ├─ models/            # Case / Message / ActionStep / 法律 / 地区 / 渠道
-│  ├─ rules/             # 地区匹配、证据目录
-│  ├─ services/          # 金额解析、事实抽取、陈述与证据目录、导出、演示案件
-│  ├─ config.py
-│  ├─ main.py
-│  └─ requirements.txt
-├─ frontend/
-│  ├─ app/               # 首页、案件列表、对话、分析、行动指南、填报助手
-│  ├─ components/        # 案件组件、首页组件、UI 基础组件
-│  ├─ hooks/             # 语音识别
-│  ├─ lib/               # 会话、事实展示、工具函数
-│  ├─ services/          # API 封装
-│  ├─ types/             # API 类型
-│  ├─ scripts/           # 可选 Playwright 视觉/流程检查脚本
-│  ├─ next.config.mjs    # /api/py → FastAPI 重写
-│  └─ vitest.config.ts
-├─ knowledge/
-│  ├─ national/          # 5 部国家层面法律/行政法规
-│  ├─ henan/             # 河南待核验政策条目、18 地市与区县
-│  └─ official_channels/ # 官方渠道、根治欠薪平台字段结构
-├─ tests/
-│  ├─ agent/             # 接待流程、金额/事实抽取
-│  ├─ legal/             # 法律种子、检索、地区、渠道
-│  ├─ api/               # 会话隔离、删除、演示案件、元信息
-│  └─ frontend/          # 事实展示与格式化函数
-├─ docs/                 # 架构、需求、Agent、法律数据、API、状态、Sites 迁移
-├─ .env.example
-├─ README.md
-└─ workerrights.db       # 运行时生成，不提交
+frontend/           React 页面、组件和 API 客户端
+  app/              首页、对话、案件分析、行动指南和填报参考
+  sites/            Qoder Sites 的 Vite 入口与路由适配
+backend/            本地 FastAPI、SQLite、Agent 和业务规则
+sites-functions/    线上 Deno Edge Functions、数据库定义和迁移测试
+  app/core/         事实、法律检索、派生结果和导出
+  app/qca/          QCA 会话、流式事件与服务端工具调用
+knowledge/          法律、地区及官方渠道数据
+tests/              本地后端和前端回归测试
+docs/               产品、架构、接口和设计验收文档
 ```
 
-## 4. 本地启动
+## 本地运行
 
-要求：Python 3.11+、Node.js 20+。以下命令在项目根目录执行。
-
-### 4.1 后端
-
-PowerShell：
+建议使用 Node.js 24 和 Python 3.11 或以上版本。在仓库根目录启动后端。
 
 ```powershell
 py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r backend\requirements.txt
-python -m backend.database.init_db
-uvicorn backend.main:app --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+.\.venv\Scripts\python.exe -m backend.database.init_db
+.\.venv\Scripts\python.exe -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-Git Bash：
-
-```bash
-python -m venv .venv
-source .venv/Scripts/activate
-pip install -r backend/requirements.txt
-python -m backend.database.init_db
-uvicorn backend.main:app --host 127.0.0.1 --port 8000
-```
-
-首次启动会自动建表并写入法律、地区、渠道种子数据。API 文档：<http://127.0.0.1:8000/docs>。
-
-### 4.2 前端
-
-另开一个终端：
+另开一个终端，在仓库根目录执行以下命令。
 
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-打开 <http://localhost:3000>。前端将 `/api/py/*` 代理到 `http://127.0.0.1:8000/api/v1/*`。
+打开 [本地前端](http://localhost:3000)。本地 API 文档在 [FastAPI Docs](http://127.0.0.1:8000/docs)。本地默认通过规则模式演示。如需调试本地真实模型，可按 [环境变量示例](.env.example) 设置服务端配置，接入说明见 [Agent v1](docs/agent-v1.md)。
 
-### 4.3 生产构建检查
+## 测试与构建
 
-```powershell
-cd frontend
-npm run build
-```
-
-## 5. 测试
+以下命令从仓库根目录执行。
 
 ```powershell
-# 后端 16 项：Agent 流程、金额解析、法律检索、API 隔离、导出
 .\.venv\Scripts\python.exe -m pytest tests -q
+node --experimental-strip-types --test sites-functions/dev/*.test.mjs
 
-# 前端 6 项：金额/日期格式化、事实展示、缺失项
 cd frontend
 npm test
+npx tsc --noEmit
+npm run build:sites
 ```
 
-浏览器流程检查脚本需要本机 Chrome，并临时安装 `playwright-core`（未写入 `package.json`）。`ui-flow.mjs` 会走通对话、事实编辑、分析、导出、行动勾选、填报复制与删除，并在桌面与移动视口截图、检查横向溢出：
+`npm run build:sites` 生成用于发布的 `frontend/dist/`。使用 `npm run build` 构建 Next.js 本地完整版。
 
-```powershell
-cd frontend
-npm install --no-save playwright-core
-node scripts/ui-flow.mjs
-```
+## 技术要点
 
-### 5.1 单文件离线演示（一个 HTML）
+| 环境 | 前端 | 后端 | 咨询 |
+| --- | --- | --- | --- |
+| 线上 | Vite 构建的 React 应用 | Qoder Sites Functions 和平台数据库 | Qoder Cloud Agents |
+| 本地 | Next.js 和 React | FastAPI 和 SQLite | 默认规则模式，可配置 OpenAI 兼容服务 |
 
-`workerrights-offline.html` 是把当前前端界面打包成的**单个自包含 HTML**：双击即可打开，无需 Node/后端/网络。它内嵌虚构演示案件的真实接口快照（对话记录、事实、分析、行动、填报、法律依据），复刻当前设计系统，支持页签/哈希路由、行动勾选（本地持久化）、字段与陈述复制、法律/事实/信息模态、案件删除、文本材料导出，桌面与移动自适应。
+- **工具回传** — QCA 请求工具时，由站点后端执行事实记录、工资核对或法律检索，再按调用 ID 返回结果。案件分析、行动指南和填报参考沿用业务规则。
+- **会话与恢复** — 按访客和案件隔离数据。流式请求重连时复用请求标识，避免同一条消息重复写入。更正事实后，基于旧事实生成的结果会标记为过期。
+- **数据边界** — 云端咨询会将必要的消息和案件上下文交给 QCA 处理。请勿输入身份证号或银行卡号。产品提供信息整理和办理参考，正式办理由用户在官方渠道完成。部分地方资料仍待核验，请以官方发布为准。
 
-注意：单文件**不含后端**，因此实时对话、语音、模型回复、DOCX/PDF 导出不可用（页面已明确标注）；这些仍需本地完整版。重新生成：
+进一步阅读 [产品需求](docs/product-requirements.md)、[系统架构](docs/architecture.md)、[API 参考](docs/api-reference.md) 和 [法律数据规范](docs/legal-data-schema.md)。
 
-```powershell
-node scripts/build-single-file.mjs   # 优先用 .snapshot 缓存；缺失时自动从运行中的后端抓取
-node frontend/scripts/verify-single-file.mjs   # 真实浏览器桌面+移动验收
-```
+## 赛事信息
 
-## 6. 环境变量
+- **比赛** — 2026 Qoder 高校创造力大赛（天池 532536）。
+- **赛道** — Hack4Good 技术向善。
+- **交付** — Qoder Sites 在线应用与 GitHub 源码。
 
-复制 `.env.example` 为 `.env`（可选）。后端启动时读取项目根目录或 `backend/` 下的 `.env`。
+## 许可证
 
-| 变量 | 默认值 | 说明 |
-| --- | --- | --- |
-| `DATABASE_URL` | 项目根目录 `workerrights.db` | SQLAlchemy 连接串 |
-| `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | 逗号分隔 |
-| `DEMO_MODE` | `true` | 演示标记 |
-| `LOG_LEVEL` | `info` | 日志级别；不记录完整敏感信息 |
-| `SERVICE_REGION` | `河南省` | 首期服务范围 |
-| `MAX_UPLOAD_MB` | `10` | 为后续上传能力预留；当前未实现文件上传 |
-| `LLM_PROVIDER` | `mock` | `mock` 为本地规则引擎；云端适配器为预留能力 |
-| `LLM_API_KEY` | 空 | 仅服务端环境变量，禁止写入前端 |
-| `LLM_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI 兼容接口 |
-| `LLM_MODEL` | `deepseek-chat` | 模型名 |
-| `LLM_TIMEOUT_SECONDS` | `30` | 请求超时 |
-| `BACKEND_URL` | `http://127.0.0.1:8000` | 仅前端构建/启动读取，用于代理目标 |
-
-**模型说明**：默认 `mock` 是确定性规则引擎，不是大模型。`OpenAICompatibleProvider` 只预留了“语言润色”接口，当前业务流程未调用；在补充云端授权同意、数据最小化和输出校验前，不应启用真实模型。详见 [docs/agent-workflow.md](docs/agent-workflow.md)。
-
-## 7. 法律数据核验状态（摘要）
-
-- 5 部国家法律/行政法规：条文按公开发布文本整理，状态为 `transcribed`；`last_verified_at` 均为空，发布日期、现行有效性仍需逐条对照官方原文。
-- 河南地方资料：4 条全部 `pending`，包括最低工资标准、劳动保障监察指引、仲裁指南、法律援助指引；未写入具体最低工资数值。
-- 全国根治欠薪平台字段结构：`pending`，字段名称与顺序待对照官方页面。
-- 官方渠道：住建部门、法院入口为 `pending`；其余为 `transcribed`，仍需核验具体受理机构与地址。
-- 区县数据：郑州区县带官方行政区划代码；其他地市区县列表已录入但代码多为空；不能假设每个区县都有独立劳动监察机构。
-
-完整清单见 [docs/development-status.md](docs/development-status.md) 和 [docs/legal-data-schema.md](docs/legal-data-schema.md)。
-
-## 8. 五个页面
-
-| 页面 | 路径 | 作用 |
-| --- | --- | --- |
-| 首页 | `/` | 产品说明、场景入口、流程、隐私、演示 |
-| 对话接待 | `/case/[id]` | 一次一问、快捷回复、语音、事实编辑、进度、法律来源 |
-| 案件分析 | `/case/[id]/analysis` | 关系图、证据分类、权利、法条、风险、管辖、导出 |
-| 行动指南 | `/case/[id]/action-plan` | 8 步任务、渠道、期限、沟通草稿、导出 |
-| 官方填报辅助 | `/case/[id]/form-assistant` | 7 步字段整理、复制、隐私提示、导出 |
-
-案件列表在 `/cases`。
-
-## 9. 安全与合规边界
-
-- 匿名会话隔离，不提供账号体系；清除浏览器存储会失去案件访问权。
-- 不采集身份证号、银行卡号；姓名、电话仅在用户主动提供时用于草稿/表单辅助。
-- 不实现文件上传；导出在服务端内存生成，不落盘保存用户文书。
-- 不自动提交政府平台，不模拟政府页面，不伪造回执。
-- 不生成“保证胜诉/保证追回”的承诺；复杂事实提示咨询法律援助或律师。
-- 不提供暴力、威胁、堵门、伪造证据等建议。
-- 演示案件明确标注“虚构演示”，使用化名和模糊地点。
-
-## 10. 未实现 / 范围外
-
-- 真实大模型对话、向量嵌入、pgvector 实际启用。
-- PostgreSQL 本地实例、Docker 编排、生产级迁移工具。
-- 文件/图片上传、OCR、对象存储、病毒扫描。
-- 账号登录、跨设备同步、团队协作。
-- 真实政府平台自动填报、自动提交、状态回执查询。
-- 河南地方政策的正式核验与最低工资数值。
-- 其他欠薪场景（装修、制造业、灵活用工等）的完整接待流程。
-- 正式上线所需的等保、隐私政策、备案、运营审核（本阶段不部署）。
-
-## 11. 文档索引
-
-- [产品需求](docs/product-requirements.md)
-- [系统架构](docs/architecture.md)
-- [Agent 工作流](docs/agent-workflow.md)
-- [法律数据规范](docs/legal-data-schema.md)
-- [API 参考](docs/api-reference.md)
-- [开发状态与核验清单](docs/development-status.md)
-- [Qoder Sites 迁移说明](docs/qoder-sites-migration.md)
-
-## 12. 许可证
-
-本项目采用 [MIT License](LICENSE)。法律知识库中的法律、法规文本本身不受本项目许可证影响，引用时请以官方发布文本为准。
+代码采用 [MIT License](LICENSE)。法律法规引用以官方发布文本为准。
