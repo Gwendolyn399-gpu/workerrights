@@ -100,7 +100,7 @@ export default function CasesPage() {
             <Spinner label="正在读取案件…" />
           </div>
         ) : cases.length === 0 ? (
-          <div className="mt-10 rounded-3xl border border-dashed border-ink-300 bg-white px-6 py-14 text-center">
+          <div className="mt-10 rounded-3xl border border-dashed border-ink-300/80 bg-white/60 px-6 py-14 text-center backdrop-blur-sm">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-800">
               <FolderOpen className="h-6 w-6" />
             </span>
@@ -118,7 +118,7 @@ export default function CasesPage() {
             {cases.map((item) => (
               <div
                 key={item.id}
-                className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition hover:border-brand-200 sm:p-5"
+                className="rounded-2xl border border-white/75 bg-white/75 p-4 shadow-card backdrop-blur-sm transition hover:border-brand-200 sm:p-5"
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">

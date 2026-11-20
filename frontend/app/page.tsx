@@ -3,65 +3,24 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import {
   ArrowUpRight,
-  ClipboardCheck,
   Database,
-  ExternalLink,
-  FileSearch,
   FolderOpen,
   LockKeyhole,
   MapPin,
-  MessageSquareText,
   Route,
-  Scale,
   ShieldCheck,
   Trash2,
   UserRoundCheck,
 } from "lucide-react";
 
 import { DemoCaseButton, StartCaseButton } from "@/components/home/start-actions";
+import { GuideStack } from "@/components/home/guide-stack";
 import { NavGallery } from "@/components/home/nav-gallery";
 import { SceneGrid } from "@/components/home/scenes";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-const cities = [
-  "郑州市", "开封市", "洛阳市", "平顶山市", "安阳市", "鹤壁市",
-  "新乡市", "焦作市", "濮阳市", "许昌市", "漯河市", "三门峡市",
-  "南阳市", "商丘市", "信阳市", "周口市", "驻马店市", "济源市",
-];
-
-const laws = [
-  ["中华人民共和国劳动合同法", "劳动报酬 · 书面合同 · 未签合同时的赔偿争议"],
-  ["中华人民共和国劳动争议调解仲裁法", "仲裁受理范围 · 申请时限"],
-  ["保障农民工工资支付条例", "工程建设领域 · 工资支付责任主体 · 实名制"],
-  ["劳动保障监察条例", "投诉举报 · 责令支付 · 查处时限"],
-  ["中华人民共和国法律援助法", "劳动报酬 · 确认劳动关系"],
-];
-
-const steps = [
-  {
-    icon: MessageSquareText,
-    title: "你用大白话说",
-    description: "不用懂法律术语，也不用填长表格。说清楚在哪儿干活、谁欠你多少钱就行。",
-  },
-  {
-    icon: FileSearch,
-    title: "Agent 一次问一个问题",
-    description: "根据你的回答逐步追问招工主体、日常管理、工资约定、证据情况，自动整理成案件事实。",
-  },
-  {
-    icon: Scale,
-    title: "匹配法律和渠道",
-    description: "从国家法律和河南办事规则中检索相关条文，标出适用条件和还需核实的事实。",
-  },
-  {
-    icon: ClipboardCheck,
-    title: "照着步骤去办",
-    description: "生成行动清单、证据目录、正式陈述和逐字段材料整理参考，内容可复制、可下载，提交仍由你在官方平台完成。",
-  },
-];
 
 export default function HomePage() {
   return (
@@ -175,7 +134,7 @@ export default function HomePage() {
         </section>
 
 
-        <section className="border-b border-ink-200/60 bg-ink-50">
+        <section className="border-b border-white/70 bg-[linear-gradient(90deg,rgba(255,252,248,0.5),rgba(250,236,226,0.78),rgba(255,252,248,0.5))] backdrop-blur-sm">
           <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 sm:grid-cols-3 sm:px-6">
             {[
               ["5 部", "首期国家法律知识库"],
@@ -214,172 +173,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section id="how" className="scroll-mt-24 border-y border-ink-200/60 bg-white py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">它是怎么工作的</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-ink-900 sm:text-3xl">
-                不是给你一篇法律文章，是陪你走完一段路
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-ink-500">
-                接待、法律检索、案件分析、行动规划、材料整理参考由不同 Agent 分工完成。每次只问当前最需要的一个问题。
-              </p>
-            </div>
-            <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {steps.map((step, index) => {
-                const Icon = step.icon;
-                return (
-                  <div key={step.title} className="relative rounded-2xl border border-ink-200 bg-ink-50/50 p-5">
-                    <div className="flex items-center justify-between">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-brand-800 shadow-sm">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <span className="text-2xl font-black text-ink-200">0{index + 1}</span>
-                    </div>
-                    <h3 className="mt-4 text-base font-bold text-ink-900">{step.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-ink-500">{step.description}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section id="scope" className="scroll-mt-24 py-16 sm:py-20">
-          <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">服务范围</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-ink-900 sm:text-3xl">
-                河南省先行，县区级定位
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-ink-600">
-                行政区划已录入河南省 18 个地级市及县、县级市、市辖区。维权渠道不会简单按“每个县区一个机构”套用，
-                而是提示你按项目所在地的劳动保障管辖规则，通过 12333 确认具体受理机构。
-              </p>
-              <ul className="mt-5 space-y-2.5 text-sm text-ink-600">
-                <li className="flex gap-2">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
-                  国家法律可直接检索，河南地方政策单独标注核验状态
-                </li>
-                <li className="flex gap-2">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
-                  郑州为验收演示城市，其他地市同样可使用，但地方规则仍需核验
-                </li>
-                <li className="flex gap-2">
-                  <Scale className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
-                  关系图只根据你提供的信息生成，不据此直接认定责任主体
-                </li>
-              </ul>
-              <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
-                河南地方政策库中的办事指南、最低工资等条目当前标记为“待核验”，不会被当作最终法律依据。
-              </div>
-            </div>
-            <div className="rounded-2xl border border-ink-200 bg-white p-5 shadow-card sm:p-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-ink-900">河南省 · 地级市</h3>
-                <Badge variant="neutral">18 个</Badge>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {cities.map((city, index) => (
-                  <span
-                    key={city}
-                    className={
-                      index === 0
-                        ? "rounded-lg border border-brand-300 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-900"
-                        : "rounded-lg border border-ink-200 bg-ink-50 px-2.5 py-1.5 text-xs text-ink-600"
-                    }
-                  >
-                    {city}
-                    {index === 0 && <span className="ml-1 text-[10px] text-brand-600">演示</span>}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-5 grid grid-cols-2 gap-3 border-t border-ink-100 pt-5 text-xs sm:grid-cols-3">
-                {[
-                  ["县区级区划", "已录入"],
-                  ["功能区", "郑州部分录入"],
-                  ["机构匹配", "按管辖核实"],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <p className="text-ink-400">{label}</p>
-                    <p className="mt-1 font-semibold text-ink-800">{value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="sources" className="scroll-mt-24 border-y border-ink-200/60 bg-white py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-              <div className="max-w-2xl">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">官方来源与核验</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-ink-900 sm:text-3xl">
-                  不靠模型记忆编法条
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-ink-500">
-                  法律检索来自独立的本地知识库，每条结果都带文件名称、发布机关、条款、官方入口和核验状态。
-                </p>
-              </div>
-              <Badge variant="warning">国家法条待逐条核验 · 河南政策待核验</Badge>
-            </div>
-            <div className="mt-8 grid gap-3 lg:grid-cols-5">
-              {laws.map(([title, topics]) => (
-                <div key={title} className="rounded-xl border border-ink-200 bg-ink-50/60 p-4">
-                  <Database className="h-5 w-5 text-brand-700" />
-                  <h3 className="mt-3 text-sm font-bold leading-snug text-ink-900">{title}</h3>
-                  <p className="mt-2 text-[11px] leading-relaxed text-ink-500">{topics}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-ink-400">
-              上面只是每部文件涉及的主题，不是对你案件的结论。时限从哪天算、适用多久，
-              取决于你的具体事实，以官方受理机构的答复为准。
-            </p>
-            <p className="mt-6 text-xs font-semibold text-ink-500">
-              以下是这些机构的官网首页，不是某个具体办事页面。办理入口请在官网内查找，或先电话确认。
-            </p>
-            <div className="mt-3 grid gap-4 md:grid-cols-3">
-              <a
-                href="https://flk.npc.gov.cn/"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="flex items-center justify-between rounded-xl border border-ink-200 px-4 py-3 text-sm font-medium text-ink-700 transition hover:border-brand-300 hover:text-brand-800"
-              >
-                国家法律法规数据库
-                <span className="flex items-center gap-1">
-                  官网首页
-                  <ExternalLink className="h-4 w-4" />
-                </span>
-              </a>
-              <a
-                href="https://hrss.henan.gov.cn/"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="flex items-center justify-between rounded-xl border border-ink-200 px-4 py-3 text-sm font-medium text-ink-700 transition hover:border-brand-300 hover:text-brand-800"
-              >
-                河南省人社厅
-                <span className="flex items-center gap-1">
-                  官网首页
-                  <ExternalLink className="h-4 w-4" />
-                </span>
-              </a>
-              <a
-                href="https://12348.gov.cn/"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="flex items-center justify-between rounded-xl border border-ink-200 px-4 py-3 text-sm font-medium text-ink-700 transition hover:border-brand-300 hover:text-brand-800"
-              >
-                中国法律服务网
-                <span className="flex items-center gap-1">
-                  官网首页
-                  <ExternalLink className="h-4 w-4" />
-                </span>
-              </a>
-            </div>
-          </div>
-        </section>
+        <GuideStack />
 
         <section className="py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -408,7 +202,7 @@ export default function HomePage() {
               ].map((item) => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.title} className="rounded-2xl border border-ink-200 bg-white p-5">
+                  <div key={item.title} className="rounded-2xl border border-white/70 bg-white/70 p-5 shadow-card backdrop-blur-sm">
                     <Icon className="h-5 w-5 text-brand-700" />
                     <h3 className="mt-3 text-sm font-bold text-ink-900">{item.title}</h3>
                     <p className="mt-2 text-xs leading-relaxed text-ink-500">{item.text}</p>
@@ -417,7 +211,7 @@ export default function HomePage() {
               })}
             </div>
 
-            <div className="mt-10 overflow-hidden rounded-3xl bg-brand-950 p-6 text-white sm:p-10">
+            <div className="mt-10 overflow-hidden rounded-3xl bg-[linear-gradient(140deg,#3b1411_0%,#5f211d_52%,#782822_100%)] p-6 text-white shadow-lift sm:p-10">
               <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
                 <div>
                   <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-brand-100">
@@ -452,7 +246,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mt-8 rounded-2xl border border-ink-200 bg-white px-5 py-4 text-xs leading-relaxed text-ink-500">
+            <div className="mt-8 rounded-2xl border border-white/70 bg-white/70 px-5 py-4 text-xs leading-relaxed text-ink-500 backdrop-blur-sm">
               <strong className="font-semibold text-ink-700">法律辅助服务免责声明：</strong>
               本产品不是律师事务所，不提供正式法律意见，不承诺追回工资或胜诉。案件分析、法律引用和行动建议仅供参考，
               最终以行政机关、仲裁机构或人民法院认定为准。遇到复杂、紧急或人身安全风险，请及时拨打 110、12348 或联系专业律师。

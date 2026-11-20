@@ -12,7 +12,7 @@ const sources = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-ink-200 bg-white">
+    <footer className="mt-20 border-t border-white/70 bg-[linear-gradient(180deg,rgba(255,252,248,0.45),rgba(248,236,226,0.85))] backdrop-blur-sm">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_1fr_1fr]">
         <div>
           <BrandLogo />

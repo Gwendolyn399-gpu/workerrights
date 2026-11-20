@@ -38,7 +38,7 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-ink-50">
+      <div className="flex min-h-screen items-center justify-center bg-transparent">
         <Spinner label="正在读取案件…" />
       </div>
     );
@@ -46,7 +46,7 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
 
   if (error || !caseData) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-ink-50 px-6 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-transparent px-6 text-center">
         <BrandLogo />
         <h1 className="mt-4 text-xl font-bold text-ink-900">无法打开这个案件</h1>
         <p className="max-w-md text-sm leading-relaxed text-ink-500">
@@ -67,7 +67,7 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
   const stage = intakeStage(caseData.progress, caseData.intake, caseData.messages, caseData.status);
 
   return (
-    <div className="min-h-screen bg-ink-50 pb-24 lg:pb-0">
+    <div className="min-h-screen bg-transparent pb-24 lg:pb-0">
       <header className="sticky top-0 z-40 border-b border-ink-200/80 bg-white/95 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="flex h-16 items-center justify-between gap-3">
