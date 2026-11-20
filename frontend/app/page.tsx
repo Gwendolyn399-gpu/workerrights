@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { DemoCaseButton, StartCaseButton } from "@/components/home/start-actions";
+import { NavGallery } from "@/components/home/nav-gallery";
 import { SceneGrid } from "@/components/home/scenes";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -188,6 +189,8 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+
+        <NavGallery />
 
         <section id="scenes" className="scroll-mt-24 py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
