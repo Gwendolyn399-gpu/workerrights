@@ -7,7 +7,7 @@ import { driveTurn } from "../app/qca/turn.ts";
 import { LegalRetriever } from "../app/core/retriever.ts";
 import { NEW_CASE_FACTS } from "../app/core/facts.ts";
 import { getOwnedCase, insertCase, insertIntent, newCaseRow, getIntent } from "../app/core/store.ts";
-import { OUT_OF_SCOPE, URGENT } from "../app/qca/boundary.ts";
+import { OUT_OF_SCOPE, URGENT, BLOCKED_REPLY } from "../app/qca/boundary.ts";
 import { newId, nowIso } from "../app/core/util.ts";
 
 const owner = "user-1";
@@ -134,4 +134,31 @@ test("review-blocked reply discards working fact changes", async () => {
   assert.deepEqual(saved.facts, NEW_CASE_FACTS);
   assert.equal(saved.facts_revision, 0);
   assert.equal(saved.messages.length, 2);
+});
+
+test("reply is shown before review and retracted when blocked", async () => {
+  const text = "我在郑州市干钢筋工，工资没结清。";
+  const respondArgs = { reply: "我记下了：郑州的钢筋工。", response_kind: "chat", next_question: null, stage: "waiting_user", citation_ids: [] };
+  const recordFactsArgs = { patch: { location_city: "郑州市" }, source_quote: "我在郑州市干钢筋工" };
+
+  const allowed = await setup({ classifyRoute: "case", reviewAllowed: true, recordFactsArgs, respondArgs });
+  const allowedIntent = await makeIntent(allowed.db, allowed.caseRow);
+  const allowedEvents = [];
+  await driveTurn(allowed.deps, allowedIntent.id, text, (e) => allowedEvents.push(e), Date.now() + 30_000);
+  const snapshotIndex = allowedEvents.findIndex((e) => e.type === "reply_snapshot" && e.text === respondArgs.reply);
+  const doneIndex = allowedEvents.findIndex((e) => e.type === "done");
+  assert.ok(snapshotIndex >= 0, "candidate reply snapshot emitted");
+  assert.ok(snapshotIndex < doneIndex, "reply shown before done");
+  assert.ok(!allowedEvents.some((e) => e.type === "reply_reset"), "allowed reply is not retracted");
+
+  const blocked = await setup({ classifyRoute: "case", reviewAllowed: false, recordFactsArgs, respondArgs });
+  const blockedIntent = await makeIntent(blocked.db, blocked.caseRow);
+  const blockedEvents = [];
+  await driveTurn(blocked.deps, blockedIntent.id, text, (e) => blockedEvents.push(e), Date.now() + 30_000);
+  const candidateIndex = blockedEvents.findIndex((e) => e.type === "reply_snapshot" && e.text === respondArgs.reply);
+  const resetIndex = blockedEvents.findIndex((e) => e.type === "reply_reset");
+  const boundaryIndex = blockedEvents.findIndex((e) => e.type === "reply_snapshot" && e.text === BLOCKED_REPLY);
+  assert.ok(candidateIndex >= 0, "candidate shown first");
+  assert.ok(resetIndex > candidateIndex, "candidate retracted after review");
+  assert.ok(boundaryIndex > resetIndex, "boundary reply replaces candidate");
 });

@@ -64,6 +64,7 @@ function stateFromCase(caseRow: CaseRow, text: string): AgentState {
 interface DriveScratch {
   route?: ScopeRoute;
   classifyUsage?: Record<string, number>;
+  classifyMs?: number;
 }
 
 export async function driveTurn(
@@ -111,6 +112,7 @@ export async function driveTurn(
 
     if (!scratch.route) {
       emit({ type: "status", text: "我先看看你说的情况…" });
+      const classifyStart = Date.now();
       const classify = await runDecision(
         deps.client, deps.bindings.classify, "classify_scope", parseRoute,
         classifyData(stateFromCase(caseRow, text), text),
@@ -118,6 +120,7 @@ export async function driveTurn(
       );
       scratch.route = classify.decision.route;
       scratch.classifyUsage = classify.usage;
+      scratch.classifyMs = Date.now() - classifyStart;
       await persistScratch();
     }
     const route = scratch.route!;
@@ -611,14 +614,21 @@ class TurnDrive {
   private async completeRespond(args: RespondArgs, respondCallId: string | null): Promise<void> {
     this.responded = true;
     this.working.stage = args.stage;
-    this.emit({ type: "status", text: "再看一遍，马上回你…" });
+    // Show the validated reply immediately; scope review runs as a post-check so
+    // the user is not left waiting on a second model session. A blocked reply is
+    // retracted (reply_reset) and replaced with the fixed boundary text.
+    const candidateCitations = args.citation_ids.map((cid) => this.working.citations[cid]).filter(Boolean);
+    this.emit({ type: "reply_snapshot", text: args.reply, citations: candidateCitations });
+    this.emit({ type: "status", text: "正在做最后核对…" });
+    const reviewStart = Date.now();
     const review = await runDecision(
       this.deps.client, this.deps.bindings.review, "review_scope", parseReview,
       reviewData(this.text, args.reply),
       { app: "workerrights", purpose: "scope_review", case_id: this.caseRow.id, owner_id: this.caseRow.owner_id },
     );
+    const reviewMs = Date.now() - reviewStart;
     const allowed = review.decision.allowed;
-    const trace = [this.gateTrace, ...this.toolTrace, { step: this.toolTrace.length + 1, action: "scope_review", ok: allowed, elapsed_ms: 0 }];
+    const trace = [this.gateTrace, ...this.toolTrace, { step: this.toolTrace.length + 1, action: "scope_review", ok: allowed, elapsed_ms: reviewMs }];
     const usage = {
       model_credits: (this.scratch.classifyUsage?.model_credits ?? 0) + (this.mainUsage.model_credits ?? 0) + (review.usage.model_credits ?? 0),
     };
@@ -626,6 +636,11 @@ class TurnDrive {
     const reply = allowed ? args.reply : BLOCKED_REPLY;
     const citations = keep ? args.citation_ids.map((cid) => this.working.citations[cid]) : [];
     const state = keep ? this.working : stateFromCase(this.caseRow, this.text);
+    if (!allowed) {
+      this.emit({ type: "reply_reset" });
+      this.emit({ type: "reply_snapshot", text: reply, citations: [] });
+    }
+    const commitStart = Date.now();
     const result = await commitTurn(this.deps, this.caseRow, this.intent, this.text, {
       reply,
       nextQuestion: keep ? args.next_question : null,
@@ -638,7 +653,10 @@ class TurnDrive {
       respondCallId,
     });
     this.finalResult = result;
-    this.emit({ type: "reply_snapshot", text: reply, citations });
+    console.error(JSON.stringify({
+      event: "sites_turn_timing", case_id: this.caseRow.id, route: this.route, allowed,
+      classify_ms: this.scratch.classifyMs ?? null, review_ms: reviewMs, commit_ms: Date.now() - commitStart,
+    }));
     this.emit({ type: "done", result });
   }
 }
