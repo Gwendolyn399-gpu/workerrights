@@ -51,3 +51,9 @@ test_agent_settings.json
 workerrights-offline.html
 .snapshot/
 .impeccable/
+
+# Qoder Sites：构建产物、生成的站点描述符、旧 Global 占位站与本机测试残留，不提交
+frontend/dist/
+*.qoder.site
+bootstrap-public/
+pytest-of-Tutul/
