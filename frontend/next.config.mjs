@@ -7,6 +7,7 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   outputFileTracingRoot: projectRoot,
   async rewrites() {
     return [

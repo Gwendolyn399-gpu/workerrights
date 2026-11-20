@@ -30,6 +30,7 @@ export default function ActionPlanPage() {
   const [plan, setPlan] = React.useState<ActionPlanResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
+  const [completedStep, setCompletedStep] = React.useState<string | null>(null);
   const [pendingStep, setPendingStep] = React.useState<string | null>(null);
   const [exporting, setExporting] = React.useState<"docx" | "pdf" | null>(null);
   const [actionError, setActionError] = React.useState("");
@@ -73,6 +74,7 @@ export default function ActionPlanPage() {
     try {
       const updated = await api.updateStep(caseId, step.id, !step.done);
       setPlan(updated);
+      setCompletedStep(step.done ? null : step.id);
       const nextStageKey = getCurrentStageKey(groupActionSteps(updated.steps));
       const nextOpenStep = updated.steps.find((item) => !item.done);
       setOpenStages(new Set([nextStageKey]));
@@ -196,7 +198,7 @@ export default function ActionPlanPage() {
       <header className="order-2 border-b border-rule pb-5 sm:pb-6 lg:order-none">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 max-w-[720px]">
-            <h1 className="text-2xl font-extrabold tracking-[-0.03em] text-ink sm:text-3xl">行动步骤</h1>
+            <h1 className="fusion-kai text-3xl font-bold text-ink sm:text-4xl">行动步骤</h1>
             <p className="mt-2 text-base leading-7 text-ink">先做这 3 件事；有些渠道可以同时准备。</p>
             <p className="mt-1 text-[11px] leading-5 text-muted sm:text-xs">
               步骤是建议，不是法律结论；受理与材料以官方告知为准。
@@ -379,7 +381,7 @@ export default function ActionPlanPage() {
                       const stepDeadlines = deadlinesForStep(step.step_key, plan.deadlines);
                       const detailsOpen = openSteps.has(step.id);
                       return (
-                        <li key={step.id} data-step-key={step.step_key} className="relative pb-5 pl-10 last:pb-1">
+                        <li key={step.id} data-step-key={step.step_key} className={cn("relative pb-5 pl-10 last:pb-1", isCurrent && "fusion-current-step")}>
                           {index < group.steps.length - 1 && (
                             <span
                               aria-hidden="true"
@@ -401,6 +403,7 @@ export default function ActionPlanPage() {
 
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0">
+                              {isCurrent && <p className="mb-1 text-xs font-bold text-signal-deep">现在先做</p>}
                               <h3
                                 className={cn(
                                   "text-base font-bold leading-6",
@@ -409,14 +412,16 @@ export default function ActionPlanPage() {
                               >
                                 {step.title}
                               </h3>
-                              <p className="mt-1 text-base leading-7 text-ink/90">{step.why}</p>
+                              {(detailsOpen || isCurrent) && (
+                                <p className="mt-1 text-sm leading-6 text-ink/90">{step.why}</p>
+                              )}
                             </div>
                             <button
                               type="button"
                               onClick={() => void toggleStep(step)}
                               disabled={pendingStep !== null}
                               className={cn(
-                                "inline-flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-control border px-4 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
+                                "fusion-press inline-flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-control border px-4 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
                                 isDone
                                   ? "border-field bg-field-wash text-field"
                                   : isCurrent
@@ -427,7 +432,7 @@ export default function ActionPlanPage() {
                               {pendingStep === step.id ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : isDone ? (
-                                <Check className="h-3.5 w-3.5" />
+                                <Check className={cn("h-3.5 w-3.5", completedStep === step.id && "fusion-draw-check")} />
                               ) : null}
                               {isDone ? "已完成" : "标记完成"}
                             </button>
@@ -444,7 +449,7 @@ export default function ActionPlanPage() {
                           </button>
 
                           {detailsOpen && (
-                            <div className="mt-2">
+                            <div className="fusion-reveal mt-2">
                               {step.prepare.length > 0 && (
                                 <div>
                                   <p className="text-xs font-bold text-muted">需要准备</p>

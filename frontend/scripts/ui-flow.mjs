@@ -29,7 +29,9 @@ const assistantBubbles = () => page.locator(".rounded-tl-sm");
 
 // 1. Fresh case: free-text conversation works regardless of provider.
 await page.goto("http://127.0.0.1:3000/", { waitUntil: "networkidle" });
-await page.getByRole("button", { name: "说说我的情况" }).first().click();
+await page.getByRole("link", { name: "说说我的情况", exact: true }).first().click();
+await page.getByRole("textbox", { name: "你的情况", exact: true }).fill("我有笔工地工资还没拿到，想先把情况理清楚。");
+await page.getByRole("button", { name: "发送", exact: true }).click();
 await page.waitForURL(/\/case\/[0-9a-f-]+$/);
 const freshCaseUrl = page.url();
 await page.getByRole("textbox", { name: "输入你的回答" }).waitFor();

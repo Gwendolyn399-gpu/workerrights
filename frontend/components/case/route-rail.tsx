@@ -13,14 +13,19 @@ export interface RouteStageView {
 }
 
 export function RouteRail({ stages }: { stages: RouteStageView[] }) {
+  const currentIndex = stages.findIndex((stage) => stage.state === "current");
+
   return (
     <div>
       <p className="text-[11px] font-bold text-muted">办理路线</p>
-      <ol className="relative mt-2 grid grid-cols-3" aria-label="行动阶段">
-        <span
+      <div className="relative mt-2">
+        <div aria-hidden="true" className="absolute left-[16.66%] right-[16.66%] top-4 h-px bg-route/40" />
+        <div
           aria-hidden="true"
-          className="absolute left-[16.66%] right-[16.66%] top-4 h-px bg-route/40"
+          className="absolute top-0 h-8 w-8 -translate-x-1/2 rounded-full ring-4 ring-signal/20 transition-[left,opacity] duration-300 ease-out"
+          style={{ left: `${((Math.max(0, currentIndex) + 0.5) / stages.length) * 100}%`, opacity: currentIndex < 0 ? 0 : 1 }}
         />
+        <ol className="grid grid-cols-3" aria-label="行动阶段">
         {stages.map((stage, index) => {
           const current = stage.state === "current";
           return (
@@ -63,7 +68,8 @@ export function RouteRail({ stages }: { stages: RouteStageView[] }) {
             </li>
           );
         })}
-      </ol>
+        </ol>
+      </div>
     </div>
   );
 }

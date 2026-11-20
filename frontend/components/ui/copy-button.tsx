@@ -52,10 +52,10 @@ export function CopyButton({ text, label = "复制", copiedLabel = "已复制", 
           }
         }}
         className={cn(
-          "inline-flex min-h-11 items-center gap-1.5 rounded-control border border-rule bg-surface font-bold text-muted transition hover:bg-sand hover:text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90 focus-visible:ring-offset-[3px] focus-visible:ring-offset-paper disabled:opacity-50",
+          "fusion-press inline-flex min-h-11 items-center gap-1.5 rounded-control border border-rule bg-surface font-bold text-muted transition hover:bg-sand hover:text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90 focus-visible:ring-offset-[3px] focus-visible:ring-offset-paper disabled:opacity-50",
           compact ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-sm", className,
         )}>
-        {copied ? <Check aria-hidden="true" className="h-3.5 w-3.5 text-field" /> : <Copy aria-hidden="true" className="h-3.5 w-3.5" />}
+        {copied ? <Check aria-hidden="true" className="fusion-draw-check h-3.5 w-3.5 text-field" /> : <Copy aria-hidden="true" className="h-3.5 w-3.5" />}
         <span aria-live="polite">{copied ? copiedLabel : label}</span>
       </button>
       {error && <p role="alert" className="mt-2 max-w-[36em] text-base text-signal-deep">{error}</p>}

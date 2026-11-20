@@ -8,7 +8,7 @@ import { randomUUID, createHash } from "node:crypto";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const OUT = path.join(ROOT, "docs/redesign/m7");
 const BASE = (process.env.BASE_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
-const BACKEND = "http://127.0.0.1:8100/api/v1";
+const BACKEND = (process.env.QA_BACKEND_URL || "http://127.0.0.1:8100/api/v1").replace(/\/$/, "");
 const STALE = "信息已更新，请重新生成";
 const REGENERATE = "回到对话核对并重新生成";
 const TIMEOUT = 35_000;
@@ -333,9 +333,12 @@ async function golden(size, checks) {
   });
   await check(checks.intake, async (item) => {
     await visit(page, "/", "home");
+    await page.getByRole("link", { name: "说说我的情况", exact: true }).first().click();
+    const openingMessage = "我有笔工地工资还没拿到，想先把情况理清楚。";
+    await page.getByRole("textbox", { name: "你的情况", exact: true }).fill(openingMessage);
     const [created] = await Promise.all([
       page.waitForResponse((res) => new URL(res.url()).pathname === "/api/py/cases" && res.request().method() === "POST"),
-      page.getByRole("button", { name: "说说我的情况", exact: true }).first().click(),
+      page.getByRole("button", { name: "发送", exact: true }).click(),
     ]);
     assert(created.ok(), `Create case: HTTP ${created.status()}`);
     const payload = await created.json();
@@ -346,7 +349,10 @@ async function golden(size, checks) {
     assert(payload.provider?.is_mock === true, "Create provider not mock");
     await page.waitForURL(`${BASE}/case/${id}`);
     await ready(page, "chat");
-    assert((await record(api, id)).is_demo === false, "Expected real new synthetic case, not demo");
+    const openedCase = await record(api, id);
+    assert(openedCase.is_demo === false, "Expected real new synthetic case, not demo");
+    assert(openedCase.messages.filter((message) => message.role === "user" && message.content === openingMessage).length === 1,
+      "Homepage message was lost or duplicated");
     const turns = [];
     let data;
     for (let round = 0; round < 30; round++) {
@@ -659,7 +665,9 @@ const incremental = planned("all", "incremental-stream-timing", "infrastructure"
 incremental.observation = "UNVERIFIED: 默认规则模式不测真实模型逐token延迟；正常SSE与截断恢复另有验证。";
 
 try {
-  assert(["127.0.0.1", "localhost", "[::1]"].includes(new URL(BASE).hostname), "BASE_URL must be loopback; remote services forbidden");
+  for (const address of [BASE, BACKEND]) {
+    assert(["127.0.0.1", "localhost", "[::1]"].includes(new URL(address).hostname), "QA endpoints must be loopback; remote services forbidden");
+  }
   fs.mkdirSync(OUT, { recursive: true });
   save();
   browser = await chromium.launch({

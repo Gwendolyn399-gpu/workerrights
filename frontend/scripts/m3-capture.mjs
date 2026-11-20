@@ -77,7 +77,8 @@ for (const size of sizes) {
   });
   await page.reload({ waitUntil: "networkidle" });
 
-  await page.getByRole("button", { name: /说说我的情况/ }).click();
+  await page.goto(`${new URL(page.url()).origin}/cases`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "开始整理", exact: true }).click();
   await page.waitForURL(/\/case\/[0-9a-f-]+$/);
   await page.getByRole("textbox", { name: "输入你的回答" }).waitFor();
   const caseUrl = page.url();
