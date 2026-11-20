@@ -11,17 +11,17 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#fdf4f2",
-          100: "#fae3de",
-          200: "#f5c9c1",
-          300: "#eda79b",
-          400: "#e07a6b",
-          500: "#cd5244",
-          600: "#b23c31",
-          700: "#932f27",
-          800: "#782822",
-          900: "#5f211d",
-          950: "#3b1411"
+          50: "#fff4f1",
+          100: "#ffe6df",
+          200: "#ffc9bd",
+          300: "#ff9f8d",
+          400: "#f76c56",
+          500: "#e8452f",
+          600: "#d32b20",
+          700: "#b31f18",
+          800: "#8f1612",
+          900: "#6d100e",
+          950: "#4c0b0b"
         },
         ink: {
           50: "#faf8f6",
@@ -45,7 +45,7 @@ const config: Config = {
       },
       boxShadow: {
         card: "0 1px 2px rgba(45, 25, 20, 0.04), 0 8px 24px -12px rgba(45, 25, 20, 0.12)",
-        lift: "0 12px 32px -12px rgba(95, 33, 29, 0.26)"
+        lift: "0 12px 32px -12px rgba(143, 22, 18, 0.26)"
       },
       keyframes: {
         "fade-up": {

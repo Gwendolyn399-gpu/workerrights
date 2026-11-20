@@ -24,6 +24,8 @@ const HASH_TO_MODULE: Record<string, GuideKey> = {
   "#how": "how",
   "#scope": "scope",
   "#sources": "sources",
+  "#privacy": "privacy",
+  "#demo": "demo",
 };
 
 export function GuideProvider({ children }: { children: React.ReactNode }) {
@@ -53,6 +55,7 @@ export function GuideProvider({ children }: { children: React.ReactNode }) {
 function GuideDialog({ initial, onClose }: { initial: GuideKey; onClose: () => void }) {
   const [active, setActive] = React.useState<GuideKey>(initial);
   const stageRef = React.useRef<HTMLDivElement | null>(null);
+  const tabsRef = React.useRef<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
 
   React.useEffect(() => {
@@ -96,6 +99,11 @@ function GuideDialog({ initial, onClose }: { initial: GuideKey; onClose: () => v
   React.useEffect(() => {
     if (initial !== "how") jumpTo(initial, true);
   }, [initial, jumpTo]);
+
+  React.useEffect(() => {
+    const tab = tabsRef.current?.querySelector<HTMLElement>(`[data-key="${active}"]`);
+    tab?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [active]);
 
   React.useEffect(() => {
     const root = getRoot();
@@ -144,7 +152,7 @@ function GuideDialog({ initial, onClose }: { initial: GuideKey; onClose: () => v
         <header className="relative z-10 flex items-start justify-between gap-4 px-5 pb-2 pt-5 sm:px-7 sm:pt-6">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-700">
-              三张卡片 · 一件事
+              五张卡片 · 一件事
             </p>
             <p className="mt-1 text-xl font-black tracking-tight text-ink-900 sm:text-2xl">看清它怎么帮你</p>
           </div>
@@ -159,7 +167,7 @@ function GuideDialog({ initial, onClose }: { initial: GuideKey; onClose: () => v
           </button>
         </header>
 
-        <div className="guide-tabs relative z-10" role="tablist" aria-label="三个模块">
+        <div ref={tabsRef} className="guide-tabs relative z-10" role="tablist" aria-label="五个模块">
           {GUIDE_MODULES.map((module, index) => (
             <button
               key={module.key}
@@ -167,6 +175,7 @@ function GuideDialog({ initial, onClose }: { initial: GuideKey; onClose: () => v
               role="tab"
               aria-selected={active === module.key}
               aria-controls={`guide-${module.key}`}
+              data-key={module.key}
               data-active={active === module.key ? "true" : "false"}
               onClick={() => jumpTo(module.key)}
               className="guide-tab"

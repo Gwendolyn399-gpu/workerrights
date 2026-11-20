@@ -2,15 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import {
-  ArrowUpRight,
   Database,
   FolderOpen,
   LockKeyhole,
   MapPin,
-  Route,
   ShieldCheck,
-  Trash2,
-  UserRoundCheck,
 } from "lucide-react";
 
 import { DemoCaseButton, StartCaseButton } from "@/components/home/start-actions";
@@ -36,19 +32,19 @@ export default function HomePage() {
           />
 
           <div
-            className="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/60 to-transparent"
+            className="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/45 to-transparent"
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-gradient-to-r from-brand-950/85 via-brand-950/35 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-brand-950/65 via-brand-950/20 to-transparent"
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-[radial-gradient(120%_95%_at_6%_92%,rgba(43,14,12,0.82)_0%,rgba(43,14,12,0.45)_42%,transparent_70%)]"
+            className="absolute inset-0 bg-[radial-gradient(115%_90%_at_4%_96%,rgba(76,11,11,0.62)_0%,rgba(76,11,11,0.28)_45%,transparent_72%)]"
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(59,20,17,0.35)_100%)]"
+            className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(76,11,11,0.22)_100%)]"
             aria-hidden="true"
           />
 
@@ -82,7 +78,7 @@ export default function HomePage() {
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-brand-950 via-brand-950/85 to-transparent sm:h-36"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-brand-950 via-brand-950/70 to-transparent sm:h-32"
           />
 
           <div className="relative z-10 mx-auto flex min-h-[82svh] max-w-6xl flex-col justify-end px-4 pb-12 pt-32 sm:px-6 sm:pb-16 lg:min-h-[calc(100svh-4rem)] lg:pb-20">
@@ -158,97 +154,6 @@ export default function HomePage() {
 
         <NavGallery />
 
-        <section className="pb-16 pt-10 sm:pb-20 sm:pt-14" aria-labelledby="privacy-heading">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="max-w-2xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-700">隐私与边界</p>
-              <h2 id="privacy-heading" className="mt-2 text-2xl font-black tracking-tight text-ink-900 sm:text-3xl">
-                先把边界说清楚
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-ink-500">
-                下面四条是这个产品固定遵守的规则，不是可选项。
-              </p>
-            </div>
-
-            <div className="trust-panel mt-8">
-              {[
-                {
-                  icon: UserRoundCheck,
-                  title: "不要求身份证号",
-                  text: "本产品不收集身份证号、银行卡等敏感信息，实名信息只在官方平台由你本人填写。",
-                },
-                {
-                  icon: LockKeyhole,
-                  title: "匿名会话隔离",
-                  text: "案件与本浏览器生成的会话标识绑定，其他会话无法读取你的案件。",
-                },
-                {
-                  icon: Trash2,
-                  title: "随时删除",
-                  text: "可在“我的案件”中删除案件及聊天记录，删除后不可恢复。",
-                },
-                {
-                  icon: ShieldCheck,
-                  title: "不自动提交",
-                  text: "只辅助整理填报内容，不登录、不代替你向任何政府平台提交材料。",
-                },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div key={item.title} className="trust-item">
-                    <span className="trust-item__icon">
-                      <Icon className="h-[18px] w-[18px]" />
-                    </span>
-                    <h3>{item.title}</h3>
-                    <p>{item.text}</p>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-10 overflow-hidden rounded-[26px] bg-[linear-gradient(140deg,#3b1411_0%,#5f211d_52%,#782822_100%)] p-6 text-white shadow-lift sm:p-10">
-              <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
-                <div>
-                  <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-brand-100">
-                    虚构演示案例 · 不涉及真实劳动者
-                  </span>
-                  <h2 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                    先用一个郑州工地欠薪案例，把流程完整走一遍
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-brand-100">
-                    对话追问、案件事实、用工关系图、证据缺口、法律依据、行动步骤和材料整理参考，全部可实际操作。
-                    演示中的人物、项目、公司均为虚构。
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-brand-200">
-                    <span className="inline-flex items-center gap-1.5"><Route className="h-3.5 w-3.5" />对话 → 分析 → 行动 → 材料整理</span>
-                    <span className="inline-flex items-center gap-1.5"><ArrowUpRight className="h-3.5 w-3.5" />支持 DOCX / PDF 导出</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                  <DemoCaseButton
-                    label="打开演示案件"
-                    variant="secondary"
-                    size="lg"
-                    className="[&>button]:bg-white [&>button]:text-brand-950 [&>button]:hover:bg-brand-50"
-                  />
-                  <StartCaseButton
-                    children="直接说我的情况"
-                    variant="outline"
-                    size="lg"
-                    className="[&>button]:border-white/25 [&>button]:bg-transparent [&>button]:text-white [&>button]:hover:bg-white/10"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 rounded-[26px] border border-[#e3d8cf]/80 bg-white/60 px-5 py-4 text-xs leading-relaxed text-ink-500 backdrop-blur-sm">
-              <strong className="font-semibold text-ink-700">法律辅助服务免责声明：</strong>
-              本产品不是律师事务所，不提供正式法律意见，不承诺追回工资或胜诉。案件分析、法律引用和行动建议仅供参考，
-              最终以行政机关、仲裁机构或人民法院认定为准。遇到复杂、紧急或人身安全风险，请及时拨打 110、12348 或联系专业律师。
-              <span className="mt-2 block text-ink-400">当前版本为本地开发预览，未部署公网，未接入付费模型 API。</span>
-            </div>
-          </div>
-        </section>
       </main>
       <SiteFooter />
     </div>

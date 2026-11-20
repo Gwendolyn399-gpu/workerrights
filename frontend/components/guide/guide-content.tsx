@@ -5,18 +5,25 @@ import {
   Database,
   ExternalLink,
   FileSearch,
+  LockKeyhole,
   MessageSquareText,
   Scale,
+  ShieldCheck,
+  Trash2,
+  UserRoundCheck,
 } from "lucide-react";
 
+import { DemoCaseButton, StartCaseButton } from "@/components/home/start-actions";
 import { ScrollStackItem } from "@/components/home/scroll-stack";
 
-export type GuideKey = "how" | "scope" | "sources";
+export type GuideKey = "how" | "scope" | "sources" | "privacy" | "demo";
 
 export const GUIDE_MODULES: { key: GuideKey; label: string }[] = [
   { key: "how", label: "工作原理" },
   { key: "scope", label: "服务范围" },
   { key: "sources", label: "官方来源" },
+  { key: "privacy", label: "隐私与边界" },
+  { key: "demo", label: "虚构演示案例" },
 ];
 
 const steps = [
@@ -60,6 +67,29 @@ const officialLinks = [
   { label: "国家法律法规数据库", href: "https://flk.npc.gov.cn/" },
   { label: "河南省人社厅", href: "https://hrss.henan.gov.cn/" },
   { label: "中国法律服务网", href: "https://12348.gov.cn/" },
+];
+
+const privacyFacts = [
+  {
+    icon: UserRoundCheck,
+    title: "不要求身份证号",
+    text: "本产品不收集身份证号、银行卡等敏感信息，实名信息只在官方平台由你本人填写。",
+  },
+  {
+    icon: LockKeyhole,
+    title: "匿名会话隔离",
+    text: "案件与本浏览器生成的会话标识绑定，其他会话无法读取你的案件。",
+  },
+  {
+    icon: Trash2,
+    title: "随时删除",
+    text: "可在“我的案件”中删除案件及聊天记录，删除后不可恢复。",
+  },
+  {
+    icon: ShieldCheck,
+    title: "不自动提交",
+    text: "只辅助整理填报内容，不登录、不代替你向任何政府平台提交材料。",
+  },
 ];
 
 export function GuideCard({ module }: { module: GuideKey }) {
@@ -143,6 +173,85 @@ export function GuideCard({ module }: { module: GuideKey }) {
             <p className="guide-note guide-note--ink">
               河南地方政策库中的办事指南、最低工资等条目当前标记为“待核验”，不会被当作最终法律依据。
             </p>
+          </div>
+        </div>
+      </ScrollStackItem>
+    );
+  }
+
+  if (module === "privacy") {
+    return (
+      <ScrollStackItem id="guide-privacy" itemClassName="guide-card">
+        <div className="guide-card__body">
+          <header className="guide-card__head">
+            <div>
+              <p className="guide-eyebrow">隐私与边界</p>
+              <h3 className="guide-title">先把边界说清楚</h3>
+            </div>
+            <span className="guide-index" aria-hidden="true">04</span>
+          </header>
+          <div className="guide-privacy">
+            <p className="guide-lead">下面四条是这个产品固定遵守的规则，不是可选项。</p>
+            <div className="guide-facts">
+              {privacyFacts.map((fact) => {
+                const Icon = fact.icon;
+                return (
+                  <div key={fact.title} className="guide-fact">
+                    <Icon className="guide-fact__icon" aria-hidden="true" />
+                    <span>
+                      <span className="guide-fact__name">{fact.title}</span>
+                      <span className="guide-fact__desc">{fact.text}</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </ScrollStackItem>
+    );
+  }
+
+  if (module === "demo") {
+    return (
+      <ScrollStackItem id="guide-demo" itemClassName="guide-card guide-card--ink">
+        <div className="guide-card__body">
+          <header className="guide-card__head">
+            <span className="guide-pill">虚构演示案例 · 不涉及真实劳动者</span>
+            <span className="guide-index" aria-hidden="true">05</span>
+          </header>
+          <h3 className="guide-title">先用一个郑州工地欠薪案例，把流程完整走一遍</h3>
+          <p className="guide-lead guide-lead--ink">
+            对话追问、案件事实、用工关系图、证据缺口、法律依据、行动步骤和材料整理参考，全部可实际操作。
+            演示中的人物、项目、公司均为虚构。
+          </p>
+          <div className="guide-demo-flow">
+            {[
+              ["对话记录", "已经填好的虚构案情，可以继续追问。"],
+              ["案件分析", "法律依据、证据缺口和仍需核实的事实。"],
+              ["行动指南", "照着做的步骤和材料整理，可导出 DOCX / PDF。"],
+            ].map(([name, desc], index) => (
+              <div key={name} className="guide-demo-flow__step">
+                <span className="guide-demo-flow__num" aria-hidden="true">0{index + 1}</span>
+                <span>
+                  <span className="guide-demo-flow__name">{name}</span>
+                  <span className="guide-demo-flow__desc">{desc}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="guide-actions">
+            <DemoCaseButton
+              label="打开演示案件"
+              size="lg"
+              className="[&>button]:bg-white [&>button]:text-brand-900 [&>button]:hover:bg-brand-50"
+            />
+            <StartCaseButton
+              children="直接说我的情况"
+              variant="outline"
+              size="lg"
+              className="[&>button]:border-white/30 [&>button]:bg-transparent [&>button]:text-white [&>button]:hover:bg-white/10"
+            />
           </div>
         </div>
       </ScrollStackItem>
