@@ -1,12 +1,9 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import {
   AlertCircle,
-  ArrowRight,
   BookOpenCheck,
-  CheckCircle2,
   PencilLine,
   ShieldCheck,
 } from "lucide-react";
@@ -22,7 +19,7 @@ import { intakeStage, unconfirmedNotice } from "@/lib/intake-progress";
 import { statusLabel } from "@/lib/utils";
 
 export function CaseInfoPanel({ compact = false }: { compact?: boolean }) {
-  const { caseId, caseData, meta } = useCase();
+  const { caseData, meta } = useCase();
   const [editOpen, setEditOpen] = React.useState(false);
   const [legalOpen, setLegalOpen] = React.useState(false);
 
@@ -113,36 +110,6 @@ export function CaseInfoPanel({ compact = false }: { compact?: boolean }) {
               匿名会话语义
             </span>
             <p className="mt-1">案件只对当前浏览器会话可见，可在“我的案件”中删除。</p>
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card">
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-ink-400">下一步</p>
-        {caseData.intake.confirmed ? (
-          <div className="mt-2 space-y-2">
-            <p className="text-xs leading-relaxed text-ink-500">
-              信息已确认，可以查看分析和行动指南。
-            </p>
-            <Link
-              href={`/case/${caseId}/analysis`}
-              className="flex items-center justify-between rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-900"
-            >
-              查看案件分析
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-            <Link
-              href={`/case/${caseId}/action-plan`}
-              className="flex items-center justify-between rounded-lg bg-brand-900 px-3 py-2 text-xs font-semibold text-white"
-            >
-              生成维权行动指南
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        ) : (
-          <div className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-ink-500">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
-            <span>继续在对话中回答一个问题，信息确认后即可生成完整分析和行动步骤。</span>
           </div>
         )}
       </div>

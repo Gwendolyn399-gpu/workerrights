@@ -21,6 +21,7 @@ import { StartCaseButton } from "@/components/home/start-actions";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import { caseDisplayTitle } from "@/lib/case-title";
 import { intakeStage } from "@/lib/intake-progress";
 import { cn, statusLabel } from "@/lib/utils";
 
@@ -83,7 +84,7 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
               </Link>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="truncate text-sm font-bold text-ink-900 sm:text-base">{caseData.title}</h1>
+                  <h1 className="truncate text-sm font-bold text-ink-900 sm:text-base">{caseDisplayTitle(caseData)}</h1>
                   {caseData.is_demo && <Badge variant="warning">虚构演示</Badge>}
                 </div>
                 <p className="mt-0.5 hidden text-[11px] text-ink-400 sm:block">
@@ -172,11 +173,6 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
       )}
 
       <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">{children}</main>
-
-      <footer className="mx-auto max-w-7xl px-4 pb-8 pt-4 text-[11px] leading-relaxed text-ink-400 sm:px-6">
-        {meta?.provider.display_name ?? "本地规则引擎（演示）"} · 法律资料以官方原文为准 ·
-        本产品不构成正式法律意见，不自动向政府平台提交。
-      </footer>
 
       <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-ink-200 bg-white/95 px-2 pt-1.5 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-lg items-center justify-around">

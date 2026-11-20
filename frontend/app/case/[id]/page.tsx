@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   ClipboardList,
-  Info,
-  MapPin,
   Settings2,
 } from "lucide-react";
 
@@ -210,25 +208,7 @@ export default function ChatPage() {
               }}
               onEditInfo={() => setEditOpen(true)}
             />
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-ink-400">
-              <span className="inline-flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                AI 辅助整理，不构成正式法律意见；重要决定请咨询 12348。
-              </span>
-              <button
-                type="button"
-                onClick={() => setEditOpen(true)}
-                className="font-medium text-brand-800 hover:underline"
-              >
-                修改案件信息
-              </button>
-            </div>
           </div>
-        </div>
-
-        <div className="mt-3 flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-[10px] text-ink-400">
-          <MapPin className="h-3.5 w-3.5 text-brand-700" />
-          服务范围：河南省。语音输入依赖浏览器能力，不会上传音频到本产品服务器。
         </div>
       </div>
 

@@ -23,6 +23,7 @@ import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/services/api";
 import type { CaseBrief } from "@/types/api";
+import { caseDisplayTitle } from "@/lib/case-title";
 import { formatAmount, formatDate, statusLabel } from "@/lib/utils";
 
 export default function CasesPage() {
@@ -134,7 +135,7 @@ export default function CasesPage() {
                       )}
                       <span className="text-[10px] text-ink-400">{formatDate(item.updated_at)}</span>
                     </div>
-                    <h2 className="mt-2 truncate text-base font-bold text-ink-900">{item.title}</h2>
+                    <h2 className="mt-2 truncate text-base font-bold text-ink-900">{caseDisplayTitle(item)}</h2>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-500">
                       <span className="inline-flex items-center gap-1">
                         <MapPin className="h-3 w-3 text-ink-400" />
@@ -167,7 +168,7 @@ export default function CasesPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setDeleteTarget(item)}
-                      aria-label={`删除案件：${item.title}`}
+                      aria-label={`删除案件：${caseDisplayTitle(item)}`}
                       className="text-ink-400 hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -203,7 +204,7 @@ export default function CasesPage() {
         }
       >
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {deleteTarget?.title}
+          {deleteTarget ? caseDisplayTitle(deleteTarget) : ""}
         </div>
       </Modal>
     </div>
