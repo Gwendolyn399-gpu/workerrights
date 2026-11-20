@@ -41,6 +41,7 @@ export default function ChatPage() {
   const [draftReply, setDraftReply] = React.useState("");
   const [draftCitations, setDraftCitations] = React.useState<Array<Record<string, unknown>>>([]);
   const [streamStatus, setStreamStatus] = React.useState("");
+  const [queuedConfirm, setQueuedConfirm] = React.useState(false);
   const bottomRef = React.useRef<HTMLDivElement | null>(null);
   const streamController = React.useRef<AbortController | null>(null);
   React.useEffect(() => () => streamController.current?.abort(), []);
@@ -99,14 +100,17 @@ export default function ChatPage() {
       );
       setCaseData(result.case);
     } catch (err) {
+      const aborted = streamController.current?.signal.aborted ?? false;
       setCaseData((current) =>
         current
           ? { ...current, messages: current.messages.filter((item) => item.id !== optimistic.id) }
           : current,
       );
-      setError(err instanceof Error ? err.message : "发送失败，请稍后重试。");
-      setRetryText(content);
-      setInput(content);
+      if (!aborted) {
+        setError(err instanceof Error ? err.message : "发送失败，请稍后重试。");
+        setRetryText(content);
+        setInput(content);
+      }
     } finally {
       setSending(false);
       streamController.current = null;
@@ -114,6 +118,13 @@ export default function ChatPage() {
       setStreamStatus("");
     }
   };
+
+  React.useEffect(() => {
+    if (!sending && queuedConfirm) {
+      setQueuedConfirm(false);
+      void send("信息无误，生成分析");
+    }
+  }, [sending, queuedConfirm]);
 
   if (!caseData) return null;
   const facts = caseData.facts;
@@ -190,9 +201,12 @@ export default function ChatPage() {
                 </span>
               </div>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                <Button onClick={() => void send("信息无误，生成分析")} disabled={sending} className="h-11">
+                <Button
+                  onClick={() => (sending ? setQueuedConfirm(true) : void send("信息无误，生成分析"))}
+                  className="h-11"
+                >
                   {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  确认信息，生成分析
+                  {queuedConfirm ? "已排队，上一轮结束后自动确认" : "确认信息，生成分析"}
                 </Button>
                 <Button
                   variant="outline"
