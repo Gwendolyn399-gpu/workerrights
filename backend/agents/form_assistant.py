@@ -61,7 +61,7 @@ class FormAssistantAgent:
             "short_description": build_short_description(facts),
             "evidence_directory": build_evidence_directory(facts),
             "copy_summary": self._copy_summary(steps),
-            "privacy_notice": "本产品不收集身份证号，也不要求你上传身份证、银行卡等敏感材料。所有核验和提交都应在官方平台由你本人完成。",
+            "privacy_notice": "姓名、手机号和身份证号由本人在官方平台填写，本产品不收集这些填报字段，也不要求上传身份证、银行卡等敏感材料。",
             "submit_notice": "本页面只辅助整理填报内容，不会自动登录、自动上传或代替你提交。提交前请逐项核对，并以官方页面要求为准。",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "agent": self.name,
@@ -112,22 +112,18 @@ class FormAssistantAgent:
             value = facts.get("recruiter_phone")
             status = "ready" if value else "missing"
             note = "没有或不方便提供可以留空，不要编造电话号码。"
-        elif key == "reporter_name":
-            value = None
-            status = "missing"
-            note = "本产品不收集姓名，请在官方平台填写本人真实姓名。"
-        elif key == "reporter_phone":
-            value = facts.get("contact_phone")
-            status = "ready" if value else "missing"
-            note = "本产品默认不主动收集手机号，请在官方平台填写并保持畅通。"
-        elif key == "reporter_id":
-            value = None
+        elif key in ("reporter_name", "reporter_phone", "reporter_id"):
             status = "official_only"
-            note = "身份证号仅应填写在官方平台，本产品不收集、不存储。"
+            note = "由本人在官方平台填写，本产品不收集此字段。"
         elif key == "work_period":
             value = work_period_text(facts) if work_period_text(facts) != "待核实" else None
             status = "ready" if value else "missing"
-            if value and ("待核实" in value or "待补充" in value):
+            if facts.get("duration_text") and not facts.get("work_start") and not facts.get("work_end"):
+                field = {**field, "label": "工作时长", "explanation": "目前只知道工作时长，起止日期由本人核实后在官方平台补充。"}
+                value = str(facts["duration_text"])
+                status = "verify"
+                note = "工作时长不是起止日期，不据此推算月份或日期。"
+            elif value and ("待核实" in value or "待补充" in value):
                 status = "verify"
         elif key == "work_type":
             value = facts.get("work_type")
@@ -185,7 +181,7 @@ class FormAssistantAgent:
         if field.get("sensitivity") in ("id",):
             status = "official_only"
 
-        copy_text = value or f"【待补充：{field['label']}】"
+        copy_text = "【由本人在官方平台填写，本产品不收集】" if status == "official_only" else value or f"【待补充：{field['label']}】"
         return {
             "key": key,
             "label": field["label"],
@@ -200,7 +196,7 @@ class FormAssistantAgent:
             "source_facts": [
                 FACT_LABELS.get(source, source)
                 for source in field.get("source_facts", [])
-                if facts.get(source) not in (None, "", [], {})
+                if status != "official_only" and facts.get(source) not in (None, "", [], {})
             ],
             "placeholder": field.get("placeholder"),
         }

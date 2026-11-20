@@ -1,5 +1,8 @@
 from backend.services.amounts import cn_to_number, find_money, parse_duration_months
 from backend.services.fact_extractor import FactExtractor
+from backend.services.facts import required_progress
+from backend.services.statement import build_short_description
+from backend.rules.evidence import analyze_evidence
 
 
 def test_chinese_amount_parsing():
@@ -41,3 +44,33 @@ def test_unknown_does_not_fill_unrelated_fields():
     assert "manager_role" not in updates
     updates, _ = extractor.extract("不知道合同的事", {}, question_key="contract")
     assert updates["has_contract"] == "unknown"
+
+
+def test_short_description_duration_is_not_a_date():
+    facts = {"location_city": "郑州", "work_type": "绑钢筋", "duration_text": "三个月",
+             "recruiter_name": "老周", "owed_amount": 20000}
+    text = build_short_description(facts)
+    assert "干了三个月" in text
+    assert "本人三个月在" not in text
+    assert "本人于" not in text
+    dated = build_short_description({**facts, "work_start": "2026-03-01", "work_end": "2026-06-01"})
+    assert "本人于2026-03-01至2026-06-01" in dated
+
+
+def test_evidence_contract_reason_respects_explicit_no():
+    no_contract = analyze_evidence({"has_contract": "no", "evidence": ["chat"]})
+    contract = next(item for item in no_contract["needed"] if item["key"] == "contract")
+    assert "已说明没有签" in contract["reason"]
+    assert "未确认" not in contract["reason"]
+    unknown = analyze_evidence({"evidence": ["chat"]})
+    contract = next(item for item in unknown["needed"] if item["key"] == "contract")
+    assert "未确认存在书面合同" in contract["reason"]
+
+
+def test_progress_reserves_hundred_percent_for_confirmed_cases():
+    facts = {"location_city": "郑州", "work_type": "钢筋工", "duration_text": "三个月",
+             "recruiter_type": "包工头", "manager_role": "包工头", "wage_basis": "按天",
+             "agreed_amount": 14000, "owed_amount": 9000, "paid_amount": 5000,
+             "has_contract": "no", "evidence": ["chat"]}
+    assert required_progress(facts, {})["percent"] == 99
+    assert required_progress(facts, {"confirmed": True})["percent"] == 100

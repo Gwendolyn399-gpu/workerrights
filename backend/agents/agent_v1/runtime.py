@@ -136,7 +136,7 @@ class AgentRuntime:
                     assert isinstance(args, Respond)
                     if not args.reply.strip():
                         raise ValueError("回复不能为空")
-                    requested_document = bool(re.search(r"(?:写|出|生成|起草|重做|整理|改|更新).{0,12}(?:草稿|文书|陈述|证据目录|申请|材料|说明)", text))
+                    requested_document = bool(re.search(r"(?:写|出|生成|起草|重做|整理|改|更新|给|来|要|需要|帮|弄).{0,12}(?:草稿|文书|陈述|证据目录|申请|材料|说明)", text))
                     if args.response_kind == "document" and not requested_document:
                         raise ValueError("本轮没有要求整份文书，只按chat简短回应当前更正或进展，不重发之前的材料。")
                     visible_reply = re.sub(r"\[[A-Za-z0-9][A-Za-z0-9_-]*\]", "", args.reply)
@@ -164,9 +164,13 @@ class AgentRuntime:
                         args.next_question = None
                     if no_followup and (args.next_question or re.search(r"[？?]", unquoted_text(args.reply))):
                         raise ValueError("本轮用户要求不追问。保留已有实质回答，删除对用户的追加问题及邀约问句；next_question=null。给用工方的引用范文可包含问题。")
+                    if len(re.findall(r"[？?]", unquoted_text(args.reply))) > 1:
+                        raise ValueError("一轮只问一个问题。保留最有用的实质回答，把追问压成一句、只问眼下最关键的一件事；问之前先接住对方的难处、说明为什么问这个，语气贴合人设、有人情味，不连环盘问。给用工方的引用范文可包含问题。")
                     if prepared_this_turn and working.facts.get("has_contract") not in ("yes", "no"):
                         if any(claim in args.reply for claim in ("未签订书面合同", "未签订书面劳动合同", "双方未签订", "签有书面合同")):
                             raise ValueError("合同情况仍未知，材料不能改写成已签或未签。按工具草稿写‘书面合同情况尚待核实’，不要新增事实。")
+                    if working.facts.get("has_contract") == "no" and re.search(r"未确认存在书面合同|书面合同情况尚待核实|目前未确认.{0,8}合同", args.reply):
+                        raise ValueError("用户已明确没有签书面合同，回复不能再说未确认或尚待核实；按‘你说过没签合同’如实表述。")
                     if prepared_this_turn and working.facts.get("paid_amount") is None and re.search(r"已支付\s*[\d,]+(?:\.\d+)?\s*元", args.reply):
                         raise ValueError("累计已付未知，材料中‘已支付’栏应保留【已付金额待核实】。本次新到账单列处理经过，不能替代累计金额。")
                     if args.stage == "ready" and (state.stage != "awaiting_confirmation" or changed or text.strip("。！! ") not in {"确认", "确认无误", "信息无误", "信息无误，生成分析"}):
@@ -180,6 +184,12 @@ class AgentRuntime:
                     if prepared_this_turn and working.materials.get("status") == "outdated_requires_regeneration":
                         self.execute("prepare_materials", None, working, text, changed)
                         trace.append({"step": step + 1, "action": "prepare_materials", "ok": True, "automatic_refresh": True, "elapsed_ms": 0})
+                    # Chat, copy and export all read the saved draft; the published
+                    # document must be that exact text, not a model paraphrase.
+                    if prepared_this_turn and args.response_kind == "document":
+                        draft = working.materials.get("draft", "")
+                        if draft and draft not in args.reply:
+                            raise ValueError("文书回复必须原样包含本轮生成的事实陈述草稿，不得改写措辞；可在草稿前后加一句简短说明。草稿原文：" + draft)
                     working.stage = args.stage
                     working.history = state.history + [{"role": "user", "content": text}, {"role": "assistant", "content": args.reply}]
                     trace.append({"step": step + 1, "action": name, "ok": True, "elapsed_ms": round((time.monotonic() - started) * 1000)})

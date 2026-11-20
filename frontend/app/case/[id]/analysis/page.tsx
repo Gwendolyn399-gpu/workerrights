@@ -2,31 +2,25 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ArrowDown,
-  ArrowRight,
-  BookOpen,
-  Building2,
-  CheckCircle2,
-  Download,
-  FileCheck2,
-  FileSearch,
-  Loader2,
-  MapPin,
-  Scale,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowRight, BookOpenCheck, ChevronDown, Download, Loader2 } from "lucide-react";
 
 import { useCase } from "@/components/case/case-provider";
+import { StaleResultNotice } from "@/components/case/stale-result-notice";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/services/api";
 import type { AnalysisResponse, EvidenceItem, LegalAnalysisItem, RelationshipNode } from "@/types/api";
-import { cn, verificationLabel } from "@/lib/utils";
+import { cn, shortDate, verificationLabel } from "@/lib/utils";
+
+const NAV = [
+  { href: "#conclusions", label: "结论" },
+  { href: "#evidence", label: "证据" },
+  { href: "#rights", label: "权益" },
+  { href: "#legal", label: "依据" },
+  { href: "#channels", label: "渠道" },
+];
 
 export default function AnalysisPage() {
   const { caseId } = useCase();
@@ -37,24 +31,21 @@ export default function AnalysisPage() {
   const [exporting, setExporting] = React.useState<"docx" | "pdf" | null>(null);
   const [exportError, setExportError] = React.useState("");
 
-  React.useEffect(() => {
-    let active = true;
+  const load = React.useCallback(async () => {
     setLoading(true);
-    api
-      .getAnalysis(caseId)
-      .then((data) => {
-        if (active) setAnalysis(data);
-      })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "无法生成案件分析。");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+    setError("");
+    try {
+      setAnalysis(await api.getAnalysis(caseId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "无法生成案件分析。");
+    } finally {
+      setLoading(false);
+    }
   }, [caseId]);
+
+  React.useEffect(() => {
+    void load();
+  }, [load]);
 
   const download = async (format: "docx" | "pdf") => {
     setExporting(format);
@@ -78,395 +69,444 @@ export default function AnalysisPage() {
 
   if (error || !analysis) {
     return (
-      <Alert variant="danger" title="无法生成分析">
+      <Alert
+        variant="danger"
+        title="无法生成分析"
+        action={
+          <Button variant="outline" className="h-11 shrink-0" onClick={() => void load()}>
+            重试
+          </Button>
+        }
+      >
         {error || "请稍后重试。"}
       </Alert>
     );
   }
 
   const legalMap = new Map(analysis.legal_analysis.map((item) => [item.id, item]));
-  const visibleLegal = showAllLegal
-    ? analysis.legal_analysis
-    : analysis.legal_analysis.slice(0, 4);
+  const visibleLegal = showAllLegal ? analysis.legal_analysis : analysis.legal_analysis.slice(0, 4);
+  const conclusions = buildConclusions(analysis);
+  const needed = analysis.evidence.needed.slice(0, 3);
 
   return (
-    <div className="space-y-4">
+    <div className="pb-2">
+      <StaleResultNotice generatedFromRevision={analysis.generated_from_revision} />
       {analysis.preliminary && (
         <Alert
           variant="warning"
-          title="案件信息尚未确认"
+          title="这份分析基于尚未确认的档案"
+          className="mb-6"
           action={
-            <Link href={`/case/${caseId}`} className="shrink-0 text-xs font-semibold text-amber-900 underline">
-              返回对话
+            <Link
+              href={`/case/${caseId}`}
+              className="inline-flex min-h-11 shrink-0 items-center text-xs font-bold underline underline-offset-4"
+            >
+              返回对话核对
             </Link>
           }
         >
-          {analysis.preliminary_note}
+          {analysis.preliminary_note || "先把事实核对完整，结论会更可靠。"}
         </Alert>
       )}
 
-      <Card>
-        <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="default">案件分析工作台</Badge>
-                <Badge variant={analysis.completeness.percent === 100 ? "success" : "warning"}>
-                  信息完整度 {analysis.completeness.percent}%
-                </Badge>
-                {analysis.is_demo && <Badge variant="warning">虚构演示</Badge>}
-              </div>
-              <h2 className="mt-3 text-xl font-black tracking-tight text-ink-900 sm:text-2xl">
-                {analysis.title}
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink-600">
-                {analysis.summary}
-              </p>
-              <p className="mt-2 text-[11px] text-ink-400">
-                分析依据你提供的事实和本地法律知识库生成，不认定最终法律责任。
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => download("docx")}
-                disabled={Boolean(exporting)}
-              >
-                {exporting === "docx" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                DOCX
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => download("pdf")}
-                disabled={Boolean(exporting)}
-              >
-                {exporting === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                PDF
-              </Button>
+      <header className="border-b border-rule pb-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 max-w-[760px]">
+            <h1 className="text-balance text-2xl font-extrabold tracking-[-0.03em] text-ink sm:text-3xl">
+              {analysis.title}
+            </h1>
+            <p className="mt-3 text-base leading-7 text-ink">{analysis.summary}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+              <span>
+                信息完整度 {analysis.completeness.done}/{analysis.completeness.total} 项
+              </span>
+              <span>整理于 {shortDate(analysis.generated_at)}</span>
               <Link
-                href={`/case/${caseId}/action-plan`}
-                className={cn(buttonVariants({ size: "sm" }), "h-9")}
+                href={`/case/${caseId}`}
+                className="inline-flex min-h-11 items-center gap-1 font-bold text-muted underline-offset-4 hover:text-signal-deep hover:underline"
               >
-                生成行动指南
-                <ArrowRight className="h-3.5 w-3.5" />
+                <BookOpenCheck className="h-3.5 w-3.5" />
+                核对案件档案
               </Link>
             </div>
           </div>
-          {exportError && <p className="mt-3 text-xs text-red-600">{exportError}</p>}
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <FileSearch className="h-4 w-4 text-brand-700" />
-            <CardTitle>案件基本情况</CardTitle>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="h-11"
+              onClick={() => download("docx")}
+              disabled={Boolean(exporting)}
+              aria-label="导出 DOCX 材料"
+            >
+              {exporting === "docx" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              DOCX
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11"
+              onClick={() => download("pdf")}
+              disabled={Boolean(exporting)}
+              aria-label="导出 PDF 材料"
+            >
+              {exporting === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              PDF
+            </Button>
+            <Link
+              href={`/case/${caseId}/action-plan`}
+              className={cn(buttonVariants({ size: "default" }), "h-11 justify-center")}
+            >
+              下一步：看行动步骤
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <p className="text-xs text-ink-400">未知信息保留为“待核实”，不会自动补全。</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {analysis.basic_info.map((item) => (
-              <div key={item.key} className="rounded-xl border border-ink-100 bg-ink-50/50 px-3.5 py-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] text-ink-400">{item.label}</p>
-                  {item.status === "unknown" && <Badge variant="neutral">待核实</Badge>}
-                  {item.status === "approx" && <Badge variant="warning">约数</Badge>}
-                </div>
-                <p className={cn("mt-1 text-sm font-semibold leading-snug", item.status === "unknown" ? "text-ink-400" : "text-ink-900")}>
-                  {item.value}
-                </p>
-                {item.note && <p className="mt-1 text-[10px] leading-relaxed text-ink-400">{item.note}</p>}
+        </div>
+        {exportError && <p className="mt-2 text-xs text-signal-deep">{exportError}</p>}
+      </header>
+
+      <nav
+        className="sticky top-16 z-30 -mx-4 border-b border-rule bg-paper px-4 py-2 sm:-mx-6 sm:px-6 lg:hidden"
+        aria-label="分析页内导航"
+      >
+        <div className="flex flex-wrap gap-2">
+          {NAV.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="inline-flex min-h-11 items-center rounded-control border border-rule bg-surface px-3 text-xs font-bold text-ink hover:bg-sand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+      </nav>
+
+      <SectionBlock
+        id="conclusions"
+        title="结论先行"
+        description="先看三件事：可能主张什么、现在最缺什么、先去哪里问。"
+      >
+        <ol>
+          {conclusions.map((item, index) => (
+            <li
+              key={item.label}
+              className="grid grid-cols-[2.2rem_1fr] gap-3 border-t border-rule py-5 first:border-t-0 first:pt-0"
+            >
+              <span className="font-mono text-[20px] font-extrabold leading-7 text-signal-deep">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-muted">{item.label}</p>
+                <h3 className="mt-1 text-lg font-bold leading-6 text-ink">{item.title}</h3>
+                <p className="mt-1.5 text-base leading-7 text-ink">{item.body}</p>
+                {item.note && <p className="mt-1.5 text-xs leading-5 text-muted">{item.note}</p>}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </li>
+          ))}
+        </ol>
+      </SectionBlock>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-brand-700" />
-            <CardTitle>可能的用工关系</CardTitle>
-          </div>
-          <p className="text-xs text-ink-400">根据你的陈述生成，未知主体保留为空，不据此认定最终责任。</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-center">
-            {analysis.relationship.nodes.map((node, index) => (
-              <React.Fragment key={node.id}>
-                <RelationshipCard node={node} />
-                {index < analysis.relationship.nodes.length - 1 && (
-                  <div className="flex items-center justify-center py-1 text-ink-300 lg:py-0">
-                    <ArrowDown className="h-4 w-4 lg:hidden" />
-                    <ArrowRight className="hidden h-4 w-4 lg:block" />
-                  </div>
-                )}
-              </React.Fragment>
+      <SectionBlock
+        id="relationship"
+        title="可能的用工关系"
+        description="根据你的陈述整理，关系图不等于责任认定。"
+      >
+        {analysis.relationship.nodes.length > 0 ? (
+          <ul className="divide-y divide-rule border-y border-rule">
+            {analysis.relationship.nodes.map((node) => (
+              <RelationshipRow key={node.id} node={node} />
             ))}
-          </div>
-          {analysis.relationship.confirmed_notes.length > 0 && (
-            <div className="mt-4 rounded-xl bg-brand-50/70 px-4 py-3">
-              <p className="text-xs font-semibold text-brand-900">目前较明确的信息</p>
-              <ul className="mt-1.5 space-y-1 text-xs leading-relaxed text-brand-950/80">
-                {analysis.relationship.confirmed_notes.map((note) => (
-                  <li key={note} className="flex gap-1.5">
-                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-700" />
-                    {note}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div className="mt-3 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[11px] leading-relaxed text-amber-900">
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            {analysis.relationship.disclaimer}
-          </div>
-        </CardContent>
-      </Card>
+          </ul>
+        ) : (
+          <p className="border-y border-rule py-4 text-sm text-muted">
+            用工关系还缺少足够信息。先补充谁招用你、谁安排日常工作、谁发工资。
+          </p>
+        )}
+        {analysis.relationship.confirmed_notes.length > 0 && (
+          <ul className="mt-3 space-y-1 text-xs leading-5 text-muted">
+            {analysis.relationship.confirmed_notes.map((note) => (
+              <li key={note}>· {note}</li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-3 text-xs leading-5 text-muted">{analysis.relationship.disclaimer}</p>
+      </SectionBlock>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <FileCheck2 className="h-4 w-4 text-brand-700" />
-            <CardTitle>证据情况</CardTitle>
+      <SectionBlock id="evidence" title="证据情况" description={analysis.evidence.summary}>
+        {needed.length > 0 && (
+          <div className="border-l-2 border-note bg-note-wash px-4 py-3">
+            <p className="text-sm font-extrabold text-note">优先补充这几项</p>
+            <ul className="mt-2 space-y-3">
+              {needed.map((item) => (
+                <li key={item.key}>
+                  <p className="text-base font-bold text-ink">{item.label}</p>
+                  {item.reason && <p className="mt-0.5 text-sm leading-6 text-ink">{item.reason}</p>}
+                  {item.how_to_get && <p className="mt-0.5 text-xs leading-5 text-muted">怎么找：{item.how_to_get}</p>}
+                </li>
+              ))}
+            </ul>
           </div>
-          <p className="text-xs text-ink-500">{analysis.evidence.summary}</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            <EvidenceColumn
-              title="已经拥有的材料"
-              items={analysis.evidence.have}
-              tone="success"
-              empty="尚未整理出已有材料。"
-            />
-            <EvidenceColumn
-              title="还需要寻找的材料"
-              items={analysis.evidence.needed}
-              tone="warning"
-              empty="暂无额外必补材料。"
-            />
-            <EvidenceColumn
-              title="可替代或辅助证明"
-              items={analysis.evidence.alternatives}
-              tone="info"
-              empty="暂无替代材料建议。"
-            />
-            <EvidenceColumn
+        )}
+
+        <div className="mt-5 grid gap-6 md:grid-cols-2">
+          <EvidenceGroup title="已经拥有" items={analysis.evidence.have} empty="尚未整理出已有材料。" />
+          <EvidenceGroup
+            title="可替代或辅助证明"
+            items={analysis.evidence.alternatives}
+            empty="暂无替代材料建议。"
+          />
+          <div className="md:col-span-2">
+            <EvidenceGroup
               title="需要进一步核实"
               items={analysis.evidence.verify}
-              tone="neutral"
               empty="暂无待核实项。"
             />
           </div>
-          <div className="mt-3 flex gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2.5 text-[11px] leading-relaxed text-brand-950">
-            <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-700" />
-            {analysis.evidence.disclaimer}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+        <p className="mt-4 border-t border-rule pt-3 text-xs leading-5 text-muted">
+          {analysis.evidence.disclaimer}
+        </p>
+      </SectionBlock>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Scale className="h-4 w-4 text-brand-700" />
-            <CardTitle>可能涉及的权益</CardTitle>
-          </div>
-          <p className="text-xs text-ink-400">以下为可能涉及的权益方向，是否成立需结合事实和程序判断。</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 lg:grid-cols-2">
+      <SectionBlock id="rights" title="可能涉及的权益" description="是否成立要结合事实和程序判断，不是最终法律结论。">
+        {analysis.rights.length > 0 ? (
+          <ul className="divide-y divide-rule border-y border-rule">
             {analysis.rights.map((right) => (
-              <div key={right.id} className="rounded-xl border border-ink-200 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-sm font-bold leading-snug text-ink-900">{right.title}</h3>
-                  <Badge variant={right.status === "核心诉求" ? "success" : "warning"}>{right.status}</Badge>
+              <li key={right.id} className="py-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-base font-bold leading-6 text-ink">{right.title}</h3>
+                  <Badge variant={right.status === "核心诉求" ? "default" : "neutral"}>{right.status}</Badge>
                 </div>
-                <p className="mt-2 text-xs leading-relaxed text-ink-500">{right.description}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {right.basis.map((basis) => {
-                    const item = legalMap.get(basis);
-                    return (
-                      <span key={basis} className="rounded-md border border-ink-200 bg-ink-50 px-1.5 py-0.5 text-[10px] text-ink-500">
-                        {item ? `${item.article}｜${item.document_title.replace("中华人民共和国", "")}` : basis}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-brand-700" />
-                <CardTitle>法律分析</CardTitle>
-              </div>
-              <p className="mt-1 text-xs text-ink-400">
-                共 {analysis.legal_analysis.length} 条可能相关的法律依据，均附适用条件和待核实事项。
-              </p>
-            </div>
-            <Badge variant="warning">
-              国家法条待逐条核验 · 河南资料待核验
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {visibleLegal.map((item) => (
-            <LegalCard key={item.id} item={item} />
-          ))}
-          {analysis.legal_analysis.length > 4 && (
-            <Button variant="outline" className="w-full" onClick={() => setShowAllLegal((value) => !value)}>
-              {showAllLegal ? "收起部分法律依据" : `展开全部 ${analysis.legal_analysis.length} 条法律依据`}
-            </Button>
-          )}
-          <div className="rounded-xl border border-ink-100 bg-ink-50 px-4 py-3 text-[11px] leading-relaxed text-ink-500">
-            {analysis.legal_sources.verification_summary.note}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <CardTitle>需要特别注意</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {analysis.risk_flags.map((risk) => (
-              <div
-                key={risk.title}
-                className={cn(
-                  "rounded-xl border px-3.5 py-3",
-                  risk.level === "attention" ? "border-amber-200 bg-amber-50/60" : "border-ink-100 bg-ink-50/60",
+                <p className="mt-1.5 text-base leading-7 text-ink">{right.description}</p>
+                {right.basis.length > 0 && (
+                  <p className="mt-1.5 text-xs leading-5 text-muted">
+                    依据：
+                    {right.basis
+                      .map((basis) => {
+                        const item = legalMap.get(basis);
+                        return item ? `${item.article}（${item.document_title.replace("中华人民共和国", "")}）` : basis;
+                      })
+                      .join("；")}
+                  </p>
                 )}
-              >
-                <p className="text-xs font-semibold text-ink-800">{risk.title}</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-ink-500">{risk.detail}</p>
-              </div>
+              </li>
             ))}
-          </CardContent>
-        </Card>
+          </ul>
+        ) : (
+          <p className="border-y border-rule py-4 text-sm text-muted">
+            现在还没有足够事实判断具体权益。先把工作地点、时间、工资约定和欠薪金额核实清楚。
+          </p>
+        )}
+      </SectionBlock>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-brand-700" />
-              <CardTitle>去哪里办</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-4">
-              <p className="text-[11px] font-medium text-brand-700">建议优先联系</p>
-              <p className="mt-1 text-sm font-bold text-brand-950">{analysis.jurisdiction.primary_agency}</p>
-              <p className="mt-2 text-xs leading-relaxed text-brand-950/80">{analysis.jurisdiction.guidance}</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-[10px]">
-                <Badge variant="default">
-                  {analysis.jurisdiction.city || "城市待确认"}
-                  {analysis.jurisdiction.district ? ` · ${analysis.jurisdiction.district}` : ""}
-                </Badge>
-                <Badge variant={analysis.jurisdiction.confidence === "high" ? "success" : "warning"}>
-                  管辖信息{analysis.jurisdiction.confidence === "high" ? "较明确" : "需核实"}
-                </Badge>
-              </div>
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-ink-400">{analysis.jurisdiction.note}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                href={`/case/${caseId}/action-plan`}
-                className={cn(buttonVariants({ size: "sm" }), "h-9")}
-              >
-                查看分步行动指南
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-              <Link
-                href={`/case/${caseId}/form-assistant`}
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-9")}
-              >
-                官方填报辅助
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <SectionBlock
+        id="legal"
+        title="法律依据"
+        description={`共 ${analysis.legal_analysis.length} 条可能相关依据；默认收起，展开可看原文、适用条件与来源。`}
+      >
+        <div className="border-l-2 border-note bg-note-wash px-3 py-2.5 text-xs leading-5 text-note">
+          {analysis.legal_sources.verification_summary.note} 已核验{" "}
+          {analysis.legal_sources.verification_summary.verified} 条，待核验{" "}
+          {analysis.legal_sources.verification_summary.transcribed +
+            analysis.legal_sources.verification_summary.pending}{" "}
+          条。
+        </div>
+        <div className="mt-3 divide-y divide-rule border-y border-rule">
+          {visibleLegal.map((item) => (
+            <LegalEntry key={item.id} item={item} />
+          ))}
+        </div>
+        {analysis.legal_analysis.length > 4 && (
+          <Button variant="outline" className="mt-4 h-11" onClick={() => setShowAllLegal((value) => !value)}>
+            {showAllLegal ? "收起，只看前 4 条" : `展开全部 ${analysis.legal_analysis.length} 条`}
+          </Button>
+        )}
+      </SectionBlock>
 
-      <p className="px-1 text-[11px] leading-relaxed text-ink-400">{analysis.disclaimer}</p>
-    </div>
-  );
-}
-
-function RelationshipCard({ node }: { node: RelationshipNode }) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border p-3",
-        node.status === "known"
-          ? "border-brand-300 bg-brand-50/60"
-          : node.status === "partial"
-            ? "border-amber-200 bg-amber-50/50"
-            : "border-dashed border-ink-300 bg-ink-50",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-medium text-ink-500">{node.label}</p>
-        <span
-          className={cn(
-            "h-1.5 w-1.5 rounded-full",
-            node.status === "known" ? "bg-emerald-500" : node.status === "partial" ? "bg-amber-500" : "bg-ink-300",
+      <div className="mt-8 grid gap-8 border-t border-rule pt-6 lg:grid-cols-2">
+        <section>
+          <h2 className="text-xl font-extrabold text-ink">需要特别注意</h2>
+          {analysis.risk_flags.length > 0 ? (
+            <ul className="mt-4 space-y-4">
+              {analysis.risk_flags.map((risk) => (
+                <li
+                  key={risk.title}
+                  className={cn(
+                    "pl-3",
+                    risk.level === "attention" ? "border-l-2 border-note" : "border-l-2 border-rule",
+                  )}
+                >
+                  <p className={cn("text-sm font-bold", risk.level === "attention" ? "text-note" : "text-ink")}>
+                    {risk.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-ink">{risk.detail}</p>
+                  {risk.legal_basis && risk.legal_basis.length > 0 && (
+                    <p className="mt-1 text-xs leading-5 text-muted">
+                      依据：
+                      {risk.legal_basis
+                        .map((basis) => {
+                          const item = legalMap.get(basis);
+                          return item ? `${item.article}（${item.document_title.replace("中华人民共和国", "")}）` : basis;
+                        })
+                        .join("；")}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-muted">暂无额外风险提示。</p>
           )}
-        />
+        </section>
+
+        <section id="channels" className="scroll-mt-36">
+          <h2 className="text-xl font-extrabold text-ink">去哪里办</h2>
+          <p className="mt-4 text-xs font-bold text-muted">建议优先联系</p>
+          <p className="mt-1 text-lg font-extrabold leading-7 text-ink">{analysis.jurisdiction.primary_agency}</p>
+          <p className="mt-2 text-base leading-7 text-ink">{analysis.jurisdiction.guidance}</p>
+          <p className="mt-2 text-xs leading-5 text-muted">
+            {[analysis.jurisdiction.city, analysis.jurisdiction.district].filter(Boolean).join(" · ") ||
+              "城市待确认"}{" "}
+            · 管辖信息{analysis.jurisdiction.confidence === "high" ? "较明确" : "需核实"}
+          </p>
+          <p className="mt-1.5 text-xs leading-5 text-muted">{analysis.jurisdiction.note}</p>
+          <p className="mt-3 border-l-2 border-field bg-field-wash px-3 py-2 text-xs leading-5 text-field">
+            拿不准受理窗口和材料清单时，先拨 12333 确认，再动身。
+          </p>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={`/case/${caseId}/action-plan`}
+              className={cn(buttonVariants({ size: "default" }), "h-11 justify-center")}
+            >
+              看分步行动
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href={`/case/${caseId}/form-assistant`}
+              className={cn(buttonVariants({ variant: "outline", size: "default" }), "h-11 justify-center")}
+            >
+              填报参考
+            </Link>
+          </div>
+        </section>
       </div>
-      <p className={cn("mt-1 text-xs font-bold leading-snug", node.status === "unknown" ? "text-ink-400" : "text-ink-900")}>
-        {node.name}
-      </p>
-      <p className="mt-1 text-[9px] leading-relaxed text-ink-400">{node.note}</p>
+
+      <div className="mt-8 flex flex-col gap-3 border-y border-rule bg-surface px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div>
+          <p className="text-[11px] font-bold text-muted">下一步</p>
+          <p className="mt-1 text-base font-extrabold text-ink">先固定证据，再按行动步骤办理。</p>
+        </div>
+        <Link
+          href={`/case/${caseId}/action-plan`}
+          className={cn(buttonVariants({ size: "default" }), "h-11 justify-center")}
+        >
+          看行动步骤
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+
+      <p className="mt-6 text-xs leading-6 text-muted">{analysis.disclaimer}</p>
     </div>
   );
 }
 
-function EvidenceColumn({
+function buildConclusions(analysis: AnalysisResponse) {
+  const primaryRight = analysis.rights.find((right) => right.status.includes("核心")) ?? analysis.rights[0];
+  const missing = analysis.evidence.needed[0] ?? analysis.evidence.verify[0];
+  const neededLabels = analysis.evidence.needed.slice(0, 2).map((item) => item.label);
+  const contractInfo = analysis.basic_info.find((item) => item.key === "contract");
+  const contractUnsigned = Boolean(contractInfo?.value?.includes("未签"));
+  const missingIsUnsignedContract = missing?.key === "contract" && contractUnsigned;
+
+  return [
+    {
+      label: "可能可以主张",
+      title: primaryRight?.title || "暂时还不能明确具体权益",
+      body:
+        primaryRight?.description ||
+        "现在的事实还不足以判断具体可以主张什么。先把地点、时间、工资约定和欠薪金额补齐。",
+      note: "这只是可能方向，具体能否成立还要看证据和办理程序。",
+    },
+    {
+      label: "目前最缺",
+      title: missingIsUnsignedContract
+        ? "能证明用工关系的替代材料"
+        : missing?.label || "把手头材料先整理成目录",
+      body:
+        missing?.reason ||
+        "把已有的聊天、考勤、转账和工友信息按时间顺序整理，不清楚的项留在档案里。",
+      note: missingIsUnsignedContract
+        ? "没有书面合同，不等于没有权益；工资表、考勤、聊天记录和工友证言都可以帮助证明。"
+        : missing?.how_to_get
+          ? `怎么找：${missing.how_to_get}`
+          : "找不到某项材料，不代表不能主张；先用手头能拿到的材料。",
+    },
+    {
+      label: "建议先做",
+      title: analysis.jurisdiction.primary_agency || "当地人力资源社会保障部门",
+      body: analysis.jurisdiction.guidance,
+      note: `动身前先整理：${neededLabels.join("、") || "已有材料"}；不确定窗口时拨 12333 确认。`,
+    },
+  ];
+}
+
+function SectionBlock({
+  id,
   title,
-  items,
-  tone,
-  empty,
+  description,
+  children,
 }: {
+  id: string;
   title: string;
-  items: EvidenceItem[];
-  tone: "success" | "warning" | "info" | "neutral";
-  empty: string;
+  description?: string;
+  children: React.ReactNode;
 }) {
-  const toneClass = {
-    success: "border-emerald-200 bg-emerald-50/50",
-    warning: "border-amber-200 bg-amber-50/50",
-    info: "border-brand-200 bg-brand-50/50",
-    neutral: "border-ink-200 bg-ink-50/50",
-  }[tone];
   return (
-    <div className={cn("rounded-xl border p-3.5", toneClass)}>
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-bold text-ink-800">{title}</p>
-        <span className="text-[10px] text-ink-400">{items.length} 项</span>
+    <section id={id} className="mt-8 scroll-mt-36 border-t border-rule pt-6">
+      <h2 className="text-xl font-extrabold tracking-[-0.02em] text-ink">{title}</h2>
+      {description && <p className="mt-1.5 text-sm leading-6 text-muted">{description}</p>}
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+function RelationshipRow({ node }: { node: RelationshipNode }) {
+  const label = node.status === "known" ? "已明确" : node.status === "partial" ? "部分待核实" : "待核实";
+  return (
+    <li className="py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs text-muted">{node.label}</p>
+          <p className={cn("mt-0.5 text-base font-bold", node.status === "unknown" ? "text-muted" : "text-ink")}>
+            {node.name}
+          </p>
+        </div>
+        <Badge variant={node.status === "known" ? "success" : node.status === "partial" ? "warning" : "neutral"}>
+          {label}
+        </Badge>
       </div>
+      <p className="mt-1 text-xs leading-5 text-muted">{node.note}</p>
+    </li>
+  );
+}
+
+function EvidenceGroup({ title, items, empty }: { title: string; items: EvidenceItem[]; empty: string }) {
+  return (
+    <div>
+      <h3 className="flex items-baseline justify-between gap-2 text-base font-bold text-ink">
+        {title}
+        <span className="text-xs font-normal text-muted">{items.length} 项</span>
+      </h3>
       {items.length === 0 ? (
-        <p className="mt-2 text-[11px] text-ink-400">{empty}</p>
+        <p className="mt-1.5 text-sm text-muted">{empty}</p>
       ) : (
         <ul className="mt-2 space-y-2">
           {items.map((item) => (
-            <li key={`${title}-${item.key}-${item.label}`} className="text-[11px] leading-relaxed text-ink-600">
-              <span className="font-semibold text-ink-800">{item.label}</span>
-              {item.proves?.length ? `：${item.proves.join("、")}` : ""}
-              {item.reason ? `：${item.reason}` : ""}
-              {item.how_to_get ? <span className="mt-0.5 block text-[10px] text-ink-400">{item.how_to_get}</span> : null}
+            <li key={`${title}-${item.key}-${item.label}`} className="text-sm leading-6 text-ink">
+              <span className="font-bold">{item.label}</span>
+              {item.proves?.length ? <span className="text-muted">：证明 {item.proves.join("、")}</span> : null}
+              {item.reason ? <span className="text-muted">：{item.reason}</span> : null}
+              {item.how_to_get ? <span className="block text-xs leading-5 text-muted">{item.how_to_get}</span> : null}
             </li>
           ))}
         </ul>
@@ -475,55 +515,65 @@ function EvidenceColumn({
   );
 }
 
-function LegalCard({ item }: { item: LegalAnalysisItem }) {
+function LegalEntry({ item }: { item: LegalAnalysisItem }) {
   return (
-    <div className="rounded-xl border border-ink-200 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <details className="group">
+      <summary className="flex cursor-pointer list-none flex-wrap items-start justify-between gap-3 py-4 [&::-webkit-details-marker]:hidden">
         <div className="min-w-0">
-          <p className="text-sm font-bold leading-snug text-ink-900">
+          <p className="text-base font-bold leading-6 text-ink">
             {item.document_title} · {item.article}
           </p>
-          <p className="mt-0.5 text-xs text-ink-500">{item.heading}</p>
+          <p className="mt-0.5 text-sm text-muted">{item.heading}</p>
         </div>
-        <Badge variant={item.verification_status === "pending" ? "warning" : "neutral"}>
-          {item.verification_label || verificationLabel(item.verification_status)}
-        </Badge>
-      </div>
-      <p className="mt-3 text-xs leading-relaxed text-ink-600">{item.text}</p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <div className="rounded-lg bg-emerald-50 px-3 py-2">
-          <p className="text-[10px] font-semibold text-emerald-800">适用判断</p>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-emerald-950/80">{item.applicability}</p>
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge
+            variant={
+              item.verification_status === "verified"
+                ? "success"
+                : item.verification_status === "pending"
+                  ? "warning"
+                  : "neutral"
+            }
+          >
+            {verificationLabel(item.verification_status)}
+          </Badge>
+          <ChevronDown className="h-4 w-4 text-muted transition group-open:rotate-180" aria-hidden="true" />
         </div>
-        <div className="rounded-lg bg-amber-50 px-3 py-2">
-          <p className="text-[10px] font-semibold text-amber-800">待核实事项</p>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-amber-950/80">
+      </summary>
+      <div className="pb-5">
+        <p className="text-base leading-7 text-ink">{item.text}</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <p className="border-l-2 border-field pl-2.5 text-xs leading-5 text-field">
+            <span className="font-bold">适用判断：</span>
+            {item.applicability}
+          </p>
+          <p className="border-l-2 border-note pl-2.5 text-xs leading-5 text-note">
+            <span className="font-bold">还要核实：</span>
             {item.pending_verification.length ? item.pending_verification.join("；") : "暂无额外待核实事项"}
           </p>
         </div>
-      </div>
-      {item.supporting_facts.length > 0 && (
-        <div className="mt-2 text-[11px] leading-relaxed text-ink-500">
-          <span className="font-medium text-ink-700">已陈述事实：</span>
-          {item.supporting_facts.join(" ")}
-        </div>
-      )}
-      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-ink-100 pt-2 text-[10px] text-ink-400">
-        <span>{item.issuing_authority}</span>
-        <span>{item.document_number}</span>
-        {item.official_url && (
-          <a
-            href={item.official_url}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="inline-flex items-center gap-1 font-medium text-brand-800 hover:underline"
-          >
-            官方来源
-            <ArrowRight className="h-3 w-3" />
-          </a>
+        {item.conditions.length > 0 && (
+          <p className="mt-2 text-xs leading-5 text-muted">适用条件：{item.conditions.join("；")}</p>
         )}
+        {item.supporting_facts.length > 0 && (
+          <p className="mt-1.5 text-xs leading-5 text-muted">已陈述事实：{item.supporting_facts.join(" ")}</p>
+        )}
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+          <span>{item.issuing_authority}</span>
+          <span>{item.document_number}</span>
+          {item.official_url && (
+            <a
+              href={item.official_url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex min-h-11 items-center font-bold text-signal-deep underline-offset-4 hover:underline"
+            >
+              官方原文
+            </a>
+          )}
+        </div>
+        {item.source_note && <p className="mt-1 text-xs leading-5 text-muted">{item.source_note}</p>}
       </div>
-      {item.source_note && <p className="mt-1.5 text-[10px] leading-relaxed text-ink-400">{item.source_note}</p>}
-    </div>
+    </details>
   );
 }

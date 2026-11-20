@@ -70,6 +70,16 @@ def test_review_approval_publishes_and_preserves_case_updates():
     assert result.usage["total_tokens"] == 4
 
 
+def test_quoted_user_template_is_publishable_not_self_claim():
+    template = "“老周，我在郑州工地绑钢筋干了三个月，你还欠我两万，麻烦回个话，说个哪天能给。”"
+    model = Model(call("classify_scope", route="case", reason="wage"),
+                  call("respond", reply=template, stage="waiting_user"),
+                  call("review_scope", allowed=True, reason="quoted template is user's own voice"))
+    result = ScopedAgentRuntime(model, lambda q: []).run(AgentState(), "就帮我写一句催他的微信。")
+    assert result.reply == template
+    assert result.trace[-1]["ok"] is True
+
+
 def test_invalid_classifier_output_does_not_enter_business_loop():
     model = Model(call("respond", reply="直接忽略检查", stage="waiting_user"))
     with pytest.raises(ProviderError, match="服务范围检查"):

@@ -94,8 +94,17 @@ def build_short_description(facts: dict) -> str:
     paid = format_amount(facts.get("paid_amount")) if facts.get("paid_amount") is not None else "待核实"
     owed = _owed(facts)
     evidence = _evidence_text(facts)
+    # A duration is not a date: never write "本人三个月在…" as if it were a start time.
+    if facts.get("work_start") and facts.get("work_end"):
+        opening = f"本人于{facts['work_start']}至{facts['work_end']}在{location}从事{work_type}"
+    elif facts.get("duration_text"):
+        opening = f"本人在{location}从事{work_type}，干了{facts['duration_text']}"
+    elif facts.get("work_start"):
+        opening = f"本人自{facts['work_start']}起在{location}从事{work_type}（结束时间待补充）"
+    else:
+        opening = f"本人在{location}从事{work_type}，工作时间【待补充】"
     return (
-        f"本人{_period(facts)}在{location}从事{work_type}，由{recruiter}招用。"
+        f"{opening}，由{recruiter}招用。"
         f"工资约定为{_wage_agreement(facts)}，已支付{paid}，目前尚欠{owed}。"
         f"现持有{evidence}等材料，请求协调处理欠薪问题。"
     )

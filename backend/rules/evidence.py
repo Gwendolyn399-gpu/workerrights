@@ -99,11 +99,16 @@ def analyze_evidence(facts: dict) -> dict:
     verify: list[dict] = []
 
     if facts.get("has_contract") != "yes":
+        contract_reason = (
+            "你已说明没有签书面合同，可优先补充其他能证明用工关系的材料。"
+            if facts.get("has_contract") == "no"
+            else "目前未确认存在书面合同，可优先寻找或补充其他能证明用工关系的材料。"
+        )
         needed.append(
             {
                 "key": "contract",
                 "label": "劳动合同或书面劳务协议",
-                "reason": "目前未确认存在书面合同，可优先寻找或补充其他能证明用工关系的材料。",
+                "reason": contract_reason,
             }
         )
 

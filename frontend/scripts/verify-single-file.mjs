@@ -1,0 +1,97 @@
+import { chromium } from "playwright-core";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const FILE = "file:///" + path.join(root, "workerrights-offline.html").replace(/\\/g, "/");
+const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
+const errors = [];
+const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 }, acceptDownloads: true, permissions: ["clipboard-read", "clipboard-write"] });
+const page = await ctx.newPage();
+page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+page.on("pageerror", (e) => errors.push(e.message));
+const log = (...a) => console.log(...a);
+
+await page.goto(FILE, { waitUntil: "load" });
+await page.getByRole("heading", { name: "被拖欠工资？说说你的情况。" }).waitFor();
+log("home ok");
+await page.getByRole("button", { name: "先看演示案件" }).click();
+await page.locator(".bubble-user").first().waitFor();
+log("chat transcript ok, bubbles:", await page.locator(".bubble").count());
+await page.locator("aside").getByText("2万元").first().waitFor();
+log("facts sidebar ok");
+
+await page.locator(".tabs").getByRole("link", { name: "案件分析" }).click();
+await page.getByRole("heading", { name: "基本情况" }).waitFor();
+await page.getByRole("button", { name: /展开全部/ }).click();
+await page.getByRole("button", { name: "收起", exact: true }).waitFor();
+log("analysis + expand legal ok");
+const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "下载文本材料" }).click()]);
+log("txt export:", dl.suggestedFilename());
+
+await page.locator(".tabs").getByRole("link", { name: "行动指南" }).click();
+await page.getByRole("heading", { name: "行动指南", exact: true }).waitFor();
+await page.getByRole("button", { name: "标记完成" }).first().click();
+await page.getByRole("button", { name: "已完成" }).first().waitFor();
+await page.reload({ waitUntil: "load" });
+await page.locator(".tabs").getByRole("link", { name: "行动指南" }).click();
+await page.getByRole("button", { name: "已完成" }).first().waitFor();
+log("step toggle persists across reload");
+
+await page.locator(".tabs").getByRole("link", { name: "官方填报" }).click();
+await page.getByRole("heading", { name: "官方填报辅助" }).waitFor();
+await page.locator(".form-nav button").nth(4).click();
+await page.getByRole("button", { name: "复制此字段" }).first().click();
+await page.getByRole("button", { name: "已复制" }).first().waitFor();
+await page.getByRole("button", { name: "下一步" }).click();
+await page.getByRole("button", { name: "上一步" }).click();
+log("form nav + copy ok");
+
+await page.locator(".tabs").getByRole("link", { name: "对话" }).click();
+await page.getByRole("button", { name: "查看法律依据" }).first().click();
+await page.getByRole("heading", { name: "相关法律依据" }).waitFor();
+await page.getByRole("button", { name: "查看条文详情" }).first().click();
+await page.getByRole("button", { name: "收起详情" }).first().waitFor();
+await page.getByRole("button", { name: "关闭" }).click();
+log("legal modal + expand ok");
+await page.getByRole("button", { name: "修改案件信息" }).first().click();
+await page.locator("#edit-owed").fill("19000");
+await page.getByRole("button", { name: "保存修改" }).click();
+await page.locator("aside").getByText("1.9万元").first().waitFor();
+log("facts edit ok");
+
+await page.locator(".back-link").click();
+await page.getByRole("heading", { name: "我的案件" }).waitFor();
+const before = await page.locator(".cases-list > li").count();
+await page.getByRole("button", { name: /删除案件/ }).first().click();
+await page.getByRole("button", { name: "确认删除" }).click();
+await page.waitForTimeout(300);
+const after = await page.locator(".cases-list > li").count();
+log("delete ok:", before, "->", after);
+await ctx.close();
+
+const m = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const mp = await m.newPage();
+mp.on("console", (msg) => { if (msg.type() === "error") errors.push("mobile: " + msg.text()); });
+mp.on("pageerror", (e) => errors.push("mobile: " + e.message));
+const overflow = async (label) => log("mobile overflow " + label + ":", await mp.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1));
+await mp.goto(FILE, { waitUntil: "load" });
+await overflow("home");
+await mp.getByRole("button", { name: "先看演示案件" }).click();
+await mp.locator(".bubble-user").first().waitFor();
+await overflow("chat");
+await mp.getByRole("button", { name: "案件信息" }).first().click();
+await mp.getByRole("dialog").waitFor();
+await mp.getByRole("button", { name: "关闭" }).click();
+log("mobile info modal ok");
+await mp.locator(".bottom-nav").getByRole("link", { name: "案件分析" }).click();
+await mp.getByRole("heading", { name: "基本情况" }).waitFor();
+await overflow("analysis");
+await mp.locator(".bottom-nav").getByRole("link", { name: "行动指南" }).click();
+await overflow("action");
+await mp.locator(".bottom-nav").getByRole("link", { name: "官方填报" }).click();
+await overflow("form");
+await mp.screenshot({ path: path.join(root, ".snapshot/single-mobile-form.png"), fullPage: true });
+await m.close();
+await browser.close();
+log("console errors:", errors.length ? errors : "none");

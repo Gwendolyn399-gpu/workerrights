@@ -292,7 +292,7 @@ class FactExtractor:
             updates["paid_amount"] = 0
 
         owed_markers = ("欠", "拖欠", "没给", "未付", "还差", "剩下", "欠着", "应付未付")
-        paid_markers = ("给了", "已付", "已经给", "付了", "拿到", "发了", "结算了", "支付了", "先给")
+        paid_markers = ("给了", "已付", "已支付", "已经给", "付了", "拿到", "发了", "结算了", "支付了", "先给")
         agreed_markers = ("一共", "总共", "应发", "说好", "答应", "该给", "约定", "合计", "工资是", "工资")
         daily_markers = ("一天", "每天", "日薪")
         monthly_markers = ("一个月", "每月", "月薪")
@@ -356,6 +356,8 @@ class FactExtractor:
             updates["has_contract"] = "unknown"
 
     def _extract_evidence(self, text: str, updates: dict, question_key: str | None) -> None:
+        if question_key == "manager" and not any(marker in text for marker in ("我有", "手里有", "保存", "保留", "拿到")):
+            return
         if "跳过" in text:
             return
         if question_key != "evidence" and not any(
@@ -412,7 +414,7 @@ class FactExtractor:
     def _extract_prior_report(self, text: str, updates: dict, question_key: str | None) -> None:
         negative = any(
             marker in text
-            for marker in ("没找过", "没有找", "没投诉", "没反映", "没报过", "没找", "没去")
+            for marker in ("没找过", "没有找", "没投诉", "没有投诉", "没反映", "没有反映", "没报过", "没找", "没去")
         )
         positive = any(
             marker in text

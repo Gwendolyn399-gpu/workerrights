@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import Engine, create_engine, event, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from backend.config import settings
@@ -39,10 +39,27 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+def migrate_case_revisions(bind: Engine) -> None:
+    """Upgrade existing SQLite cases without replacing rows; safe to repeat."""
+    if bind.dialect.name != "sqlite":
+        return
+    with bind.begin() as connection:
+        columns = {column["name"] for column in inspect(connection).get_columns("cases")}
+        if "facts_revision" not in columns:
+            connection.execute(text(
+                "ALTER TABLE cases ADD COLUMN facts_revision INTEGER NOT NULL DEFAULT 0"
+            ))
+        if "derived_results" not in columns:
+            connection.execute(text(
+                "ALTER TABLE cases ADD COLUMN derived_results JSON NOT NULL DEFAULT '{}'"
+            ))
+
+
 def init_database() -> None:
     from backend import models  # noqa: F401  (register mappers)
     from backend.database.seed import seed_all
 
     Base.metadata.create_all(bind=engine)
+    migrate_case_revisions(engine)
     with SessionLocal() as db:
         seed_all(db)

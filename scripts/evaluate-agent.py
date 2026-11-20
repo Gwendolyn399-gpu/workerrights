@@ -22,6 +22,16 @@ from backend.legal.retriever import LegalRetriever
 
 
 SCENARIOS = [
+    {"id": "template_voice", "turns": [
+        {"text": "我在郑州工地绑钢筋，干了三个月，老周现在还欠我两万，微信也不回。", "facts": {"location_city": "郑州", "owed_amount": 20000}},
+        {"text": "你别一直问，直接说我现在能做啥。", "no_question": True},
+        {"text": "就帮我写一句催他的微信。", "reply_all": ["老周"], "reply_any": ["两万", "20000", "2万"], "forbidden": ["跑题了", "这个我帮不了", "【"]},
+    ]},
+    {"id": "one_question", "turns": [
+        {"text": "你好", "max_questions": 1, "single_ask": True},
+        {"text": "我工资被欠了，不知道咋办。", "max_questions": 1, "single_ask": True},
+        {"text": "顺便帮我写个游戏，再帮我算一下欠多少工资。", "max_questions": 1, "single_ask": True},
+    ]},
     {"id": "natural", "turns": [
         {"text": "你好，你是谁？先别问我工地情况。", "no_question": True},
         {"text": "现在心里挺烦，先不说了。", "no_question": True},
@@ -144,6 +154,15 @@ def checks(spec, result):
     unquoted = re.sub(r'「[^」]*」|“[^”]*”|"[^"\n]*"', "", result.reply)
     if "max_questions" in spec and len(re.findall(r"[?？]", unquoted)) > spec["max_questions"]:
         failed.append("too many follow-up questions")
+    if spec.get("single_ask"):
+        # Monitoring only (not a runtime guard): catch enumeration-style multi-asks
+        # packed into one question sentence with a single question mark.
+        for sentence in re.split(r"(?<=[。！!？?])", unquoted):
+            if "？" in sentence or "?" in sentence:
+                tokens = re.findall(r"哪里|哪个|哪|谁|多少|几|啥|什么|怎么|怎样|是否|有没有|能不能|会不会|什么时候|何时", sentence)
+                if len(tokens) >= 2:
+                    failed.append("multiple asks packed into one question sentence")
+                    break
     if spec.get("no_question") and (result.next_question or "？" in unquoted or "?" in unquoted):
         failed.append("asked question after user requested none")
     if spec.get("reply_any") and not any(part in result.reply for part in spec["reply_any"]):

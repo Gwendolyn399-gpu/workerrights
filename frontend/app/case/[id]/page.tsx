@@ -18,7 +18,17 @@ import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { locationValue } from "@/lib/facts";
 import { cn, formatAmount } from "@/lib/utils";
 import { api } from "@/services/api";
-import type { ChatMessage } from "@/types/api";
+import type { ChatMessage, Question } from "@/types/api";
+
+const openingTopics: Question = {
+  key: "opening",
+  text: "说说你遇到的情况",
+  quick_replies: [
+    { label: "工资没结清，怎么办？" },
+    { label: "我该找谁反映？" },
+    { label: "需要准备哪些材料？" },
+  ],
+};
 
 export default function ChatPage() {
   const { caseId, caseData, meta, setCaseData } = useCase();
@@ -36,6 +46,9 @@ export default function ChatPage() {
   React.useEffect(() => () => streamController.current?.abort(), []);
 
   const messages = caseData?.messages || [];
+  const firstUserIndex = messages.findIndex((message) => message.role === "user");
+  const conversation = firstUserIndex < 0 ? [] : messages.slice(firstUserIndex);
+  const showOpening = firstUserIndex < 0 && !sending && !retryText;
 
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -107,10 +120,8 @@ export default function ChatPage() {
   const awaitingConfirmation =
     !caseData.intake.confirmed &&
     (currentQuestion?.key === "confirm" || caseData.intake.agent_stage === "awaiting_confirmation");
-  const providerIsMock = lastAssistant?.meta?.provider_is_mock ?? meta?.provider.is_mock ?? true;
-  const providerLabel = providerIsMock
-    ? "本地规则整理 · 不是在线大模型"
-    : `当前模式：${lastAssistant?.meta?.provider ?? meta?.provider.display_name ?? "本地服务"}`;
+  const isAiGenerated = (lastAssistant?.meta?.provider_is_mock ?? meta?.provider.is_mock) === false;
+  const contentLabel = isAiGenerated ? "由 AI 生成" : "内容仅供参考";
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
@@ -142,10 +153,13 @@ export default function ChatPage() {
 
         <div className="flex h-[calc(100dvh-17rem)] min-h-[380px] flex-col overflow-hidden rounded-card border border-rule bg-surface lg:h-[calc(100vh-13rem)]">
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
-            {messages.length === 0 && !sending && (
-              <p className="py-8 text-center text-sm text-muted">从下面说第一句话开始，我会一次问一个问题。</p>
+            {showOpening && (
+              <div className="py-8" data-chat-opening>
+                <h2 className="text-xl font-extrabold text-ink">遇到什么难处，慢慢说。</h2>
+                <p className="mt-3 max-w-[30em] text-base leading-7 text-muted">工资没结清、不知道找谁，或想准备材料，都可以从这里聊起。</p>
+              </div>
             )}
-            {messages.map((message, index) => (
+            {conversation.map((message, index) => (
               <ChatBubble key={`${message.id}-${index}`} message={message} />
             ))}
             {sending &&
@@ -221,9 +235,9 @@ export default function ChatPage() {
             </div>
           )}
 
-          {currentQuestion && !awaitingConfirmation && (
+          {showOpening && !awaitingConfirmation && (
             <QuickReplyBar
-              question={currentQuestion}
+              question={openingTopics}
               onSend={send}
               onEdit={() => setEditOpen(true)}
               disabled={sending}
@@ -274,18 +288,14 @@ export default function ChatPage() {
                     }
                   }}
                   rows={1}
-                  placeholder={
-                    caseData.intake.confirmed
-                      ? "还有补充或问题？继续告诉我…"
-                      : "用平时说话的方式回答…"
-                  }
+                  placeholder={showOpening ? "说说你想咨询的事…" : "输入消息…"}
                   className="min-h-12 max-h-32 resize-none py-3 pr-12 leading-6"
                   aria-label="输入你的回答"
                 />
                 <button
                   type="button"
                   onClick={() => (speech.listening ? speech.stop() : speech.start())}
-                  title={speech.supported ? "语音输入（Chrome/Edge）" : "当前浏览器不支持语音输入"}
+                  title={speech.supported ? "语音输入" : "当前浏览器不支持语音输入"}
                   className={cn(
                     "absolute bottom-0.5 right-0.5 inline-flex h-11 w-11 items-center justify-center rounded-control transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90",
                     speech.listening
@@ -318,7 +328,7 @@ export default function ChatPage() {
               )}
             </form>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] leading-5 text-muted">{providerLabel}</p>
+              <p className="text-xs leading-5 text-muted">{contentLabel}</p>
               <button
                 type="button"
                 onClick={() => setEditOpen(true)}

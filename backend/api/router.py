@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -25,7 +26,7 @@ from backend.rules.regions import REGION_INDEX
 from backend.services.demo import create_demo_case
 from backend.services.export import build_plain_text, to_docx, to_pdf
 from backend.services.fact_extractor import NEW_CASE_FACTS
-from backend.services.facts import build_case_title, required_progress
+from backend.services.facts import build_case_title, record_fact_change, required_progress
 
 router = APIRouter()
 
@@ -272,6 +273,7 @@ def update_facts(
         else:
             normalized[key] = value
 
+    before = deepcopy(case.facts)
     case.facts = {**case.facts, **normalized}
     if case.facts.get("location_city"):
         case.facts["location_province"] = "河南省"
@@ -309,17 +311,15 @@ def update_facts(
     intake["unknowns"] = unknowns
     case.intake = intake
 
-    if case.status in ("ready", "planned") and not _all_required(case):
-        case.intake = {**intake, "confirmed": False}
-        case.status = "collecting"
+    changed = record_fact_change(case, before)
 
     orchestrator = AgentOrchestrator(db, _provider(session_id))
     next_question = None
-    if not orchestrator.provider.is_mock:
+    if changed and not orchestrator.provider.is_mock:
         case.intake = {**case.intake, "confirmed": False, "agent_stage": "waiting_user"}
         case.status = "collecting"
         case.plan_generated_at = None
-    elif case.status == "collecting":
+    elif orchestrator.provider.is_mock and case.status == "collecting":
         question = orchestrator.intake.next_question(case)
         next_question = question
         case.intake["last_question_key"] = question["key"] if question else None
@@ -416,6 +416,12 @@ def update_action_step(
     db: Session = Depends(get_db),
 ) -> dict:
     case = get_owned_case(db, case_id, session_id)
+    plan = AgentOrchestrator(db, _provider(session_id)).ensure_action_plan(case)
+    if plan["generated_from_revision"] != case.facts_revision:
+        raise HTTPException(
+            status_code=409,
+            detail="信息已更新，请重新生成。请返回对话重新核对并确认案件信息后，再勾选行动步骤。",
+        )
     step = (
         db.query(ActionStep)
         .filter(ActionStep.id == step_id, ActionStep.case_id == case.id)
@@ -425,22 +431,22 @@ def update_action_step(
         raise HTTPException(status_code=404, detail="步骤不存在。")
     step.done = payload.done
     step.done_at = datetime.now(timezone.utc) if payload.done else None
+    db.flush()
+    db.refresh(step)
+    for item in plan["steps"]:
+        if item["id"] == step.id:
+            item["done"] = step.done
+            item["done_at"] = step.done_at.isoformat() if step.done_at else None
+    done = sum(1 for item in plan["steps"] if item["done"])
+    total = len(plan["steps"])
+    plan["progress"] = {"done": done, "total": total, "percent": round(done / total * 100) if total else 0}
+    case.derived_results = {**case.derived_results, "action_plan": deepcopy(plan)}
     db.commit()
-    db.refresh(case)
-    plan = ActionPlanningSerialization(db, case).serialize()
     plan["preliminary"] = not bool((case.intake or {}).get("confirmed"))
+    if plan["preliminary"]:
+        plan["preliminary_note"] = "案件信息尚未确认，行动指南为初步版本，请先补充并核对信息。"
+    plan["case_status"] = case.status
     return plan
-
-
-class ActionPlanningSerialization:
-    def __init__(self, db: Session, case: Case) -> None:
-        self.db = db
-        self.case = case
-
-    def serialize(self) -> dict:
-        from backend.agents.action_planning import ActionPlanningAgent
-
-        return ActionPlanningAgent(self.db).serialize(self.case)
 
 
 @router.get("/cases/{case_id}/form-assistant")
@@ -465,6 +471,14 @@ def export_case(
     db: Session = Depends(get_db),
 ) -> Response:
     case = get_owned_case(db, case_id, session_id)
+    if any(
+        result["generated_from_revision"] != case.facts_revision
+        for result in case.derived_results.values()
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="信息已更新，请重新生成。请返回对话重新核对并确认案件信息后，再导出材料。",
+        )
     orchestrator = AgentOrchestrator(db, _provider(session_id))
     analysis = orchestrator.get_analysis(case)
     plan = orchestrator.ensure_action_plan(case)

@@ -1,11 +1,12 @@
 import json
+import os
 from contextlib import contextmanager
 
 import httpx
 import pytest
 
 from backend.agents.agent_v1.streaming import partial_reply
-from backend.agents.provider import OpenAICompatibleProvider, ProviderError
+from backend.agents.provider import OpenAICompatibleProvider, ProviderError, normalize_no_proxy_env
 
 
 def test_partial_json_reply_handles_escapes_and_split_unicode():
@@ -55,4 +56,36 @@ def test_provider_rejects_truncated_stream(monkeypatch):
         yield httpx.Response(200, request=httpx.Request(method, url), stream=ByteStream([{"choices": [{"delta": {"content": "半截"}}]}]))
     monkeypatch.setattr(httpx, "stream", stream)
     with pytest.raises(ProviderError, match="中断"):
+        OpenAICompatibleProvider(api_key="test", model="test").stream_complete([], [], final=False, emit=lambda event: None)
+
+
+def test_normalize_no_proxy_strips_bracketed_ipv6(monkeypatch):
+    monkeypatch.setenv("NO_PROXY", "localhost,.localhost,127.0.0.1,127.0.0.0/8,[::1],::1")
+    normalize_no_proxy_env()
+    assert os.environ["NO_PROXY"] == "localhost,.localhost,127.0.0.1,127.0.0.0/8,::1,::1"
+    mounts = httpx._utils.get_environment_proxies()
+    assert "all://*[::1]" not in mounts
+
+
+def test_provider_init_normalizes_no_proxy(monkeypatch):
+    monkeypatch.setenv("NO_PROXY", "[::1],localhost")
+    OpenAICompatibleProvider(api_key="test", model="test")
+    assert os.environ["NO_PROXY"] == "::1,localhost"
+
+
+def test_complete_wraps_invalid_url(monkeypatch):
+    def post(*args, **kwargs):
+        raise httpx.InvalidURL("Invalid port: ':1]'")
+    monkeypatch.setattr(httpx, "post", post)
+    with pytest.raises(ProviderError, match="代理环境变量"):
+        OpenAICompatibleProvider(api_key="test", model="test").complete([], [], final=False)
+
+
+def test_stream_complete_wraps_invalid_url(monkeypatch):
+    @contextmanager
+    def stream(*args, **kwargs):
+        raise httpx.InvalidURL("Invalid port: ':1]'")
+        yield
+    monkeypatch.setattr(httpx, "stream", stream)
+    with pytest.raises(ProviderError, match="代理环境变量"):
         OpenAICompatibleProvider(api_key="test", model="test").stream_complete([], [], final=False, emit=lambda event: None)

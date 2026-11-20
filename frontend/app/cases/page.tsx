@@ -38,7 +38,7 @@ export default function CasesPage() {
       const result = await api.listCases();
       setCases(result.cases);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "无法读取案件列表。请确认本地后端已启动。");
+      setError(err instanceof Error ? err.message : "暂时无法读取案件，请稍后重试。");
     } finally {
       setLoading(false);
     }

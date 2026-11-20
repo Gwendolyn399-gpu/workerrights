@@ -19,8 +19,10 @@ const tabs = [
 
 export function CaseShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { caseId, caseData, loading, error, meta } = useCase();
+  const { caseId, caseData, loading, error } = useCase();
   const base = `/case/${caseId}`;
+  const analysisRoute = pathname.endsWith("/analysis");
+  const actionRoute = pathname.endsWith("/action-plan");
 
   if (loading) {
     return (
@@ -77,18 +79,22 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
 
             <div className="flex shrink-0 items-center gap-4">
               <div className="hidden items-center gap-4 sm:flex">
-                <div className="text-right">
-                  <p className="text-[10px] leading-4 text-muted">信息完整度</p>
-                  <p className="font-mono text-xs font-bold leading-4 text-ink">
-                    {caseData.progress.done} / {caseData.progress.total}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] leading-4 text-muted">办理进度</p>
-                  <p className="font-mono text-xs font-bold leading-4 text-signal-deep">
-                    {caseData.step_progress.done} / {caseData.step_progress.total}
-                  </p>
-                </div>
+                {!actionRoute && (
+                  <div className="text-right">
+                    <p className="text-xs leading-4 text-muted">{caseData.intake.confirmed ? "信息已核对" : caseData.progress.done === caseData.progress.total ? "核心已够，待核对" : "信息完整度"}</p>
+                    <p className="font-mono text-xs font-bold leading-4 text-ink">
+                      {caseData.progress.done} / {caseData.progress.total}
+                    </p>
+                  </div>
+                )}
+                {!analysisRoute && (
+                  <div className="text-right">
+                    <p className="text-xs leading-4 text-muted">办理进度</p>
+                    <p className="font-mono text-xs font-bold leading-4 text-signal-deep">
+                      {caseData.step_progress.done} / {caseData.step_progress.total}
+                    </p>
+                  </div>
+                )}
               </div>
               <StartCaseButton variant="outline" size="default" showArrow={false}>
                 <Plus className="h-3.5 w-3.5" />
@@ -131,7 +137,7 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6">{children}</main>
 
       <footer className="mx-auto max-w-[1180px] px-4 pb-8 pt-2 text-xs leading-6 text-muted sm:px-6">
-        {meta?.provider.display_name ?? "本地规则引擎（演示）"} · 法律资料以官方原文为准 · 不构成正式法律意见，不自动向政府平台提交。
+        内容仅供参考，重要信息请核实。需要专业帮助可拨打 12348。
       </footer>
 
       <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-rule bg-surface px-2 pt-1 lg:hidden" aria-label="案件工作台导航">

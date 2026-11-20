@@ -24,11 +24,10 @@ export function SiteFooter() {
           ))}
         </div>
         <p className="mt-4 max-w-3xl text-xs leading-6 text-muted">
-          本产品提供信息整理、法律资料检索和办事路径参考，不构成正式法律意见，不承诺追回工资或胜诉，不自动向政府平台提交。
-          法律条文与地方政策以官方最新公布为准；复杂或紧急案件请拨打 12348 或咨询专业律师。
+          内容仅供参考，不代替专业法律意见。需要帮助可拨打 12348。
         </p>
         <p className="mt-2 text-xs text-muted">
-          服务范围：河南省 · 建筑工地欠薪。当前为本地开发预览，未部署公网。
+          服务范围：河南省 · 建筑工地欠薪
         </p>
       </div>
     </footer>

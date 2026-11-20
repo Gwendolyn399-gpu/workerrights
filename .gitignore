@@ -46,3 +46,8 @@ Thumbs.db
 test_agent_settings.json
 .agent-settings-*.tmp
 .logs/
+
+# 单文件离线演示：可再生成的产物与快照缓存
+workerrights-offline.html
+.snapshot/
+.impeccable/
