@@ -1,12 +1,8 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
-
+import { StartCaseButton } from "@/components/home/start-actions";
 import { BrandLogo } from "@/components/brand-logo";
 import { SiteNav } from "@/components/site-nav";
-import { buttonVariants } from "@/components/ui/button";
-import { PressLink } from "@/components/ui/press-feedback";
-import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
   return (
@@ -15,10 +11,9 @@ export function SiteHeader() {
         <BrandLogo />
         <SiteNav />
         <div className="flex items-center gap-2">
-          <PressLink href="/#scenes" className={cn(buttonVariants({ size: "sm" }), "h-10 px-4")}>
+          <StartCaseButton size="sm" showArrow className="[&>button]:h-10 [&>button]:px-4">
             开始咨询
-            <ArrowRight className="h-3.5 w-3.5" />
-          </PressLink>
+          </StartCaseButton>
         </div>
       </div>
     </header>

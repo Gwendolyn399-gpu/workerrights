@@ -1027,6 +1027,189 @@ body::before {
   }
 }
 
+/* 首屏插画底部是深赭色，这里用一条“地平线”把它接到暖纸底色，避免硬切。 */
+.hero-horizon {
+  position: relative;
+  height: clamp(104px, 13vw, 184px);
+  margin-top: -1px;
+  overflow: hidden;
+  background:
+    radial-gradient(110% 150% at 76% 0%, rgba(255, 206, 156, 0.32), transparent 58%),
+    radial-gradient(85% 130% at 18% 6%, rgba(211, 118, 92, 0.3), transparent 62%),
+    linear-gradient(
+      180deg,
+      #3b1411 0%,
+      #431913 14%,
+      #55221b 30%,
+      #75332a 47%,
+      #9d5f50 63%,
+      #c79785 76%,
+      #e4c8ba 87%,
+      #f2e3d8 94%,
+      #f8f1e9 100%
+    );
+}
+
+.hero-horizon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.14;
+  mix-blend-mode: overlay;
+}
+
+.hero-horizon::after {
+  content: "";
+  position: absolute;
+  inset-inline: -8%;
+  bottom: -6%;
+  height: 62%;
+  background: radial-gradient(58% 120% at 50% 115%, rgba(255, 250, 244, 0.8), transparent 70%);
+  pointer-events: none;
+}
+
+/* 首页三个说明模块放进弹窗：弹窗内继续用滚动堆栈切换卡片。 */
+.guide-overlay {
+  animation: guide-overlay-in 220ms ease both;
+}
+
+.guide-dialog {
+  border: 1px solid rgba(255, 250, 245, 0.7);
+  color: #241d19;
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(205, 82, 68, 0.1), transparent 52%),
+    radial-gradient(90% 70% at 0% 100%, rgba(168, 125, 34, 0.08), transparent 60%),
+    linear-gradient(165deg, #fffdfa 0%, #fbf2ea 46%, #f6e7dc 100%);
+  box-shadow:
+    0 0 0 1px rgba(122, 37, 31, 0.08),
+    0 48px 140px -48px rgba(28, 8, 7, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: guide-dialog-in 320ms cubic-bezier(0.22, 0.9, 0.28, 1) both;
+}
+
+.guide-dialog__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 40% at 82% -6%, rgba(255, 206, 160, 0.22), transparent 70%),
+    radial-gradient(50% 40% at 8% 108%, rgba(205, 82, 68, 0.08), transparent 70%);
+}
+
+@keyframes guide-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes guide-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.guide-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 clamp(16px, 3.5vw, 28px) 10px;
+}
+
+.guide-tab {
+  display: inline-flex;
+  flex: 1 1 0;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid rgba(122, 37, 31, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 252, 248, 0.65);
+  color: #6c5c53;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 240ms ease,
+    color 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease;
+}
+
+.guide-tab:hover {
+  background: #fff8f2;
+  color: #932f27;
+}
+
+.guide-tab[data-active="true"] {
+  border-color: transparent;
+  color: #fff6ee;
+  background: linear-gradient(140deg, #6d241f 0%, #3b1411 100%);
+  box-shadow: 0 10px 22px -12px rgba(59, 20, 17, 0.7);
+}
+
+.guide-tab__num {
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+
+.guide-tab:focus-visible {
+  outline: 2px solid #cd5244;
+  outline-offset: 2px;
+}
+
+.guide-dialog__stack {
+  height: 100%;
+  padding-inline: clamp(12px, 3vw, 22px);
+  overscroll-behavior: contain;
+}
+
+.guide-dialog .guide-card {
+  min-height: clamp(320px, 44vh, 470px);
+  max-height: calc(var(--stack-view, 640px) - 56px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  scroll-margin-top: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(122, 37, 31, 0.28) transparent;
+}
+
+.guide-dialog .guide-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.guide-dialog .guide-card::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(122, 37, 31, 0.24);
+}
+
+.guide-dialog .guide-card--ink {
+  scrollbar-color: rgba(255, 244, 236, 0.3) transparent;
+}
+
+.guide-dialog .guide-card--ink::-webkit-scrollbar-thumb {
+  background: rgba(255, 244, 236, 0.24);
+}
+
+.guide-dialog .guide-card::before {
+  inset: 8px;
+  border-radius: 20px;
+}
+
 @media (max-width: 767px) {
   .guide-card {
     min-height: 0;
@@ -1036,6 +1219,11 @@ body::before {
   .guide-card::before {
     inset: 7px;
     border-radius: 18px;
+  }
+  .guide-dialog .guide-card {
+    min-height: 0;
+    padding: 20px;
+    border-radius: 22px;
   }
   .guide-steps {
     grid-template-columns: 1fr;
@@ -1063,10 +1251,42 @@ body::before {
   .guide-stats dd {
     margin-top: 0;
   }
+  .guide-tab {
+    height: 32px;
+    font-size: 11.5px;
+  }
+}
+
+@media (max-height: 720px) {
+  .guide-dialog .guide-card {
+    padding: 16px 18px;
+  }
+  .guide-dialog .guide-index {
+    font-size: 44px;
+  }
+  .guide-dialog .guide-card__body {
+    gap: 10px;
+  }
+  .guide-dialog .guide-laws {
+    gap: 4px;
+  }
+  .guide-dialog .guide-law {
+    padding: 6px 8px;
+  }
+  .guide-dialog .guide-links {
+    gap: 5px;
+  }
+  .guide-dialog .guide-link {
+    padding: 6px 9px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .guide-hint svg {
+    animation: none;
+  }
+  .guide-dialog,
+  .guide-overlay {
     animation: none;
   }
 }

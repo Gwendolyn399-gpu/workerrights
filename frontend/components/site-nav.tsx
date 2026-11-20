@@ -4,23 +4,31 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowUpRight, Database, FolderOpen, MapPin, Menu, MessageSquareText, X } from "lucide-react";
 
+import { useGuide } from "@/components/guide/guide-provider";
+import type { GuideKey } from "@/components/guide/guide-content";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
+const NAV_ITEMS: {
+  href?: string;
+  guide?: GuideKey;
+  label: string;
+  description: string;
+  icon: typeof MessageSquareText;
+}[] = [
   {
-    href: "/#how",
+    guide: "how",
     label: "工作原理",
     description: "四步问清情况，再给依据",
     icon: MessageSquareText,
   },
   {
-    href: "/#scope",
+    guide: "scope",
     label: "服务范围",
     description: "河南 18 个地级市",
     icon: MapPin,
   },
   {
-    href: "/#sources",
+    guide: "sources",
     label: "官方来源",
     description: "每条结论都能查原文",
     icon: Database,
@@ -34,6 +42,7 @@ const NAV_ITEMS = [
 ];
 
 export function SiteNav() {
+  const { openGuide } = useGuide();
   const [open, setOpen] = React.useState(0);
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const sheetRef = React.useRef<HTMLDivElement | null>(null);
@@ -54,6 +63,11 @@ export function SiteNav() {
     };
   }, [sheetOpen]);
 
+  const activate = (item: (typeof NAV_ITEMS)[number]) => {
+    setSheetOpen(false);
+    if (item.guide) openGuide(item.guide);
+  };
+
   return (
     <>
       <nav aria-label="主导航" className="hidden shrink-0 lg:mx-auto lg:block">
@@ -65,19 +79,37 @@ export function SiteNav() {
           {NAV_ITEMS.map((item, index) => {
             const Icon = item.icon;
             const active = open === index;
+            const content = (
+              <>
+                <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} aria-hidden="true" />
+                <span className="nav-fold__label">{item.label}</span>
+              </>
+            );
             return (
-              <li key={item.href} className="nav-fold__item" style={{ flexGrow: active ? 1.35 : 1 }}>
-                <Link
-                  href={item.href}
-                  className="nav-fold__link"
-                  data-open={active ? "true" : "false"}
-                  onMouseEnter={() => setOpen(index)}
-                  onFocus={() => setOpen(index)}
-                  onClick={() => setSheetOpen(false)}
-                >
-                  <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} aria-hidden="true" />
-                  <span className="nav-fold__label">{item.label}</span>
-                </Link>
+              <li key={item.label} className="nav-fold__item" style={{ flexGrow: active ? 1.35 : 1 }}>
+                {item.guide ? (
+                  <button
+                    type="button"
+                    className="nav-fold__link"
+                    data-open={active ? "true" : "false"}
+                    onMouseEnter={() => setOpen(index)}
+                    onFocus={() => setOpen(index)}
+                    onClick={() => activate(item)}
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href ?? "/cases"}
+                    className="nav-fold__link"
+                    data-open={active ? "true" : "false"}
+                    onMouseEnter={() => setOpen(index)}
+                    onFocus={() => setOpen(index)}
+                    onClick={() => setSheetOpen(false)}
+                  >
+                    {content}
+                  </Link>
+                )}
               </li>
             );
           })}
@@ -106,23 +138,34 @@ export function SiteNav() {
           >
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSheetOpen(false)}
-                  className="group flex items-start gap-3 rounded-xl px-3 py-2.5 transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                >
+              const content = (
+                <>
                   <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-800 transition group-hover:bg-brand-800 group-hover:text-[#fff8f2]">
                     <Icon className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
                   </span>
-                  <span className="min-w-0">
+                  <span className="min-w-0 text-left">
                     <span className="flex items-center gap-1 text-sm font-semibold text-ink-900">
                       {item.label}
                       <ArrowUpRight className="h-3 w-3 text-ink-300 transition group-hover:text-brand-700" aria-hidden="true" />
                     </span>
                     <span className="mt-0.5 block text-xs leading-snug text-ink-500">{item.description}</span>
                   </span>
+                </>
+              );
+              const className =
+                "group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500";
+              return item.guide ? (
+                <button key={item.label} type="button" onClick={() => activate(item)} className={className}>
+                  {content}
+                </button>
+              ) : (
+                <Link
+                  key={item.label}
+                  href={item.href ?? "/cases"}
+                  onClick={() => setSheetOpen(false)}
+                  className={className}
+                >
+                  {content}
                 </Link>
               );
             })}

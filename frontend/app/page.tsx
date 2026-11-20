@@ -14,9 +14,7 @@ import {
 } from "lucide-react";
 
 import { DemoCaseButton, StartCaseButton } from "@/components/home/start-actions";
-import { GuideStack } from "@/components/home/guide-stack";
 import { NavGallery } from "@/components/home/nav-gallery";
-import { SceneGrid } from "@/components/home/scenes";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +80,11 @@ export default function HomePage() {
             />
           </div>
 
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-brand-950 via-brand-950/85 to-transparent sm:h-36"
+          />
+
           <div className="relative z-10 mx-auto flex min-h-[82svh] max-w-6xl flex-col justify-end px-4 pb-12 pt-32 sm:px-6 sm:pb-16 lg:min-h-[calc(100svh-4rem)] lg:pb-20">
             <div className="max-w-xl">
               <div className="flex flex-wrap items-center gap-2">
@@ -133,8 +136,9 @@ export default function HomePage() {
           </div>
         </section>
 
+        <div aria-hidden="true" className="hero-horizon" />
 
-        <section className="border-b border-white/70 bg-[linear-gradient(90deg,rgba(255,252,248,0.5),rgba(250,236,226,0.78),rgba(255,252,248,0.5))] backdrop-blur-sm">
+        <section className="bg-[linear-gradient(180deg,rgba(248,241,233,0),rgba(255,252,248,0.55)_55%,rgba(250,236,226,0.35))]">
           <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 sm:grid-cols-3 sm:px-6">
             {[
               ["5 部", "首期国家法律知识库"],
@@ -150,30 +154,6 @@ export default function HomePage() {
         </section>
 
         <NavGallery />
-
-        <section id="scenes" className="scroll-mt-24 py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">选择你遇到的问题</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-ink-900 sm:text-3xl">
-                  先从最要紧的一件事开始
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-500">
-                  选一个最接近你遇到的情况，用大白话说说经过，Agent 会一步步帮你理清。
-                </p>
-              </div>
-            </div>
-            <div className="mt-8">
-              <SceneGrid />
-            </div>
-            <p className="mt-4 text-xs leading-relaxed text-ink-400">
-              暂时不支持的场景，可先拨打 12348 公共法律服务热线咨询，或通过 12333 联系当地人社部门。
-            </p>
-          </div>
-        </section>
-
-        <GuideStack />
 
         <section className="py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">

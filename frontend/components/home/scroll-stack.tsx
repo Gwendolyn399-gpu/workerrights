@@ -192,6 +192,12 @@ export default function ScrollStack({
       let moved = write("padTop", String(padTop), (value) => {
         inner.style.paddingTop = `${value}px`;
       });
+      if (!windowed) {
+        moved =
+          write("stackView", String(Math.round(viewHeight)), (value) => {
+            root.style.setProperty("--stack-view", `${value}px`);
+          }) || moved;
+      }
       moved =
         write("endHeight", String(endHeight), (value) => {
           end.style.height = `${value}px`;
