@@ -1,0 +1,242 @@
+[
+  {
+    "size": "desktop",
+    "surface": "home",
+    "title": "工友权益助手",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      1044
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 505,
+    "mainHeadings": [
+      "被拖欠工资？说说你的情况。"
+    ],
+    "smallText": 0,
+    "fixedOrSticky": 1
+  },
+  {
+    "size": "desktop",
+    "surface": "chat",
+    "title": "工友权益助手",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      933
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 868,
+    "mainHeadings": [
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "案件信息"
+    ],
+    "smallText": 6,
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "surface": "analysis",
+    "title": "工友权益助手",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      3640
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 3805,
+    "mainHeadings": [
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "基本情况",
+      "可能的用工关系",
+      "证据情况",
+      "可能涉及的权益",
+      "法律分析",
+      "需要特别注意",
+      "去哪里办"
+    ],
+    "smallText": 9,
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "surface": "action",
+    "title": "工友权益助手",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      4672
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 4449,
+    "mainHeadings": [
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "行动指南",
+      "时效与风险",
+      "推荐渠道"
+    ],
+    "smallText": 13,
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "surface": "form",
+    "title": "工友权益助手",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      1715
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 1618,
+    "mainHeadings": [
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "官方填报辅助",
+      "进入官方平台",
+      "正式事实陈述",
+      "证据目录"
+    ],
+    "smallText": 26,
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "consoleErrors": []
+  },
+  {
+    "size": "mobile",
+    "surface": "home",
+    "title": "工友权益助手",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      1275
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 505,
+    "mainHeadings": [
+      "被拖欠工资？说说你的情况。"
+    ],
+    "smallText": 0,
+    "fixedOrSticky": 1
+  },
+  {
+    "size": "mobile",
+    "surface": "chat",
+    "title": "工友权益助手",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      924
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 711,
+    "mainHeadings": [
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "案件信息"
+    ],
+    "smallText": 6,
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "surface": "analysis",
+    "title": "工友权益助手",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      6491
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 3794,
+    "mainHeadings": [
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "基本情况",
+      "可能的用工关系",
+      "证据情况",
+      "可能涉及的权益",
+      "法律分析",
+      "需要特别注意",
+      "去哪里办"
+    ],
+    "smallText": 9,
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "surface": "action",
+    "title": "工友权益助手",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      7075
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 4438,
+    "mainHeadings": [
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "行动指南",
+      "时效与风险",
+      "推荐渠道"
+    ],
+    "smallText": 13,
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "surface": "form",
+    "title": "工友权益助手",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      2421
+    ],
+    "horizontalOverflow": 0,
+    "bodyTextChars": 1553,
+    "mainHeadings": [
+      "郑州金水区建筑工地欠薪（虚构演示）",
+      "官方填报辅助",
+      "进入官方平台",
+      "正式事实陈述",
+      "证据目录"
+    ],
+    "smallText": 26,
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "consoleErrors": []
+  }
+]

@@ -3,61 +3,69 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   ArrowRight,
-  CalendarClock,
   Check,
-  CheckCircle2,
+  ChevronDown,
   Download,
   ExternalLink,
-  FileText,
-  Landmark,
   Loader2,
-  Phone,
-  Route,
-  ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 
+import { RouteRail, type RouteStageView } from "@/components/case/route-rail";
 import { useCase } from "@/components/case/case-provider";
+import { StaleResultNotice } from "@/components/case/stale-result-notice";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import { getCurrentStageKey, groupActionSteps } from "@/lib/action-stages";
 import { api } from "@/services/api";
 import type { ActionPlanResponse, ActionStep, ChannelInfo } from "@/types/api";
 import { cn, verificationLabel } from "@/lib/utils";
 
 export default function ActionPlanPage() {
-  const { caseId } = useCase();
+  const { caseId, setCaseData } = useCase();
   const [plan, setPlan] = React.useState<ActionPlanResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
+  const [completedStep, setCompletedStep] = React.useState<string | null>(null);
   const [pendingStep, setPendingStep] = React.useState<string | null>(null);
   const [exporting, setExporting] = React.useState<"docx" | "pdf" | null>(null);
   const [actionError, setActionError] = React.useState("");
+  const [openStages, setOpenStages] = React.useState<Set<string>>(new Set());
+  const [openSteps, setOpenSteps] = React.useState<Set<string>>(new Set());
+  const initialized = React.useRef(false);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      setPlan(await api.getActionPlan(caseId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "无法生成行动步骤。");
+    } finally {
+      setLoading(false);
+    }
+  }, [caseId]);
 
   React.useEffect(() => {
-    let active = true;
-    setLoading(true);
-    api
-      .getActionPlan(caseId)
-      .then((data) => {
-        if (active) setPlan(data);
-      })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "无法生成行动指南。");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [caseId]);
+    void load();
+  }, [load]);
+
+  const groups = React.useMemo(() => groupActionSteps(plan?.steps ?? []), [plan]);
+  const currentStageKey = React.useMemo(() => getCurrentStageKey(groups), [groups]);
+  const currentStep = plan?.steps.find((step) => !step.done) ?? null;
+
+  React.useEffect(() => {
+    if (!plan || initialized.current) return;
+    initialized.current = true;
+    const currentGroups = groupActionSteps(plan.steps);
+    setOpenStages(new Set([getCurrentStageKey(currentGroups)]));
+    const firstOpen = plan.steps.find((step) => !step.done);
+    if (firstOpen) setOpenSteps(new Set([firstOpen.id]));
+  }, [plan]);
 
   const toggleStep = async (step: ActionStep) => {
     if (pendingStep) return;
@@ -66,6 +74,25 @@ export default function ActionPlanPage() {
     try {
       const updated = await api.updateStep(caseId, step.id, !step.done);
       setPlan(updated);
+      setCompletedStep(step.done ? null : step.id);
+      const nextStageKey = getCurrentStageKey(groupActionSteps(updated.steps));
+      const nextOpenStep = updated.steps.find((item) => !item.done);
+      setOpenStages(new Set([nextStageKey]));
+      setOpenSteps((current) => {
+        const next = new Set(current);
+        if (!step.done) next.delete(step.id);
+        if (nextOpenStep) next.add(nextOpenStep.id);
+        return next;
+      });
+      setCaseData((current) =>
+        current
+          ? {
+              ...current,
+              step_progress: updated.progress,
+              status: updated.case_status ?? current.status,
+            }
+          : current,
+      );
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "更新步骤状态失败。");
     } finally {
@@ -85,347 +112,484 @@ export default function ActionPlanPage() {
     }
   };
 
+  const toggleStage = (key: string) => {
+    setOpenStages((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleStepDetails = (id: string) => {
+    setOpenSteps((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Spinner label="正在规划维权步骤和渠道…" />
+        <Spinner label="正在规划办理路线…" />
       </div>
     );
   }
 
   if (error || !plan) {
     return (
-      <Alert variant="danger" title="无法生成行动指南">
+      <Alert
+        variant="danger"
+        title="无法生成行动步骤"
+        action={
+          <Button variant="outline" className="h-11 shrink-0" onClick={() => void load()}>
+            重试
+          </Button>
+        }
+      >
         {error || "请稍后重试。"}
       </Alert>
     );
   }
 
   const channelsById = new Map(plan.channels.map((channel) => [channel.id, channel]));
-  const primary = channelsById.get(plan.primary_channel_id);
+  const primary =
+    channelsById.get(plan.primary_channel_id) ??
+    plan.channels.find((channel) => channel.recommended) ??
+    null;
+  const stageViews: RouteStageView[] = groups.map((group) => ({
+    key: group.key,
+    label: group.label,
+    done: group.done,
+    total: group.total,
+    state:
+      group.total > 0 && group.done === group.total
+        ? "done"
+        : group.key === currentStageKey
+          ? "current"
+          : "upcoming",
+  }));
+  const usedChannelIds = new Set(plan.steps.map((step) => step.channel_id).filter(Boolean));
+  const otherChannels = plan.channels.filter((channel) => !usedChannelIds.has(channel.id));
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col pb-2">
+      <StaleResultNotice generatedFromRevision={plan.generated_from_revision} />
       {plan.preliminary && (
         <Alert
           variant="warning"
-          title="案件信息尚未确认"
+          title="这份行动步骤基于尚未确认的档案"
+          className="order-1 mb-6 lg:order-none"
           action={
-            <Link href={`/case/${caseId}`} className="shrink-0 text-xs font-semibold text-amber-900 underline">
-              返回对话
+            <Link
+              href={`/case/${caseId}`}
+              className="inline-flex min-h-11 shrink-0 items-center text-xs font-bold underline underline-offset-4"
+            >
+              返回对话核对
             </Link>
           }
         >
-          {plan.preliminary_note}
+          {plan.preliminary_note || "先把事实核对完整，步骤会更可靠。"}
         </Alert>
       )}
-      {actionError && <Alert variant="danger">{actionError}</Alert>}
 
-      <Card>
-        <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="dark">维权行动指南</Badge>
-                <Badge variant="success">{plan.progress.done}/{plan.progress.total} 步已完成</Badge>
-                {plan.preliminary ? <Badge variant="warning">初步版本</Badge> : null}
-              </div>
-              <h2 className="mt-3 text-xl font-black tracking-tight text-ink-900 sm:text-2xl">
-                按顺序做，每一步都有原因和材料清单
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink-500">
-                优先走劳动保障监察和全国欠薪线索平台，视情况再考虑仲裁、法律援助或诉讼。
-                勾选步骤后会自动保存，下次进入可以继续。
-              </p>
-              <div className="mt-4 flex max-w-md items-center gap-3">
-                <Progress value={plan.progress.percent} className="h-2 flex-1" />
-                <span className="text-xs font-bold text-brand-900">{plan.progress.percent}%</span>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => download("docx")} disabled={Boolean(exporting)}>
-                {exporting === "docx" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                DOCX
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => download("pdf")} disabled={Boolean(exporting)}>
-                {exporting === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                PDF
-              </Button>
-              <Link href={`/case/${caseId}/form-assistant`} className={cn(buttonVariants({ size: "sm" }), "h-9")}>
-                官方填报辅助
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {primary && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-2xl border border-brand-200 bg-brand-50/70 p-4 sm:col-span-2 lg:col-span-2">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand-600">优先渠道</p>
-                <p className="mt-1 text-base font-bold text-brand-950">{primary.name}</p>
-                <p className="mt-1 text-xs leading-relaxed text-brand-950/75">{primary.reason}</p>
-              </div>
-              <Landmark className="h-5 w-5 shrink-0 text-brand-700" />
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <a
-                href={primary.official_url || "https://hrss.henan.gov.cn/"}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-1 rounded-lg bg-brand-900 px-3 py-1.5 text-xs font-semibold text-white"
-              >
-                官方入口
-                <ExternalLink className="h-3 w-3" />
-              </a>
-              <span className="rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs text-brand-800">
-                12333 可确认受理机构
+      <header className="order-2 border-b border-rule pb-5 sm:pb-6 lg:order-none">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 max-w-[720px]">
+            <h1 className="fusion-kai text-3xl font-bold text-ink sm:text-4xl">行动步骤</h1>
+            <p className="mt-2 text-base leading-7 text-ink">先做这 3 件事；有些渠道可以同时准备。</p>
+            <p className="mt-1 text-[11px] leading-5 text-muted sm:text-xs">
+              步骤是建议，不是法律结论；受理与材料以官方告知为准。
+            </p>
+            <div className="mt-3 flex max-w-sm items-center gap-3">
+              <Progress value={plan.progress.percent} className="flex-1" />
+              <span className="shrink-0 text-xs font-bold text-ink">
+                办理进度 {plan.progress.done}/{plan.progress.total} 步
               </span>
             </div>
           </div>
-          <div className="rounded-2xl border border-ink-200 bg-white p-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-400">正式事实陈述</p>
-            <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-ink-600">{plan.formal_statement}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <CopyButton text={plan.formal_statement} label="复制陈述" />
+          <div className="hidden shrink-0 flex-wrap gap-2 lg:flex">
+            <Button
+              variant="outline"
+              className="h-11"
+              onClick={() => download("docx")}
+              disabled={Boolean(exporting)}
+              aria-label="导出 DOCX 材料"
+            >
+              {exporting === "docx" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              DOCX
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11"
+              onClick={() => download("pdf")}
+              disabled={Boolean(exporting)}
+              aria-label="导出 PDF 材料"
+            >
+              {exporting === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              PDF
+            </Button>
+            <Link
+              href={`/case/${caseId}/form-assistant`}
+              className={cn(buttonVariants({ variant: "outline", size: "default" }), "h-11 justify-center")}
+            >
+              填报参考
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+        {actionError && <Alert variant="danger" className="mt-4">{actionError}</Alert>}
+      </header>
+
+      <section className="order-6 mt-6 border-y border-rule py-4 lg:order-none">
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr] lg:gap-8">
+          <div>
+            <p className="text-[11px] font-bold text-muted">优先渠道</p>
+            {primary ? (
+              <>
+                <p className="mt-1 text-lg font-extrabold leading-7 text-ink">{primary.name}</p>
+                <p className="mt-1 text-sm leading-6 text-ink">{primary.reason}</p>
+                <ChannelVerification channel={primary} />
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  {primary.official_url ? (
+                    <a
+                      href={primary.official_url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className={cn(buttonVariants({ variant: "outline", size: "default" }), "h-11")}
+                    >
+                      官方入口（本人提交）
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  ) : (
+                    <span className="text-xs font-bold text-note">官方入口待核实，先拨 12333 确认。</span>
+                  )}
+                  <span className="text-xs text-muted">12333 可确认受理机构</span>
+                </div>
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-muted">优先渠道待核实，可以先查看下面步骤。</p>
+            )}
+          </div>
+
+          <div className="border-t border-rule pt-3 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] font-bold text-muted">正式陈述（摘要）</p>
               <Link
                 href={`/case/${caseId}/form-assistant`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-800 hover:underline"
+                className="inline-flex min-h-11 items-center text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
               >
-                逐字段填报
-                <ArrowRight className="h-3 w-3" />
+                去填报参考查看全文
               </Link>
             </div>
+            <p className="line-clamp-2 text-sm leading-6 text-ink">{plan.formal_statement}</p>
+            <div className="mt-3 flex gap-2 lg:hidden">
+              <Button
+                variant="outline"
+                className="h-11"
+                onClick={() => download("docx")}
+                disabled={Boolean(exporting)}
+                aria-label="导出 DOCX 材料"
+              >
+                {exporting === "docx" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                导出 DOCX
+              </Button>
+              <Button
+                variant="outline"
+                className="h-11"
+                onClick={() => download("pdf")}
+                disabled={Boolean(exporting)}
+                aria-label="导出 PDF 材料"
+              >
+                {exporting === "pdf" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                导出 PDF
+              </Button>
+            </div>
           </div>
         </div>
-      )}
 
-      <div className="space-y-3">
-        {plan.steps.map((step) => {
-          const channel = step.channel_id ? channelsById.get(step.channel_id) : null;
-          return (
-            <Card
-              key={step.id}
-              className={cn("overflow-hidden transition", step.done && "border-emerald-200 bg-emerald-50/30")}
-            >
-              <div className="flex gap-3 p-4 sm:gap-5 sm:p-5">
-                <div className="flex flex-col items-center">
+        <details className="mt-3 border-l-2 border-note bg-note-wash px-3 py-2 text-xs text-note">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 font-bold [&::-webkit-details-marker]:hidden">
+            办理边界与提醒（不承诺追回或胜诉）
+            <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+          </summary>
+          <ul className="mt-2 space-y-1.5">
+            {plan.risks.map((risk) => (
+              <li key={risk}>{risk}</li>
+            ))}
+          </ul>
+        </details>
+      </section>
+
+      <div className="order-3 mt-4 border-b border-rule pb-4 sm:mt-6 sm:pb-5 lg:order-none">
+        <RouteRail stages={stageViews} />
+      </div>
+
+      <div className="order-4 mt-4 space-y-4 sm:mt-6 lg:order-none">
+        {groups
+          .filter((group) => group.total > 0)
+          .map((group, groupIndex) => {
+            const open = openStages.has(group.key);
+            const state =
+              group.done === group.total
+                ? "done"
+                : group.key === currentStageKey
+                  ? "current"
+                  : "upcoming";
+            return (
+              <section key={group.key} id={`stage-${group.key}`} className="border-t border-rule pt-1">
+                <button
+                  type="button"
+                  onClick={() => toggleStage(group.key)}
+                  aria-expanded={open}
+                  className="flex min-h-14 w-full items-start gap-3 py-3 text-left focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90"
+                >
                   <span
                     className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black",
-                      step.done ? "bg-emerald-700 text-white" : "bg-brand-900 text-white",
+                      "mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold",
+                      state === "done"
+                        ? "border-field bg-field text-surface"
+                        : state === "current"
+                          ? "border-signal bg-signal text-surface"
+                          : "border-route text-route",
                     )}
                   >
-                    {step.done ? <Check className="h-4 w-4" strokeWidth={3} /> : step.position}
+                    {state === "done" ? <Check className="h-4 w-4" strokeWidth={3} /> : groupIndex + 1}
                   </span>
-                  {step.position < plan.steps.length && <span className="mt-2 h-full w-px flex-1 bg-ink-200" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <h3 className={cn("text-base font-bold leading-snug", step.done ? "text-emerald-900" : "text-ink-900")}>
-                        {step.title}
-                      </h3>
-                      <p className="mt-1.5 text-xs leading-relaxed text-ink-500">{step.why}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => toggleStep(step)}
-                      disabled={pendingStep === step.id}
-                      className={cn(
-                        "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition",
-                        step.done
-                          ? "border-emerald-300 bg-emerald-100 text-emerald-800"
-                          : "border-ink-200 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-800",
-                      )}
-                    >
-                      {pendingStep === step.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : step.done ? (
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      ) : (
-                        <span className="h-3.5 w-3.5 rounded border border-ink-300" />
-                      )}
-                      {step.done ? "已完成" : "标记完成"}
-                    </button>
-                  </div>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-xl font-extrabold text-ink">{group.label}</span>
+                      {state === "current" && <Badge variant="default">当前</Badge>}
+                      {state === "done" && <Badge variant="success">已完成</Badge>}
+                    </span>
+                    <span className="mt-0.5 block text-sm leading-6 text-muted">{group.hint}</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2 pt-1 text-xs font-bold text-muted">
+                    {group.done}/{group.total}
+                    <ChevronDown className={cn("h-4 w-4 transition", open && "rotate-180")} aria-hidden="true" />
+                  </span>
+                </button>
 
-                  <div className="mt-3 rounded-xl border border-ink-100 bg-ink-50/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">需要准备</p>
-                    <ul className="mt-1.5 space-y-1.5">
-                      {step.prepare.map((item) => (
-                        <li key={item} className="flex gap-2 text-[11px] leading-relaxed text-ink-600">
-                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-ink-400" />
-                          {item}
+                {open && (
+                  <ol className="pb-2">
+                    {group.steps.map((step, index) => {
+                      const isDone = step.done;
+                      const isCurrent = step.id === currentStep?.id;
+                      const channel = step.channel_id ? channelsById.get(step.channel_id) : null;
+                      const stepDeadlines = deadlinesForStep(step.step_key, plan.deadlines);
+                      const detailsOpen = openSteps.has(step.id);
+                      return (
+                        <li key={step.id} data-step-key={step.step_key} className={cn("relative pb-5 pl-10 last:pb-1", isCurrent && "fusion-current-step")}>
+                          {index < group.steps.length - 1 && (
+                            <span
+                              aria-hidden="true"
+                              className="absolute bottom-0 left-[13px] top-7 w-px bg-rule"
+                            />
+                          )}
+                          <span
+                            className={cn(
+                              "absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-extrabold",
+                              isDone
+                                ? "border-field bg-field text-surface"
+                                : isCurrent
+                                  ? "border-signal bg-signal text-surface"
+                                  : "border-route bg-surface text-route",
+                            )}
+                          >
+                            {isDone ? <Check className="h-4 w-4" strokeWidth={3} /> : step.position}
+                          </span>
+
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              {isCurrent && <p className="mb-1 text-xs font-bold text-signal-deep">现在先做</p>}
+                              <h3
+                                className={cn(
+                                  "text-base font-bold leading-6",
+                                  isDone ? "text-muted" : "text-ink",
+                                )}
+                              >
+                                {step.title}
+                              </h3>
+                              {(detailsOpen || isCurrent) && (
+                                <p className="mt-1 text-sm leading-6 text-ink/90">{step.why}</p>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void toggleStep(step)}
+                              disabled={pendingStep !== null}
+                              className={cn(
+                                "fusion-press inline-flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-control border px-4 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
+                                isDone
+                                  ? "border-field bg-field-wash text-field"
+                                  : isCurrent
+                                    ? "border-ink bg-ink text-surface hover:bg-signal"
+                                    : "border-rule bg-surface text-ink hover:bg-sand",
+                              )}
+                            >
+                              {pendingStep === step.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : isDone ? (
+                                <Check className={cn("h-3.5 w-3.5", completedStep === step.id && "fusion-draw-check")} />
+                              ) : null}
+                              {isDone ? "已完成" : "标记完成"}
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleStepDetails(step.id)}
+                            aria-expanded={detailsOpen}
+                            className="mt-1 inline-flex min-h-11 items-center gap-1.5 text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
+                          >
+                            {detailsOpen ? "收起准备内容" : "看这一步怎么做"}
+                            <ChevronDown className={cn("h-3.5 w-3.5 transition", detailsOpen && "rotate-180")} />
+                          </button>
+
+                          {detailsOpen && (
+                            <div className="fusion-reveal mt-2">
+                              {step.prepare.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-bold text-muted">需要准备</p>
+                                  <ul className="mt-1 list-disc space-y-1 pl-5 text-sm leading-6 text-ink">
+                                    {step.prepare.map((item) => (
+                                      <li key={item}>{item}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {step.draft_text && (
+                                <div className="mt-3 border-l-2 border-field bg-field-wash px-3 py-3">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-xs font-bold text-field">可复制沟通话术</p>
+                                    <CopyButton text={step.draft_text} label="复制话术" compact />
+                                  </div>
+                                  <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-ink">
+                                    {step.draft_text}
+                                  </p>
+                                </div>
+                              )}
+
+                              {(step.deadline_note || step.risk_note || stepDeadlines.length > 0) && (
+                                <div className="mt-3 space-y-2">
+                                  {step.deadline_note && (
+                                    <p className="border-l-2 border-note bg-note-wash px-3 py-2 text-xs leading-5 text-note">
+                                      期限：{step.deadline_note}
+                                    </p>
+                                  )}
+                                  {stepDeadlines.map((deadline) => (
+                                    <div
+                                      key={deadline.title}
+                                      className="border-l-2 border-note bg-note-wash px-3 py-2 text-xs leading-5 text-note"
+                                    >
+                                      <p className="font-bold">
+                                        {deadline.title} · {deadline.urgency}
+                                      </p>
+                                      <p className="mt-0.5">{deadline.detail}</p>
+                                    </div>
+                                  ))}
+                                  {step.risk_note && (
+                                    <p className="border-l-2 border-signal bg-signal-wash px-3 py-2 text-xs leading-5 text-signal-deep">
+                                      风险：{step.risk_note}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+
+                              {channel && (
+                                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-rule pt-3">
+                                  <p className="text-sm font-bold text-ink">{channel.name}</p>
+                                  <ChannelVerification channel={channel} />
+                                  {channel.official_url ? (
+                                    <a
+                                      href={channel.official_url}
+                                      target="_blank"
+                                      rel="noreferrer noopener"
+                                      className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
+                                    >
+                                      官方入口
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  ) : (
+                                    <span className="text-xs text-note">入口待核实，先拨 12333。</span>
+                                  )}
+                                  {channel.access_note && (
+                                    <span className="text-xs leading-5 text-muted">{channel.access_note}</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </li>
-                      ))}
-                    </ul>
-                  </div>
+                      );
+                    })}
+                  </ol>
+                )}
+              </section>
+            );
+          })}
+      </div>
 
-                  {step.draft_text && (
-                    <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50/60 p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-brand-700">可复制沟通话术</p>
-                        <CopyButton text={step.draft_text} label="复制话术" compact />
-                      </div>
-                      <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-brand-950/80">
-                        {step.draft_text}
-                      </p>
-                    </div>
-                  )}
-
-                  {(step.deadline_note || step.risk_note) && (
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      {step.deadline_note && (
-                        <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] leading-relaxed text-amber-900">
-                          <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                          {step.deadline_note}
-                        </div>
-                      )}
-                      {step.risk_note && (
-                        <div className="flex gap-2 rounded-lg border border-ink-200 bg-white px-3 py-2 text-[10px] leading-relaxed text-ink-500">
-                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                          {step.risk_note}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {channel && (
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                      <span className="inline-flex items-center gap-1 font-semibold text-brand-800">
-                        <Phone className="h-3 w-3" />
-                        {channel.name}
-                      </span>
-                      {channel.official_url && (
-                        <a
-                          href={channel.official_url}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="inline-flex items-center gap-1 text-ink-500 hover:text-brand-800"
-                        >
-                          官方入口
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
-                    </div>
-                  )}
+      {otherChannels.length > 0 && (
+        <section className="order-7 mt-8 border-t border-rule pt-6 lg:order-none">
+          <h2 className="text-xl font-extrabold text-ink">还可以咨询</h2>
+          <p className="mt-1.5 text-sm leading-6 text-muted">
+            以下渠道不在上面 8 步中，但可以并行了解；具体以官方告知为准。
+          </p>
+          <ul className="mt-3 divide-y divide-rule border-y border-rule">
+            {otherChannels.map((channel) => (
+              <li key={channel.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="text-base font-bold text-ink">{channel.name}</p>
+                  <p className="mt-0.5 text-xs text-muted">{channel.category}</p>
+                  <ChannelVerification channel={channel} />
                 </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-brand-700" />
-              <CardTitle>时效与风险</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {plan.deadlines.map((deadline) => (
-              <div key={deadline.title} className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-bold text-amber-950">{deadline.title}</p>
-                  <Badge variant="warning">{deadline.urgency}</Badge>
-                </div>
-                <p className="mt-1 text-[11px] leading-relaxed text-amber-900/80">{deadline.detail}</p>
-              </div>
+                {channel.official_url ? (
+                  <a
+                    href={channel.official_url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
+                  >
+                    官方入口
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : (
+                  <span className="text-xs text-note">入口待核实</span>
+                )}
+              </li>
             ))}
-            <ul className="space-y-2">
-              {plan.risks.map((risk) => (
-                <li key={risk} className="flex gap-2 text-[11px] leading-relaxed text-ink-500">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
-                  {risk}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+          </ul>
+        </section>
+      )}
 
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Route className="h-4 w-4 text-brand-700" />
-              <CardTitle>推荐渠道</CardTitle>
-            </div>
-            <p className="text-xs text-ink-400">不同渠道可并行准备材料，具体受理以官方告知为准。</p>
-          </CardHeader>
-          <CardContent className="space-y-2.5">
-            {plan.channels.map((channel) => (
-              <ChannelCard key={channel.id} channel={channel} />
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl bg-brand-950 p-5 text-white sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-200">
-              <Sparkles className="h-3.5 w-3.5" />
-              下一步：去官方平台填报
-            </p>
-            <h3 className="mt-1 text-lg font-bold">不用自己组织语言，逐字段复制即可</h3>
-            <p className="mt-1 text-xs leading-relaxed text-brand-200">
-              本产品不会自动提交。填报完成后，请由你本人在官方平台核对并提交。
-            </p>
-          </div>
-          <Link
-            href={`/case/${caseId}/form-assistant`}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-brand-950"
-          >
-            <FileText className="h-4 w-4" />
-            打开官方填报辅助
-          </Link>
-        </div>
-      </div>
-
-      <p className="px-1 text-[11px] leading-relaxed text-ink-400">{plan.disclaimer}</p>
+      <p className="order-8 mt-6 text-xs leading-6 text-muted lg:order-none">{plan.disclaimer}</p>
     </div>
   );
 }
 
-function ChannelCard({ channel }: { channel: ChannelInfo }) {
+function ChannelVerification({ channel }: { channel: ChannelInfo }) {
   return (
-    <div className={cn("rounded-xl border p-3.5", channel.recommended ? "border-brand-200 bg-brand-50/50" : "border-ink-200")}>
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs font-bold text-ink-900">{channel.name}</p>
-          <p className="mt-0.5 text-[10px] text-ink-400">{channel.category}</p>
-        </div>
-        <Badge variant={channel.recommended ? "success" : channel.verification_status === "pending" ? "warning" : "neutral"}>
-          {channel.recommended
-            ? "推荐"
-            : channel.verification_status === "transcribed"
-              ? "来源待核验"
-              : verificationLabel(channel.verification_status)}
-        </Badge>
-      </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-ink-500">{channel.description}</p>
-      {channel.reason && <p className="mt-1.5 text-[10px] leading-relaxed text-brand-800">{channel.reason}</p>}
-      <div className="mt-2.5 flex flex-wrap items-center gap-2">
-        {channel.official_url && (
-          <a
-            href={channel.official_url}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="inline-flex items-center gap-1 text-[10px] font-semibold text-brand-800 hover:underline"
-          >
-            官方入口
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
-        {channel.access_note && (
-          <span className="text-[10px] leading-relaxed text-ink-400">{channel.access_note}</span>
-        )}
-      </div>
+    <div className="mt-2 basis-full text-xs leading-5 text-muted">
+      <p>{verificationLabel(channel.verification_status)} · 具体受理入口以官方页面为准</p>
+      {channel.source_note && <p>{channel.source_note}</p>}
+      {channel.official_url && <p>链接用于查找官方渠道，不代表已核验的直接办理页。</p>}
     </div>
   );
+}
+
+function deadlinesForStep(
+  stepKey: string,
+  deadlines: ActionPlanResponse["deadlines"],
+): ActionPlanResponse["deadlines"] {
+  if (stepKey === "labor-supervision") {
+    return deadlines.filter((deadline) => deadline.title.includes("监察"));
+  }
+  if (stepKey === "labor-arbitration") {
+    return deadlines.filter((deadline) => deadline.title.includes("仲裁"));
+  }
+  return [];
 }

@@ -1,0 +1,278 @@
+[
+  {
+    "size": "desktop",
+    "surface": "chat-new",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      902
+    ],
+    "horizontalOverflow": 0,
+    "h1": "河南建筑工地欠薪",
+    "tabs": [
+      "事实",
+      "法律依据"
+    ],
+    "stamps": [
+      "待核对"
+    ],
+    "confirmVisible": false,
+    "confirmedVisible": false,
+    "assistantLabels": 1,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "desktop",
+    "surface": "chat-answer",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      902
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪",
+    "tabs": [
+      "事实",
+      "法律依据"
+    ],
+    "stamps": [
+      "待核对"
+    ],
+    "confirmVisible": false,
+    "confirmedVisible": false,
+    "assistantLabels": 2,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "desktop",
+    "surface": "chat-confirm",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      902
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪 · 钢筋工",
+    "tabs": [
+      "事实",
+      "法律依据"
+    ],
+    "stamps": [
+      "待核对"
+    ],
+    "confirmVisible": true,
+    "confirmedVisible": false,
+    "assistantLabels": 3,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "desktop",
+    "surface": "dossier-legal",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      950
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪 · 钢筋工",
+    "tabs": [
+      "事实",
+      "法律依据"
+    ],
+    "stamps": [
+      "待核对"
+    ],
+    "confirmVisible": true,
+    "confirmedVisible": false,
+    "assistantLabels": 3,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "desktop",
+    "surface": "chat-confirmed",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      950
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪 · 钢筋工",
+    "tabs": [
+      "事实",
+      "法律依据"
+    ],
+    "stamps": [
+      "已核对"
+    ],
+    "confirmVisible": false,
+    "confirmedVisible": true,
+    "assistantLabels": 4,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "desktop",
+    "caseUrl": "http://127.0.0.1:3000/case/eb6ff163-6c6c-406b-ad60-c7357aded678",
+    "errors": []
+  },
+  {
+    "size": "mobile",
+    "surface": "chat-new",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      923
+    ],
+    "horizontalOverflow": 0,
+    "h1": "河南建筑工地欠薪",
+    "tabs": [],
+    "stamps": [],
+    "confirmVisible": false,
+    "confirmedVisible": false,
+    "assistantLabels": 1,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "mobile",
+    "surface": "chat-answer",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      923
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪",
+    "tabs": [],
+    "stamps": [],
+    "confirmVisible": false,
+    "confirmedVisible": false,
+    "assistantLabels": 2,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "mobile",
+    "surface": "chat-confirm",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      923
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪 · 钢筋工",
+    "tabs": [],
+    "stamps": [],
+    "confirmVisible": true,
+    "confirmedVisible": false,
+    "assistantLabels": 3,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "mobile",
+    "surface": "dossier-facts",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      923
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪 · 钢筋工",
+    "tabs": [
+      "事实",
+      "法律依据"
+    ],
+    "stamps": [
+      "待核对"
+    ],
+    "confirmVisible": true,
+    "confirmedVisible": false,
+    "assistantLabels": 3,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "mobile",
+    "surface": "dossier-legal",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      923
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪 · 钢筋工",
+    "tabs": [
+      "事实",
+      "法律依据"
+    ],
+    "stamps": [
+      "待核对"
+    ],
+    "confirmVisible": true,
+    "confirmedVisible": false,
+    "assistantLabels": 3,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "mobile",
+    "surface": "chat-confirmed",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      923
+    ],
+    "horizontalOverflow": 0,
+    "h1": "郑州建筑工地欠薪 · 钢筋工",
+    "tabs": [],
+    "stamps": [],
+    "confirmVisible": false,
+    "confirmedVisible": true,
+    "assistantLabels": 4,
+    "minButtonHeight": 44,
+    "sub44Buttons": []
+  },
+  {
+    "size": "mobile",
+    "caseUrl": "http://127.0.0.1:3000/case/1a138473-ad7c-46c2-a7f4-e40644754df9",
+    "errors": []
+  }
+]

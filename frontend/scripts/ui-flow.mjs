@@ -13,6 +13,7 @@ const browser = await chromium.launch({
 const context = await browser.newContext({
   viewport: { width: 1360, height: 900 },
   acceptDownloads: true,
+  permissions: ["clipboard-read", "clipboard-write"],
 });
 await context.addInitScript((sid) => localStorage.setItem("workerrights_session_id", sid), SESSION);
 const page = await context.newPage();
@@ -23,105 +24,145 @@ page.on("console", (msg) => {
 page.on("pageerror", (err) => errors.push(err.message));
 
 const log = (...args) => console.log(...args);
-const clickButton = async (name, exact = true) => {
-  const button = page.getByRole("button", { name, exact });
-  await button.first().waitFor({ state: "visible", timeout: 15000 });
-  await button.first().click();
-  await page.waitForTimeout(800);
-};
-const clickQuick = async (name) => clickButton(name, true);
+const shot = (name, full = false) => page.screenshot({ path: path.join(OUT, name), fullPage: full });
+const assistantBubbles = () => page.locator(".rounded-tl-sm");
 
+// 1. Fresh case: free-text conversation works regardless of provider.
 await page.goto("http://127.0.0.1:3000/", { waitUntil: "networkidle" });
-await clickButton("说说我的情况");
+await page.getByRole("link", { name: "说说我的情况", exact: true }).first().click();
+await page.getByRole("textbox", { name: "你的情况", exact: true }).fill("我有笔工地工资还没拿到，想先把情况理清楚。");
+await page.getByRole("button", { name: "发送", exact: true }).click();
 await page.waitForURL(/\/case\/[0-9a-f-]+$/);
-await page.getByText("AI 劳动权益助手").waitFor();
-log("created case", page.url());
-await page.screenshot({ path: path.join(OUT, "flow-01-first-question.png"), fullPage: false });
-
-await clickQuick("郑州");
-await clickQuick("金水区");
-await clickQuick("钢筋工");
-await clickQuick("3-6个月左右");
-await clickQuick("包工头");
-await clickQuick("同一个包工头");
-await clickQuick("按天算");
-
+const freshCaseUrl = page.url();
+await page.getByRole("textbox", { name: "输入你的回答" }).waitFor();
+const before = await assistantBubbles().count();
 const textarea = page.getByRole("textbox", { name: "输入你的回答" });
-await textarea.fill("一共两万六，给了六千，还欠两万");
+await textarea.fill("我在郑州金水区一个工地干了三个月，钢筋工，包工头还欠我两万元。");
 await textarea.press("Enter");
-await page.waitForTimeout(1200);
-log("amount answered");
-await page.screenshot({ path: path.join(OUT, "flow-02-quick-replies.png"), fullPage: false });
+await page.waitForFunction(
+  (n) => document.querySelectorAll(".rounded-tl-sm").length >= n && !document.querySelector(".animate-pulse-dot"),
+  before + 1,
+  { timeout: 60000 },
+);
+log("chat reply rendered, bubbles:", await assistantBubbles().count());
+await page.waitForTimeout(400);
+await shot("flow-01-chat.png");
 
-await clickQuick("没签");
-await clickQuick("微信聊天记录");
-await clickQuick("考勤记录");
-await clickQuick("工友证言");
-await clickButton(/发送所选/, false);
-await clickQuick("不知道");
-await clickQuick("没找过");
-await page.screenshot({ path: path.join(OUT, "flow-03-before-confirm.png"), fullPage: false });
-await clickQuick("信息无误，生成分析");
-await page.getByText("案件信息已确认。你可以查看分析，或直接生成行动指南。").waitFor({ timeout: 15000 });
-log("intake confirmed");
+// 2. Open the confirmed demo case for the full workbench.
+await page.goto("http://127.0.0.1:3000/cases", { waitUntil: "networkidle" });
+await page.getByRole("button", { name: "演示案件" }).first().click();
+await page.waitForURL(/\/case\/[0-9a-f-]+$/);
+const demoUrl = page.url();
+const demoId = demoUrl.split("/case/")[1];
+await page.getByRole("textbox", { name: "输入你的回答" }).waitFor();
+log("demo case", demoId);
 
-const analysisLink = page.locator('a[href$="/analysis"]').first();
-await analysisLink.click();
-await page.getByText("案件分析工作台").waitFor({ timeout: 15000 });
-await page.waitForTimeout(1000);
-const bodyText = await page.locator("body").innerText();
-log("analysis has owed", bodyText.includes("2万元"));
-log("analysis has law", bodyText.includes("保障农民工工资支付条例"));
-
-const [docx] = await Promise.all([
-  page.waitForEvent("download", { timeout: 30000 }),
-  page.getByRole("button", { name: "DOCX" }).click(),
-]);
-log("docx download", docx.suggestedFilename());
-fs.writeFileSync(path.join(OUT, "export.docx"), await docx.path());
-const [pdf] = await Promise.all([
-  page.waitForEvent("download", { timeout: 30000 }),
-  page.getByRole("button", { name: "PDF" }).click(),
-]);
-log("pdf download", pdf.suggestedFilename());
-fs.writeFileSync(path.join(OUT, "export.pdf"), await pdf.path());
-
-await page.locator('a[href$="/action-plan"]').first().click();
-await page.getByText("维权行动指南").waitFor({ timeout: 15000 });
-await page.waitForTimeout(800);
-await page.getByRole("button", { name: "标记完成" }).first().click();
-await page.getByRole("button", { name: "已完成" }).first().waitFor({ timeout: 15000 });
-log("action step persisted");
-await page.screenshot({ path: path.join(OUT, "flow-04-action.png"), fullPage: false });
-
-await page.locator('a[href$="/form-assistant"]').first().click();
-await page.waitForURL(/form-assistant/);
-await page.getByText("逐字段给你解释和参考内容").waitFor({ timeout: 15000 });
-await page.getByRole("button", { name: /5 填写欠薪事实/ }).click();
-await page.getByText("填写欠薪事实").last().waitFor();
-log("form step 5 open");
-await page.screenshot({ path: path.join(OUT, "flow-05-form.png"), fullPage: false });
-
-await page.locator('a[href$="/case/' + page.url().split("/case/")[1].split("/")[0] + '"]').first().click();
-await page.getByText("AI 劳动权益助手").waitFor();
-await page.getByRole("button", { name: "查看相关法律依据" }).first().click();
+// 3. Facts panel + legal modal + facts editor.
+await page.locator("aside").getByText("2万元").first().waitFor();
+await page.getByRole("button", { name: "查看法律依据" }).first().click();
 await page.getByRole("heading", { name: "相关法律依据" }).waitFor({ timeout: 15000 });
-await page.getByText("核验状态说明").waitFor();
-log("legal modal open");
-await page.screenshot({ path: path.join(OUT, "flow-06-legal-modal.png"), fullPage: false });
+await page.getByText("附来源与核验状态").waitFor();
+await page.waitForTimeout(300);
+await shot("flow-02-legal-modal.png");
 await page.getByRole("button", { name: "关闭" }).click();
-
 await page.getByRole("button", { name: "修改案件信息" }).first().click();
 await page.getByRole("dialog").waitFor();
 const owedInput = page.locator("label").filter({ hasText: "拖欠金额（元）" }).locator("input");
 await owedInput.fill("19000");
 await page.getByRole("button", { name: "保存修改" }).click();
-await page.getByText("案件信息已更新").waitFor({ timeout: 15000 });
-log("facts editor saved");
-await page.waitForTimeout(800);
-const afterEdit = await page.locator("body").innerText();
-log("updated owed", afterEdit.includes("1.9万元") || afterEdit.includes("19,000"));
+await page.getByRole("dialog").waitFor({ state: "detached", timeout: 15000 });
+await page.locator("aside").getByText("1.9万元").first().waitFor({ timeout: 15000 });
+log("facts editor saved and panel updated");
+await shot("flow-03-after-edit.png");
 
-await page.screenshot({ path: path.join(OUT, "flow-07-after-edit.png"), fullPage: false });
-log("errors", errors.length ? errors : "none");
+// 4. Analysis + exports.
+await page.goto(`${demoUrl}/analysis`, { waitUntil: "networkidle" });
+await page.getByText("信息完整度").waitFor({ timeout: 15000 });
+const analysisText = await page.locator("body").innerText();
+log("analysis has law:", analysisText.includes("保障农民工工资支付条例"));
+await shot("flow-04-analysis.png", true);
+const [docx] = await Promise.all([
+  page.waitForEvent("download", { timeout: 30000 }),
+  page.getByRole("button", { name: "DOCX" }).click(),
+]);
+fs.writeFileSync(path.join(OUT, "export.docx"), await docx.path());
+log("docx download", docx.suggestedFilename());
+const [pdf] = await Promise.all([
+  page.waitForEvent("download", { timeout: 30000 }),
+  page.getByRole("button", { name: "PDF" }).click(),
+]);
+fs.writeFileSync(path.join(OUT, "export.pdf"), await pdf.path());
+log("pdf download", pdf.suggestedFilename());
+
+// 5. Action plan: toggle persists across reload.
+await page.goto(`${demoUrl}/action-plan`, { waitUntil: "networkidle" });
+await page.getByRole("heading", { name: "行动指南", exact: true }).waitFor({ timeout: 15000 });
+await page.getByRole("button", { name: "标记完成" }).first().click();
+await page.getByRole("button", { name: "已完成" }).first().waitFor({ timeout: 15000 });
+await page.reload({ waitUntil: "networkidle" });
+await page.getByRole("button", { name: "已完成" }).first().waitFor({ timeout: 15000 });
+log("action step persisted across reload");
+await shot("flow-05-action.png", true);
+
+// 6. Form assistant: step navigation + copy.
+await page.goto(`${demoUrl}/form-assistant`, { waitUntil: "networkidle" });
+await page.getByRole("heading", { name: "官方填报辅助" }).waitFor({ timeout: 15000 });
+await page.getByRole("button", { name: /填写欠薪事实/ }).first().click();
+await page.getByText("来自：").first().waitFor({ timeout: 15000 });
+await page.getByRole("button", { name: "复制此字段" }).first().click();
+await page.getByRole("button", { name: "已复制" }).first().waitFor({ timeout: 5000 });
+log("form step navigation + copy ok");
+await shot("flow-06-form.png", true);
+
+// 7. Mobile pass on the demo case + home.
+const mobile = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  acceptDownloads: true,
+});
+await mobile.addInitScript((sid) => localStorage.setItem("workerrights_session_id", sid), SESSION);
+const mpage = await mobile.newPage();
+mpage.on("console", (msg) => {
+  if (msg.type() === "error") errors.push("mobile: " + msg.text());
+});
+mpage.on("pageerror", (err) => errors.push("mobile: " + err.message));
+const overflow = async (label) => {
+  const bad = await mpage.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  log(`mobile horizontal overflow ${label}:`, bad);
+};
+for (const [route, name] of [
+  ["/", "mobile-home"],
+  [`/case/${demoId}`, "mobile-chat"],
+  [`/case/${demoId}/analysis`, "mobile-analysis"],
+  [`/case/${demoId}/action-plan`, "mobile-action"],
+  [`/case/${demoId}/form-assistant`, "mobile-form"],
+]) {
+  await mpage.goto(`http://127.0.0.1:3000${route}`, { waitUntil: "networkidle" });
+  await mpage.waitForTimeout(600);
+  await overflow(name);
+  await mpage.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: true });
+}
+// mobile bottom nav + info modal
+await mpage.goto(`http://127.0.0.1:3000/case/${demoId}`, { waitUntil: "networkidle" });
+await mpage.getByRole("button", { name: "案件信息" }).first().click();
+await mpage.getByRole("dialog").waitFor();
+await mpage.waitForTimeout(350);
+await mpage.screenshot({ path: path.join(OUT, "mobile-info-modal.png") });
+await mpage.getByRole("button", { name: "关闭" }).click();
+await mpage.getByRole("navigation", { name: "案件工作台导航" }).last().getByRole("link", { name: "行动指南" }).click();
+await mpage.waitForURL(/action-plan/);
+log("mobile bottom nav works");
+await mobile.close();
+
+// 8. Delete a case from the list.
+await page.goto("http://127.0.0.1:3000/cases", { waitUntil: "networkidle" });
+const rowsBefore = await page.locator("main ul > li").count();
+await page.getByRole("button", { name: /删除案件/ }).first().click();
+await page.getByRole("dialog").waitFor();
+await page.getByRole("button", { name: "确认删除" }).click();
+await page.waitForTimeout(800);
+const rowsAfter = await page.locator("main ul > li").count();
+log("case deleted, rows:", rowsBefore, "->", rowsAfter);
+await shot("flow-07-cases.png", true);
+
+log("console errors:", errors.length ? errors : "none");
 await browser.close();

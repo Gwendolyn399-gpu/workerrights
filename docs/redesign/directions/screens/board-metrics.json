@@ -1,0 +1,28 @@
+[
+  {
+    "name": "desktop",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      5109
+    ],
+    "overflow": 0,
+    "imagesComplete": true
+  },
+  {
+    "name": "mobile",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      6424
+    ],
+    "overflow": 0,
+    "imagesComplete": true
+  }
+]

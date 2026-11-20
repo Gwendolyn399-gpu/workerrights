@@ -1,4 +1,49 @@
-from typing import Any
+from copy import deepcopy
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from backend.models.case import Case
+
+
+# Only inputs consumed by derived materials affect their revision.
+DERIVED_FACT_FIELDS = frozenset({
+    "location_province", "location_city", "location_district", "location_detail",
+    "project_name", "developer_name", "contractor_name", "subcontractor_name",
+    "work_type", "work_start", "work_end", "duration_text",
+    "recruiter_type", "recruiter_name", "recruiter_phone", "manager_role",
+    "wage_basis", "daily_wage", "monthly_wage", "unit_price", "agreed_amount",
+    "paid_amount", "owed_amount", "owed_amount_approx", "owed_amount_note",
+    "has_contract", "evidence", "evidence_other", "evidence_status",
+    "prior_report", "prior_report_detail",
+})
+
+
+def generation_facts(facts: dict) -> dict:
+    snapshot = deepcopy(facts)
+    result = {}
+    for key in DERIVED_FACT_FIELDS:
+        value = snapshot.get(key)
+        if isinstance(value, str):
+            value = value.strip()
+        if key == "evidence":
+            value = sorted(set(value or []))
+        elif key == "owed_amount_approx":
+            value = bool(value)
+        elif value in (None, "", [], {}):
+            value = None
+        result[key] = value
+    return result
+
+
+def record_fact_change(case: "Case", before: dict, *, preserve_confirmation: bool = False) -> bool:
+    """Record one persisted fact edit; retain old results for stale comparison."""
+    if generation_facts(before) == generation_facts(case.facts):
+        return False
+    case.facts_revision += 1
+    if not preserve_confirmation:
+        case.intake = {**(case.intake or {}), "confirmed": False}
+        case.status = "collecting"
+    return True
 
 FACT_LABELS = {
     "location_city": "工作城市",
@@ -99,11 +144,16 @@ def required_progress(facts: dict, intake: dict) -> dict:
     }
     done = sum(1 for value in checks.values() if value)
     total = len(checks)
+    percent = round(done / total * 100)
+    # Skipped optional fields count as done, so completeness can hit 100% before
+    # the user confirms the summary; reserve 100% for confirmed cases.
+    if percent == 100 and not intake.get("confirmed"):
+        percent = 99
     return {
         "checks": checks,
         "done": done,
         "total": total,
-        "percent": round(done / total * 100),
+        "percent": percent,
         "unknown_count": len(unknowns),
     }
 

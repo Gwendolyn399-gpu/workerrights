@@ -1,8 +1,11 @@
+from copy import deepcopy
+
 from sqlalchemy.orm import Session
 
 from backend.agents.orchestrator import AgentOrchestrator
 from backend.models.case import Case, Message
 from backend.services.fact_extractor import NEW_CASE_FACTS
+from backend.services.facts import record_fact_change
 
 DEMO_TITLE = "郑州金水区建筑工地欠薪（虚构演示）"
 
@@ -83,8 +86,10 @@ def create_demo_case(db: Session, session_id: str) -> Case:
 
     orchestrator = AgentOrchestrator(db)
     case = orchestrator.create_case(session_id, is_demo=True)
-    case.facts = dict(DEMO_FACTS)
-    case.intake = dict(DEMO_INTAKE)
+    before = deepcopy(case.facts)
+    case.facts = deepcopy(DEMO_FACTS)
+    record_fact_change(case, before)
+    case.intake = deepcopy(DEMO_INTAKE)
     case.title = DEMO_TITLE
     case.status = "ready"
     for message in list(case.messages):

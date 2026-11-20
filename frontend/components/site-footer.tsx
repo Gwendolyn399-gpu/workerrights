@@ -1,67 +1,75 @@
 import Link from "next/link";
-import { ExternalLink, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Github } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
+
+const shortcuts = [
+  { label: "说说我的情况", href: "/#start-case" },
+  { label: "看看怎么整理", href: "/#case-story" },
+  { label: "我的案件", href: "/cases" },
+];
 
 const sources = [
   { label: "国家法律法规数据库", href: "https://flk.npc.gov.cn/" },
   { label: "人力资源社会保障部", href: "https://www.mohrss.gov.cn/" },
-  { label: "河南省人力资源和社会保障厅", href: "https://hrss.henan.gov.cn/" },
+  { label: "河南省人社厅", href: "https://hrss.henan.gov.cn/" },
   { label: "中国法律服务网", href: "https://12348.gov.cn/" },
 ];
 
+const footerLink = "inline-flex min-h-9 items-center rounded-control text-sm leading-6 text-ink underline decoration-rule underline-offset-4 hover:text-signal-deep hover:decoration-signal-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal";
+
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-ink-200 bg-white">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_1fr_1fr]">
-        <div>
+    <footer className="border-t border-rule bg-surface">
+      <div className="mx-auto grid max-w-[1180px] grid-cols-2 gap-x-4 gap-y-8 px-4 py-9 sm:px-6 sm:py-12 md:grid-cols-[1.35fr_0.8fr_1fr] md:gap-x-12">
+        <div className="col-span-2 md:col-span-1">
           <BrandLogo />
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-500">
-            让不懂法律的劳动者，也能知道自己的权益、找到正确的维权渠道，并知道具体应该怎么做。
+          <p className="mt-4 max-w-xs text-sm leading-7 text-muted">
+            说说你的欠薪经历，理清账目和手头材料，再查看接下来怎么走。
           </p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-ink-200 bg-ink-50 px-3 py-1.5 text-xs text-ink-600">
-            <ShieldCheck className="h-3.5 w-3.5 text-brand-700" />
-            本地演示版 · 未部署公网 · 不自动提交官方平台
-          </div>
+          <a
+            href="https://github.com/liuyike200811-maker/workerrights"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-control border border-rule px-3 text-sm font-bold text-ink transition-colors hover:border-signal-deep hover:bg-paper hover:text-signal-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+          >
+            <Github className="h-4 w-4" aria-hidden="true" />
+            GitHub 仓库
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
         </div>
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-ink-400">官方信息来源</h3>
-          <ul className="mt-3 space-y-2">
-            {sources.map((item) => (
-              <li key={item.href}>
-                <a
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex items-center gap-1.5 text-sm text-ink-600 transition hover:text-brand-800"
-                >
-                  {item.label}
-                  <ExternalLink className="h-3 w-3" />
+
+        <nav aria-labelledby="footer-shortcuts">
+          <h2 id="footer-shortcuts" className="fusion-kai mb-2 text-xl font-bold text-ink">
+            快捷入口
+          </h2>
+          <ul>
+            {shortcuts.map(({ label, href }) => (
+              <li key={href}><Link href={href} className={footerLink}>{label}</Link></li>
+            ))}
+          </ul>
+        </nav>
+
+        <nav aria-labelledby="footer-sources">
+          <h2 id="footer-sources" className="fusion-kai mb-2 text-xl font-bold text-ink">
+            官方来源
+          </h2>
+          <ul>
+            {sources.map(({ label, href }) => (
+              <li key={href}>
+                <a href={href} target="_blank" rel="noreferrer noopener" className={footerLink}>
+                  {label}
                 </a>
               </li>
             ))}
           </ul>
-        </div>
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-ink-400">产品说明</h3>
-          <ul className="mt-3 space-y-2 text-sm text-ink-600">
-            <li>
-              <Link href="/#how" className="hover:text-brand-800">工作原理</Link>
-            </li>
-            <li>
-              <Link href="/#scope" className="hover:text-brand-800">服务范围</Link>
-            </li>
-            <li>
-              <Link href="/cases" className="hover:text-brand-800">我的案件</Link>
-            </li>
-            <li>法条核验状态：国家法条待逐条核验，河南政策待核验</li>
-          </ul>
-        </div>
+        </nav>
       </div>
-      <div className="border-t border-ink-100">
-        <div className="mx-auto max-w-6xl px-4 py-5 text-xs leading-relaxed text-ink-400 sm:px-6">
-          免责声明：本产品提供信息整理、法律资料检索和办事路径参考，不构成正式法律意见，不承诺追回工资或胜诉。
-          复杂或不确定案件请拨打12348或咨询专业律师。法律条文与地方政策请以官方最新公布为准。
+
+      <div className="border-t border-rule">
+        <div className="mx-auto flex max-w-[1180px] flex-wrap justify-between gap-x-5 gap-y-1 px-4 py-4 text-xs leading-6 text-muted sm:px-6">
+          <p>服务范围 · 河南省建筑工地欠薪</p>
+          <p>材料整理与办事路径仅供参考，提交前请核对官方要求。</p>
         </div>
       </div>
     </footer>

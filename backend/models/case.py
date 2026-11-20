@@ -27,6 +27,10 @@ class Case(Base):
     is_demo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="collecting")
     facts: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSON), nullable=False, default=dict)
+    facts_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    derived_results: Mapped[dict] = mapped_column(
+        MutableDict.as_mutable(JSON), nullable=False, default=dict, server_default="{}"
+    )
     facts_meta: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSON), nullable=False, default=dict)
     intake: Mapped[dict] = mapped_column(MutableDict.as_mutable(JSON), nullable=False, default=dict)
     plan_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

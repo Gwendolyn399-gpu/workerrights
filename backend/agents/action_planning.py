@@ -20,12 +20,12 @@ class ActionPlanningAgent:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def ensure_plan(self, case: Case) -> dict:
+    def ensure_plan(self, case: Case, force: bool = False) -> dict:
         signature = self._signature(case.facts)
         has_steps = (
             self.db.query(ActionStep).filter(ActionStep.case_id == case.id).count() > 0
         )
-        if case.facts_meta.get("plan_signature") != signature or not has_steps:
+        if force or case.facts_meta.get("plan_signature") != signature or not has_steps:
             self._rebuild(case, signature)
         return self.serialize(case)
 
@@ -63,7 +63,7 @@ class ActionPlanningAgent:
             .order_by(ActionStep.position)
             .all()
         )
-        existing_done = {step.step_key: step.done for step in existing_steps}
+        existing_done = {step.step_key: (step.done, step.done_at) for step in existing_steps}
         for step in existing_steps:
             self.db.delete(step)
         self.db.flush()
@@ -83,7 +83,8 @@ class ActionPlanningAgent:
                     deadline_note=definition.get("deadline_note"),
                     risk_note=definition.get("risk_note"),
                     draft_text=definition.get("draft_text"),
-                    done=existing_done.get(definition["step_key"], False),
+                    done=existing_done.get(definition["step_key"], (False, None))[0],
+                    done_at=existing_done.get(definition["step_key"], (False, None))[1],
                 )
             )
         case.facts_meta = {**(case.facts_meta or {}), "plan_signature": signature}

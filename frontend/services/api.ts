@@ -103,14 +103,16 @@ export const api = {
     if (signal?.aborted) cancel();
     const timeout = setTimeout(() => controller.abort(new Error("本轮等待超过90秒，已停止，请稍后重试。")), 90_000);
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    let completed = false;
     try {
     const response = await fetch(`${API_BASE}/cases/${caseId}/messages/stream`, {
       method: "POST", headers: {"Content-Type": "application/json", "X-Session-Id": getSessionId()},
       body: JSON.stringify({content}), signal: controller.signal,
     });
     if (!response.ok) {
-      const body = await response.json();
-      throw new ApiError(typeof body.detail === "string" ? body.detail : "无法开始回复", response.status);
+      const body = response.headers.get("content-type")?.includes("application/json") ? await response.json() : null;
+      const message = response.status >= 500 ? "暂时无法连接，请稍后重试。" : "无法开始回复，请重试。";
+      throw new ApiError(typeof body?.detail === "string" ? body.detail : message, response.status);
     }
     if (!response.body) throw new Error("浏览器未提供可读取的数据流");
     reader = response.body.getReader();
@@ -127,7 +129,10 @@ export const api = {
           if (!data) continue;
           const event = JSON.parse(data);
           if (event.type === "error") throw new Error(event.message);
-          if (event.type === "done") return event.result as SendMessageResponse;
+          if (event.type === "done") {
+            completed = true;
+            return event.result as SendMessageResponse;
+          }
           onEvent(event as AgentStreamEvent);
         }
         if (chunk.done) throw new Error("连接中断，回复尚未完成，请重试。");
@@ -135,7 +140,7 @@ export const api = {
     } finally {
       clearTimeout(timeout);
       signal?.removeEventListener("abort", cancel);
-      controller.abort();
+      if (!completed) controller.abort();
       reader?.releaseLock();
     }
   },

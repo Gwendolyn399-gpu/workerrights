@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a4f8a">
+<title>工友权益助手 · 单文件离线演示</title>
+<style>
+:root{
+  --paper:#f6f7f8; --surface:#fff;
+  --brand-50:#eef4fa; --brand-100:#dce8f4; --brand-200:#b9d0e6; --brand-600:#1f5c9e; --brand-700:#1a4f8a; --brand-800:#163f6e; --brand-900:#123253;
+  --ink-50:#f4f6f7; --ink-100:#e8ebee; --ink-200:#d5dae0; --ink-300:#a8b1bb; --ink-400:#6b7683; --ink-500:#5f6c7a; --ink-600:#4a5764; --ink-700:#35424f; --ink-800:#24303d; --ink-900:#1a2430;
+  --ok-bg:#ecfdf5; --ok-fg:#065f46; --ok-bd:#a7f3d0;
+  --warn-bg:#fffbeb; --warn-fg:#78350f; --warn-bd:#fde68a;
+  --bad-bg:#fef2f2; --bad-fg:#991b1b; --bad-bd:#fecaca;
+  --radius:6px; --radius-lg:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink-900);font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Source Han Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+::selection{background:var(--brand-100);color:var(--brand-900)}
+*{scrollbar-width:thin;scrollbar-color:var(--ink-300) transparent}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:#c3ccd4;border-radius:4px}
+*::-webkit-scrollbar-thumb:hover{background:var(--ink-300)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:inherit;text-decoration:none}
+input,select,textarea{font:inherit;color:var(--ink-900)}
+svg{display:block;flex-shrink:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+.wrap-narrow{max-width:768px;margin:0 auto;padding:0 16px}
+/* header */
+.site-header{position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--ink-200)}
+.site-header .row{display:flex;align-items:center;justify-content:space-between;gap:16px;height:56px}
+.logo{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--ink-900)}
+.logo .mark{width:32px;height:32px;border-radius:var(--radius);background:var(--brand-700);color:#fff;display:flex;align-items:center;justify-content:center}
+.header-actions{display:flex;align-items:center;gap:4px}
+.link-quiet{padding:8px 12px;border-radius:var(--radius);font-size:14px;font-weight:500;color:var(--ink-600)}
+.link-quiet:hover{background:var(--ink-100);color:var(--ink-900)}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--radius);font-size:14px;font-weight:500;transition:background .15s,color .15s;white-space:nowrap}
+.btn:focus-visible{outline:2px solid var(--brand-600);outline-offset:2px}
+.btn-primary{background:var(--brand-700);color:#fff}
+.btn-primary:hover{background:var(--brand-800)}
+.btn-outline{border:1px solid var(--ink-200);background:var(--surface);color:var(--ink-800)}
+.btn-outline:hover{background:var(--ink-50)}
+.btn-ghost{color:var(--ink-600)}
+.btn-ghost:hover{background:var(--ink-100);color:var(--ink-900)}
+.btn-danger{background:#b91c1c;color:#fff}
+.btn-danger:hover{background:#991b1b}
+.btn-sm{height:32px;padding:0 12px;font-size:12px}
+.btn-lg{height:44px;padding:0 20px;font-size:15px}
+.btn-icon{width:40px;height:40px;padding:0}
+.btn[disabled]{opacity:.5;pointer-events:none}
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:500;line-height:16px;white-space:nowrap}
+.badge-brand{background:var(--brand-50);color:var(--brand-800)}
+.badge-neutral{background:var(--ink-100);color:var(--ink-600)}
+.badge-ok{background:var(--ok-bg);color:var(--ok-fg)}
+.badge-warn{background:var(--warn-bg);color:var(--warn-fg)}
+.badge-bad{background:var(--bad-bg);color:var(--bad-fg)}
+/* case shell */
+.case-header{position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--ink-200)}
+.case-header .row{display:flex;align-items:center;justify-content:space-between;gap:12px;height:56px}
+.case-title-group{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.back-link{display:flex;align-items:center;gap:4px;padding:6px;border-radius:var(--radius);color:var(--ink-500);font-size:14px;flex-shrink:0}
+.back-link:hover{background:var(--ink-100);color:var(--ink-900)}
+.back-text{display:none}
+.case-title{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.case-demo-badge{display:none}
+.header-progress{display:none;align-items:center;gap:8px}
+.progress{height:6px;width:96px;background:var(--ink-100);border-radius:999px;overflow:hidden}
+.progress>i{display:block;height:100%;background:var(--brand-700);border-radius:999px;transition:width .4s}
+.progress-label{font-size:12px;color:var(--ink-500)}
+.tabs{display:none;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:2px solid transparent;font-size:14px;font-weight:500;color:var(--ink-500);white-space:nowrap}
+.tab:hover{color:var(--ink-900)}
+.tab.active{border-color:var(--brand-700);color:var(--brand-800)}
+.demo-strip{background:var(--warn-bg);border-bottom:1px solid var(--warn-bd)}
+.demo-strip p{max-width:1120px;margin:0 auto;padding:6px 16px;font-size:12px;color:var(--warn-fg)}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--ink-200);padding:4px 8px calc(env(safe-area-inset-bottom) + 8px)}
+.bottom-nav .inner{display:flex;justify-content:space-around;max-width:480px;margin:0 auto}
+.bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;border-radius:var(--radius);font-size:11px;font-weight:500;color:var(--ink-500)}
+.bottom-nav a.active{color:var(--brand-800)}
+.case-main{padding:20px 0 8px}
+.case-foot{padding:8px 0 32px;font-size:12px;line-height:1.6;color:var(--ink-500)}
+/* layout */
+.chat-grid{display:grid;gap:16px}
+.chat-aside{display:none}
+.panel{background:var(--surface);border:1px solid var(--ink-200);border-radius:var(--radius-lg)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--ink-100)}
+.panel-head h2{font-size:14px;font-weight:600}
+.chat-scroll{max-height:46vh;min-height:280px;overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:12px}
+.bubble{max-width:92%;border-radius:var(--radius-lg);padding:10px 14px;font-size:14px;line-height:1.6;animation:fadeup .2s ease-out both}
+.bubble-user{align-self:flex-end;background:var(--brand-700);color:#fff;border-top-right-radius:2px;white-space:pre-wrap}
+.bubble-assist{align-self:flex-start;border:1px solid var(--ink-200);background:var(--surface);color:var(--ink-700);border-top-left-radius:2px}
+.bubble-summary{align-self:flex-start;background:var(--ok-bg);color:#022c22;border-top-left-radius:2px}
+.bubble-update{align-self:flex-start;background:var(--brand-50);color:var(--ink-700);border-top-left-radius:2px}
+.bubble p+p{margin-top:10px}
+.bubble .helper{margin-top:6px;font-size:12px;color:var(--ink-500)}
+.bubble details{margin-top:8px;font-size:12px;color:var(--ink-600)}
+.bubble summary{cursor:pointer;font-weight:500;color:var(--brand-800)}
+.bubble details ul{margin:8px 0 0 16px;display:flex;flex-direction:column;gap:6px}
+.bubble details a{text-decoration:underline;text-underline-offset:2px}
+@keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.offline-note{margin:0 12px 12px;padding:10px 14px;border-radius:var(--radius);background:var(--ink-50);font-size:12px;line-height:1.6;color:var(--ink-600)}
+.mobile-info-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:8px 12px;background:var(--surface);border:1px solid var(--ink-200);border-radius:var(--radius-lg)}
+.mobile-info-bar .loc{font-size:12px;font-weight:500;color:var(--ink-800);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mobile-info-bar .owed{font-size:12px;color:var(--ink-500);margin-top:2px}
+/* definition list */
+.dl{padding:0 16px}
+.dl>div{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--ink-100)}
+.dl>div:last-child{border-bottom:none}
+.dl dt{flex-shrink:0;font-size:12px;color:var(--ink-500)}
+.dl dd{font-size:12px;font-weight:500;color:var(--ink-800);text-align:right}
+.dl dd.unknown{color:var(--ink-400);font-weight:400}
+.dl dd.highlight{color:var(--brand-800);font-weight:600}
+.panel-body{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px}
+.callout{border-radius:var(--radius);padding:8px 12px;font-size:12px;line-height:1.6}
+.callout-warn{background:var(--warn-bg);color:var(--warn-fg)}
+.callout-brand{background:var(--brand-50);color:var(--brand-900)}
+.callout-ok{background:var(--ok-bg);color:#022c22}
+.callout-bad{background:var(--bad-bg);color:var(--bad-fg)}
+.muted{font-size:12px;line-height:1.6;color:var(--ink-500)}
+/* sections */
+.section{border-top:1px solid var(--ink-200);padding-top:24px;margin-top:32px}
+.section:first-of-type{margin-top:24px}
+.section-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px}
+.section-head h2{font-size:18px;font-weight:600}
+.section-desc{margin-top:4px;font-size:14px;line-height:1.6;color:var(--ink-600)}
+.section-body{margin-top:16px}
+.page-head{display:flex;flex-direction:column;gap:16px}
+.page-head h1{font-size:22px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.page-head .summary{margin-top:8px;max-width:720px;font-size:14px;line-height:1.6;color:var(--ink-600);text-wrap:pretty}
+.page-actions{display:flex;flex-wrap:wrap;gap:8px}
+.grid-facts{display:grid;gap:12px 24px}
+.grid-facts .k{font-size:12px;color:var(--ink-500);display:flex;gap:8px;align-items:center}
+.grid-facts .v{margin-top:2px;font-size:14px;font-weight:500;line-height:1.4}
+.grid-facts .v.unknown{color:var(--ink-400);font-weight:400}
+.grid-facts .note{margin-top:2px;font-size:12px;line-height:1.5;color:var(--ink-500)}
+.rel-chain{display:grid;gap:8px}
+.rel-node{border:1px solid var(--ink-200);background:var(--surface);border-radius:var(--radius);padding:10px 12px}
+.rel-node .k{font-size:12px;color:var(--ink-500)}
+.rel-node .v{margin-top:2px;font-size:14px;font-weight:600;line-height:1.4}
+.rel-node .v.unknown{color:var(--ink-400)}
+.rel-node .n{margin-top:2px;font-size:12px;line-height:1.5;color:var(--ink-500)}
+.rel-arrow{display:flex;align-items:center;justify-content:center;color:var(--ink-300)}
+.rel-arrow svg{transform:rotate(90deg)}
+.two-col{display:grid;gap:32px}
+.list-divide{border-top:1px solid var(--ink-100);border-bottom:1px solid var(--ink-100)}
+.list-divide>li{list-style:none;padding:14px 0;border-bottom:1px solid var(--ink-100)}
+.list-divide>li:last-child{border-bottom:none}
+.item-title{font-size:14px;font-weight:600}
+.item-sub{margin-top:2px;font-size:12px;color:var(--ink-500)}
+.item-body{margin-top:4px;font-size:14px;line-height:1.6;color:var(--ink-600)}
+.item-meta{margin-top:6px;font-size:12px;line-height:1.5;color:var(--ink-500)}
+.item-meta a{color:var(--brand-800);font-weight:500}
+.item-meta a:hover{text-decoration:underline}
+.row-between{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+.tag-ok{font-size:12px;font-weight:500;color:var(--ok-fg)}
+.tag-warn{font-size:12px;font-weight:500;color:var(--warn-fg)}
+ul.plain{margin:6px 0 0 18px;display:flex;flex-direction:column;gap:4px;font-size:14px;line-height:1.6;color:var(--ink-600)}
+/* steps */
+.steps{display:flex;flex-direction:column;gap:24px;border-top:1px solid var(--ink-200);padding-top:24px;margin-top:24px}
+.step{display:flex;gap:16px}
+.step-num{width:28px;height:28px;flex-shrink:0;border-radius:999px;background:var(--ink-100);color:var(--ink-700);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.step.done .step-num{background:#047857;color:#fff}
+.step-body{min-width:0;flex:1}
+.step-title{font-size:16px;font-weight:600;line-height:1.4}
+.step.done .step-title{color:#064e3b}
+.step-why{margin-top:4px;font-size:14px;line-height:1.6;color:var(--ink-600)}
+.step-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ink-200);background:var(--surface);border-radius:var(--radius);padding:6px 12px;font-size:12px;font-weight:500;color:var(--ink-600)}
+.step-toggle:hover{background:var(--ink-50)}
+.step.done .step-toggle{border-color:var(--ok-bd);background:var(--ok-bg);color:var(--ok-fg)}
+.prepare-label{margin-top:12px;font-size:12px;font-weight:500;color:var(--ink-500)}
+.draft{margin-top:12px;border-radius:var(--radius);background:var(--brand-50);padding:12px 14px}
+.draft .row-between{align-items:center}
+.draft .label{font-size:12px;font-weight:500;color:var(--brand-900)}
+.draft pre{margin-top:6px;white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.6;color:var(--brand-900)}
+.step-notes{margin-top:12px;display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.5}
+.step-notes .deadline{color:var(--warn-fg)}
+.step-notes .risk{color:var(--ink-500)}
+.step-channel{margin-top:12px;display:flex;flex-wrap:wrap;gap:12px;font-size:12px}
+.step-channel .name{font-weight:500;color:var(--ink-800)}
+.step-channel a{color:var(--brand-800)}
+/* form */
+.form-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;border-top:1px solid var(--ink-200);padding-top:24px;margin-top:24px}
+.form-nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.form-nav::-webkit-scrollbar{display:none}
+.form-nav button{display:flex;align-items:center;gap:10px;min-width:150px;text-align:left;border-radius:var(--radius);padding:8px 12px;color:var(--ink-600)}
+.form-nav button:hover{background:var(--ink-100)}
+.form-nav button.active{background:var(--brand-700);color:#fff}
+.form-nav .n{width:20px;height:20px;flex-shrink:0;border-radius:999px;background:var(--ink-100);color:var(--ink-600);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.form-nav button.active .n{background:rgba(255,255,255,.2);color:#fff}
+.form-nav .t{display:block;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.form-nav .c{display:block;margin-top:2px;font-size:11px;color:var(--ink-500)}
+.form-nav button.active .c{color:var(--brand-100)}
+.field-row{padding:14px 0;border-bottom:1px solid var(--ink-100)}
+.field-row:last-child{border-bottom:none}
+.field-value{margin-top:8px;border-radius:var(--radius);background:var(--ink-50);padding:8px 12px;font-size:14px;line-height:1.6;color:var(--ink-800);white-space:pre-wrap;word-break:break-word}
+.field-value.empty{color:var(--ink-400)}
+.field-foot{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ink-200);background:var(--surface);border-radius:var(--radius);padding:4px 8px;font-size:12px;font-weight:500;color:var(--ink-600)}
+.copy-btn:hover{background:var(--ink-50);color:var(--ink-900)}
+.copy-btn.copied{color:var(--ok-fg)}
+pre.summary-pre{margin-top:8px;max-height:288px;overflow:auto;white-space:pre-wrap;border-radius:var(--radius);background:var(--ink-50);padding:12px 14px;font-family:inherit;font-size:12px;line-height:1.6;color:var(--ink-600)}
+.table-scroll{overflow-x:auto;margin-top:12px}
+table{width:100%;min-width:560px;border-collapse:collapse;text-align:left;font-size:14px}
+th{padding:8px 12px 8px 0;border-bottom:1px solid var(--ink-200);font-size:12px;font-weight:500;color:var(--ink-500)}
+td{padding:10px 12px 10px 0;border-bottom:1px solid var(--ink-100);vertical-align:top;line-height:1.6;color:var(--ink-600)}
+td.label{font-weight:500;color:var(--ink-800)}
+.form-prevnext{margin-top:20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--ink-100);padding-top:16px}
+/* home / cases */
+.home{padding:56px 0}
+.home h1{font-size:32px;font-weight:700;line-height:1.2;letter-spacing:-.01em;text-wrap:balance}
+.home .lede{margin-top:16px;max-width:560px;font-size:16px;line-height:1.7;color:var(--ink-600);text-wrap:pretty}
+.home .cta{margin-top:32px;display:flex;flex-direction:column;gap:12px}
+.home .existing{margin-top:16px;font-size:14px;color:var(--ink-500)}
+.home .existing a{color:var(--brand-800);font-weight:500}
+.home ol.flow{margin-top:48px;border-top:1px solid var(--ink-200);padding-top:32px;display:flex;flex-direction:column;gap:16px;list-style:none}
+.home ol.flow li{display:flex;gap:16px}
+.home ol.flow .n{width:24px;height:24px;flex-shrink:0;margin-top:2px;border-radius:999px;background:var(--ink-100);color:var(--ink-600);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.home ol.flow .t{font-size:14px;font-weight:600}
+.home ol.flow .d{margin-top:2px;font-size:14px;line-height:1.6;color:var(--ink-600)}
+.home .scope{margin-top:40px;border-top:1px solid var(--ink-200);padding-top:24px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.6;color:var(--ink-600)}
+.cases-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.cases-head h1{font-size:24px;font-weight:700}
+.cases-list{margin-top:24px;border-top:1px solid var(--ink-200);border-bottom:1px solid var(--ink-200)}
+.cases-list>li{list-style:none;display:flex;flex-direction:column;gap:12px;padding:16px 0;border-bottom:1px solid var(--ink-200)}
+.cases-list>li:last-child{border-bottom:none}
+.case-row-title{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.case-row-title a{font-size:16px;font-weight:600}
+.case-row-title a:hover{color:var(--brand-800)}
+.case-row-meta{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--ink-500)}
+.case-row-meta .owed{font-weight:600;color:var(--ink-800)}
+.case-row-progress{margin-top:10px;display:flex;align-items:center;gap:8px;max-width:280px}
+.case-row-actions{display:flex;align-items:center;gap:8px}
+.empty{margin-top:48px;border-top:1px solid var(--ink-200);padding-top:40px;text-align:center}
+.empty .t{font-size:16px;font-weight:600}
+.empty .d{margin:8px auto 0;max-width:360px;font-size:14px;line-height:1.6;color:var(--ink-600)}
+.empty .cta{margin-top:20px;display:flex;flex-direction:column;align-items:center;gap:12px}
+/* footer */
+.site-footer{border-top:1px solid var(--ink-200);background:var(--surface);margin-top:48px}
+.site-footer .inner{padding:32px 16px}
+.site-footer .sources{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;font-size:14px}
+.site-footer .sources .label{font-weight:500;color:var(--ink-700)}
+.site-footer .sources a{color:var(--ink-600)}
+.site-footer .sources a:hover{color:var(--brand-800);text-decoration:underline;text-underline-offset:4px}
+.site-footer .disclaimer{margin-top:16px;font-size:12px;line-height:1.7;color:var(--ink-500)}
+/* modal */
+.modal-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center}
+.modal-scrim{position:absolute;inset:0;background:rgba(26,36,48,.4)}
+.modal{position:relative;display:flex;flex-direction:column;max-height:92vh;width:100%;background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:0 12px 40px -12px rgba(26,36,48,.28);animation:fadeup .2s ease-out both;overflow:hidden}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px solid var(--ink-100)}
+.modal-head h2{font-size:16px;font-weight:600}
+.modal-head .desc{margin-top:4px;font-size:14px;line-height:1.6;color:var(--ink-600)}
+.modal-close{padding:6px;border-radius:var(--radius);color:var(--ink-500)}
+.modal-close:hover{background:var(--ink-100);color:var(--ink-800)}
+.modal-body{flex:1;overflow-y:auto;padding:16px 20px}
+.modal-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--ink-100)}
+.form-field{display:block;margin-bottom:12px}
+.form-field .label{display:block;margin-bottom:6px;font-size:12px;font-weight:500;color:var(--ink-600)}
+.form-field input,.form-field select,.form-field textarea{width:100%;height:40px;border:1px solid var(--ink-200);border-radius:var(--radius);background:var(--surface);padding:0 12px;font-size:14px;outline:none}
+.form-field textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical;line-height:1.6}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--brand-600);box-shadow:0 0 0 2px var(--brand-100)}
+/* toast */
+.toast-root{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 72px);z-index:90;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--ink-900);color:#fff;border-radius:var(--radius);padding:8px 16px;font-size:13px;box-shadow:0 12px 40px -12px rgba(26,36,48,.4);animation:fadeup .2s ease-out both;max-width:90vw;text-align:center}
+@media(min-width:640px){
+  .back-text{display:inline}
+  .header-progress{display:flex}
+  .case-demo-badge{display:inline-flex}
+  .home .cta{flex-direction:row;align-items:center}
+  .empty .cta{flex-direction:row;justify-content:center}
+  .cases-list>li{flex-direction:row;align-items:center;justify-content:space-between}
+  .grid-facts{grid-template-columns:repeat(2,1fr)}
+  .modal-overlay{align-items:center;padding:24px}
+  .modal{border-radius:var(--radius-lg);max-width:560px}
+  .modal.wide{max-width:768px}
+  .page-head{flex-direction:row;align-items:flex-start;justify-content:space-between}
+}
+@media(min-width:1024px){
+  .tabs{display:flex}
+  .bottom-nav{display:none}
+  .chat-grid{grid-template-columns:minmax(0,1fr) 300px}
+  .chat-scroll{max-height:calc(100vh - 22rem);min-height:440px}
+  .mobile-info-bar{display:none}
+  .chat-aside{display:block}
+  .grid-facts{grid-template-columns:repeat(3,1fr)}
+  .rel-chain{grid-template-columns:1fr auto 1fr auto 1fr auto 1fr auto 1fr;align-items:stretch}
+  .rel-arrow svg{transform:none}
+  .two-col{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:220px minmax(0,1fr)}
+  .form-nav{flex-direction:column}
+  .form-nav button{min-width:0;width:100%}
+  .home h1{font-size:36px}
+  .toast-root{bottom:32px}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .bubble,.modal,.toast{animation:none}
+  *{transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toast-root" class="toast-root"></div>
+<script>
+"use strict";
+const DATA = __DATA__;
+const LS_KEY = "wr_single_file_state_v1";
+const state = {
+  route: "home",
+  formStep: 0,
+  showAllLegal: false,
+  expandedLegal: new Set(),
+  modal: null,
+  facts: JSON.parse(JSON.stringify(DATA.case.facts)),
+  steps: DATA.action.steps.map(s => ({ ...s })),
+  cases: DATA.cases.cases.map(c => ({ ...c })),
+};
+try {
+  const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+  if (saved && Array.isArray(saved.done)) {
+    state.steps.forEach(s => { if (saved.done.includes(s.id)) s.done = true; });
+  }
+} catch (e) {}
+function persist() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ done: state.steps.filter(s => s.done).map(s => s.id) })); } catch (e) {}
+}
+const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function fmtAmount(v, approx) {
+  if (v == null || isNaN(v)) return "待核实";
+  const t = v >= 10000 ? (v / 10000).toFixed(1).replace(/\.0$/, "") + "万元" : Number(v).toLocaleString("zh-CN") + "元";
+  return approx ? "约" + t : t;
+}
+const ICONS = {
+  hat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><path d="M14 6a6 6 0 0 1 6 6v3"/></svg>',
+  left: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>',
+  right: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>',
+  copy: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+  check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  download: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+  x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  plus: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+  trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+  pencil: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  book: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>',
+  chat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  list: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>',
+  route: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>',
+  file: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+  settings: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>',
+  external: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>',
+};
+const icon = (n) => ICONS[n] || "";
+function toast(msg) {
+  const root = document.getElementById("toast-root");
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  root.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
+}
+async function copyText(text, btn) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; }
+  catch (e) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      ok = document.execCommand("copy"); ta.remove();
+    } catch (e2) { ok = false; }
+  }
+  if (ok) {
+    toast("已复制");
+    if (btn) { const old = btn.innerHTML; btn.classList.add("copied"); btn.innerHTML = icon("check") + "已复制"; setTimeout(() => { btn.classList.remove("copied"); btn.innerHTML = old; }, 1600); }
+  } else toast("复制失败，请手动选择文本");
+}
+function downloadTxt() {
+  const a = DATA.action, f = DATA.form;
+  const lines = [];
+  lines.push("工友权益助手 · 案件材料（离线演示快照）");
+  lines.push("案件：" + DATA.case.title);
+  lines.push("");
+  lines.push("【正式事实陈述】");
+  lines.push(f.formal_statement);
+  lines.push("");
+  lines.push("【行动步骤】");
+  a.steps.forEach(s => {
+    lines.push(s.position + ". " + s.title + (s.done ? "（已完成）" : ""));
+    lines.push("   原因：" + s.why);
+    s.prepare.forEach(p => lines.push("   准备：" + p));
+    if (s.draft_text) lines.push("   话术：" + s.draft_text);
+    if (s.deadline_note) lines.push("   期限：" + s.deadline_note);
+    if (s.risk_note) lines.push("   风险：" + s.risk_note);
+  });
+  lines.push("");
+  lines.push("【官方填报字段参考】");
+  lines.push(f.copy_summary);
+  lines.push("");
+  lines.push("【证据目录】");
+  f.evidence_directory.forEach(e => lines.push("- " + e.label + "｜" + e.proves + "｜" + e.status + "｜" + e.how_to_get));
+  lines.push("");
+  lines.push("说明：本文件由离线演示快照生成，仅供整理参考，不构成正式法律意见。");
+  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url; link.download = "工友权益助手-案件材料.txt";
+  document.body.appendChild(link); link.click(); link.remove();
+  URL.revokeObjectURL(url);
+  toast("已下载文本材料");
+}
+/* ---- shared fragments ---- */
+function badge(text, variant) { return '<span class="badge badge-' + variant + '">' + esc(text) + "</span>"; }
+function progress(pct, label) {
+  return '<div class="header-progress"><div class="progress"><i style="width:' + Math.max(0, Math.min(100, pct)) + '%"></i></div>' + (label ? '<span class="progress-label">' + esc(label) + "</span>" : "") + "</div>";
+}
+function siteHeader() {
+  return '<header class="site-header"><div class="wrap row"><a class="logo" href="#" data-nav="home"><span class="mark">' + icon("hat") + "</span>工友权益助手</a>" +
+    '<div class="header-actions"><a class="link-quiet" href="#" data-nav="cases">我的案件</a>' +
+    '<button class="btn btn-primary btn-sm" data-action="offline-start">开始咨询</button></div></div></header>';
+}
+function siteFooter() {
+  const sources = [["国家法律法规数据库", "https://flk.npc.gov.cn/"], ["人力资源社会保障部", "https://www.mohrss.gov.cn/"], ["河南省人社厅", "https://hrss.henan.gov.cn/"], ["中国法律服务网", "https://12348.gov.cn/"]];
+  return '<footer class="site-footer"><div class="wrap inner"><div class="sources"><span class="label">官方来源</span>' +
+    sources.map(s => '<a href="' + s[1] + '" target="_blank" rel="noreferrer noopener">' + esc(s[0]) + "</a>").join("") + "</div>" +
+    '<p class="disclaimer">本产品提供信息整理、法律资料检索和办事路径参考，不构成正式法律意见，不承诺追回工资或胜诉，不自动向政府平台提交。法律条文与地方政策以官方最新公布为准；复杂或紧急案件请拨打 12348 或咨询专业律师。</p>' +
+    '<p class="disclaimer">服务范围：河南省 · 建筑工地欠薪。本页为单文件离线演示快照，数据来自虚构演示案件，不含后端服务。</p></div></footer>';
+}
+const TABS = [["chat", "对话", "chat"], ["analysis", "案件分析", "list"], ["action", "行动指南", "route"], ["form", "官方填报", "file"]];
+function caseShell(content) {
+  const c = DATA.case;
+  const done = state.steps.filter(s => s.done).length;
+  const tabs = TABS.map(t => '<a class="tab' + (state.route === t[0] ? " active" : "") + '" href="#" data-nav="' + t[0] + '">' + icon(t[2]) + esc(t[1]) + "</a>").join("");
+  const bottom = TABS.map(t => '<a class="' + (state.route === t[0] ? "active" : "") + '" href="#" data-nav="' + t[0] + '">' + icon(t[2]) + esc(t[1]) + "</a>").join("");
+  return '<header class="case-header"><div class="wrap"><div class="row">' +
+    '<div class="case-title-group"><a class="back-link" href="#" data-nav="cases">' + icon("left") + '<span class="back-text">我的案件</span></a>' +
+    '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1"><span class="case-title">' + esc(c.title) + '</span><span class="case-demo-badge">' + badge("虚构演示", "neutral") + "</span></div></div>" +
+    '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">' + progress(c.progress.percent, c.progress.done + "/" + c.progress.total) +
+    '<button class="btn btn-outline btn-sm" data-action="offline-start">' + icon("plus") + "新建</button></div></div>" +
+    '<nav class="tabs" aria-label="案件工作台导航">' + tabs + "</nav></div></header>" +
+    '<div class="demo-strip"><p>虚构演示：人物、项目、公司名称均为虚构，仅用于体验流程。离线快照不含实时对话与后端服务。</p></div>' +
+    '<main class="wrap case-main">' + content + "</main>" +
+    '<div class="wrap case-foot">' + esc(DATA.meta.provider.display_name) + " · 法律资料以官方原文为准 · 不构成正式法律意见，不自动向政府平台提交。</div>" +
+    '<nav class="bottom-nav" aria-label="案件工作台导航"><div class="inner">' + bottom + "</div></nav>";
+}
+function factRows() {
+  const f = state.facts;
+  const cat = DATA.meta.evidence_catalog || [];
+  const evLabel = (keys) => !keys || !keys.length ? "待核实" : keys.map(k => (cat.find(c => c.key === k) || {}).label || k).join("、");
+  const loc = [f.location_province === "河南省" ? "河南" : f.location_province, f.location_city, f.location_district, f.location_detail].filter(Boolean).join(" · ") || "待核实";
+  const period = f.work_start && f.work_end ? f.work_start + " 至 " + f.work_end : f.work_start ? f.work_start + " 起" : f.duration_text ? "约" + f.duration_text : "待核实";
+  const wage = [f.wage_basis, f.daily_wage ? "每天" + fmtAmount(f.daily_wage) : "", f.monthly_wage ? "每月" + fmtAmount(f.monthly_wage) : ""].filter(Boolean).join("，") || "待核实";
+  return [
+    ["工作地点", loc, !!f.location_city, false],
+    ["工种", f.work_type || "待核实", !!f.work_type, false],
+    ["工作时间", period, !!(f.work_start || f.duration_text), false],
+    ["工资约定", wage, !!(f.wage_basis || f.daily_wage || f.monthly_wage), false],
+    ["目前欠薪", f.owed_amount ? fmtAmount(f.owed_amount, f.owed_amount_approx) : "待核实", !!f.owed_amount, !!f.owed_amount],
+    ["书面合同", f.has_contract === "yes" ? "已签" : f.has_contract === "no" ? "未签" : "待核实", !!f.has_contract, false],
+    ["招用/管理", [f.recruiter_type, f.manager_role].filter(Boolean).join(" / ") || "待核实", !!(f.recruiter_type || f.manager_role), false],
+    ["已有证据", evLabel(f.evidence), !!(f.evidence && f.evidence.length), false],
+  ];
+}
+function factsPanel(bare) {
+  const rows = factRows();
+  const missing = Object.entries(DATA.case.progress.checks).filter(([, v]) => !v).map(([k]) => (DATA.checkLabels || {})[k] || k);
+  const confirmed = DATA.case.intake.confirmed;
+  const head = bare
+    ? '<div style="display:flex;justify-content:flex-end;padding-bottom:8px">' + badge(confirmed ? "已确认" : "补充信息中", confirmed ? "ok" : "warn") + "</div>"
+    : '<div class="panel-head"><h2>案件信息</h2>' + badge(confirmed ? "已确认" : "补充信息中", confirmed ? "ok" : "warn") + "</div>";
+  return '<div class="' + (bare ? "" : "panel") + '">' + head +
+    '<dl class="dl" style="' + (bare ? "padding:0" : "") + '">' + rows.map(r =>
+      "<div><dt>" + esc(r[0]) + '</dt><dd class="' + (r[3] ? "highlight" : r[2] ? "" : "unknown") + '">' + esc(r[1]) + "</dd></div>").join("") + "</dl>" +
+    '<div class="panel-body" style="' + (bare ? "padding:12px 0 0" : "") + '">' +
+    (missing.length ? '<p class="callout callout-warn">还需补充：' + esc(missing.join("、")) + "</p>" : "") +
+    '<button class="btn btn-outline btn-sm" data-action="open-facts">' + icon("pencil") + "修改案件信息</button>" +
+    '<button class="btn btn-ghost btn-sm" data-action="open-legal">' + icon("book") + "查看法律依据</button>" +
+    "</div></div>";
+}
+/* ---- routes ---- */
+function homeView() {
+  const steps = [["说情况", "用大白话讲在哪儿干活、谁欠你多少钱。"], ["补事实", "一次回答一个问题，自动整理成案件事实。"], ["看分析", "匹配法律条文，标出证据缺口和管辖渠道。"], ["照步骤办", "生成行动清单、陈述和官方填报参考，可复制下载。"]];
+  return siteHeader() + '<main class="wrap-narrow home"><h1>被拖欠工资？说说你的情况。</h1>' +
+    '<p class="lede">不用先懂法律。一次问一个问题，帮你把事实理清，找到法律依据和该走的步骤。</p>' +
+    '<div class="cta"><button class="btn btn-primary btn-lg" data-action="offline-start">说说我的情况' + icon("right") + "</button>" +
+    '<button class="btn btn-outline btn-lg" data-nav="chat">先看演示案件</button></div>' +
+    '<p class="existing">已有案件？<a href="#" data-nav="cases">继续查看</a></p>' +
+    '<ol class="flow">' + steps.map((s, i) => '<li><span class="n">' + (i + 1) + '</span><div><p class="t">' + esc(s[0]) + '</p><p class="d">' + esc(s[1]) + "</p></div></li>").join("") + "</ol>" +
+    '<div class="scope"><p>首期完整支持河南省建筑工地欠薪。其他劳动权益问题可先拨打 12348 公共法律服务热线，或 12333 联系当地人社部门。</p>' +
+    "<p>不要求身份证号；案件仅本浏览器会话可见，可随时删除；只辅助整理材料，不代替你向政府平台提交。</p></div></main>" + siteFooter();
+}
+function casesView() {
+  const list = state.cases;
+  const rows = list.map(c => {
+    const st = c.status === "collecting" ? ["补充信息中", "warn"] : c.status === "ready" ? ["信息已确认", "ok"] : ["已生成行动方案", "brand"];
+    return "<li><div style=\"min-width:0\"><div class=\"case-row-title\"><a href=\"#\" data-nav=\"chat\">" + esc(c.title) + "</a>" + badge(st[0], st[1]) + (c.is_demo ? badge("虚构演示", "neutral") : "") + "</div>" +
+      '<div class="case-row-meta"><span>' + esc([c.city, c.district].filter(Boolean).join(" · ") || "地点待核实") + "</span><span>" + esc(c.work_type || "工种待核实") + '</span><span class="owed">' + esc(c.owed_amount ? "欠薪 " + fmtAmount(c.owed_amount, c.owed_amount_approx) : "欠薪金额待核实") + "</span></div>" +
+      '<div class="case-row-progress"><div class="progress" style="flex:1"><i style="width:' + c.progress.percent + '%"></i></div><span class="progress-label">' + c.progress.done + "/" + c.progress.total + "</span></div></div>" +
+      '<div class="case-row-actions"><button class="btn btn-primary btn-sm" data-nav="chat">继续</button>' +
+      '<button class="btn btn-ghost btn-icon" style="width:36px;height:36px" data-action="delete-case" data-id="' + esc(c.id) + '" aria-label="删除案件：' + esc(c.title) + '">' + icon("trash") + "</button></div></li>";
+  }).join("");
+  return siteHeader() + '<main class="wrap-narrow" style="padding:40px 16px"><div class="cases-head"><h1>我的案件</h1>' +
+    '<div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" data-action="offline-start">说说我的情况</button><button class="btn btn-outline btn-sm" data-nav="chat">演示案件</button></div></div>' +
+    '<p class="muted" style="margin-top:8px">离线快照：案件列表仅在本页内保存，删除不会影响到本地完整版。</p>' +
+    (list.length ? '<ul class="cases-list">' + rows + "</ul>" :
+      '<div class="empty"><p class="t">还没有案件</p><p class="d">说说遇到的欠薪情况，一次回答一个问题，整理成可用的维权材料。</p><div class="cta"><button class="btn btn-primary" data-action="offline-start">说说我的情况</button><button class="btn btn-outline" data-nav="chat">打开虚构演示案件</button></div></div>') +
+    '<p class="muted" style="margin-top:20px">删除案件会同时删除聊天记录和已勾选的行动步骤，且不可恢复。</p></main>' + siteFooter();
+}
+function chatView() {
+  const msgs = DATA.case.messages.map(m => {
+    if (m.role === "user") return '<div class="bubble bubble-user">' + esc(m.content) + "</div>";
+    const kind = (m.meta || {}).kind;
+    const cls = kind === "summary" ? "bubble-summary" : kind === "facts_updated" ? "bubble-update" : "bubble-assist";
+    const paras = String(m.content).split(/\n\s*\n/).map(p => "<p>" + esc(p.replace(/^#{1,6}\s+/gm, "")) + "</p>").join("");
+    const cites = (m.meta || {}).citations || [];
+    const citeHtml = cites.length ? "<details><summary>查看依据（" + cites.length + "）</summary><ul>" + cites.map(ct => {
+      const doc = ct.document || {};
+      const title = [doc.title || ct.title, ct.article].filter(Boolean).join(" · ");
+      const url = doc.official_url || ct.official_url;
+      return "<li>" + (url ? '<a href="' + esc(url) + '" target="_blank" rel="noreferrer noopener">' + esc(title) + "</a>" : esc(title)) + "</li>";
+    }).join("") + "</ul></details>" : "";
+    const helper = (m.meta || {}).question && m.meta.question.helper ? '<p class="helper">' + esc(m.meta.question.helper) + "</p>" : "";
+    return '<div class="bubble ' + cls + '">' + paras + citeHtml + helper + "</div>";
+  }).join("");
+  const f = state.facts;
+  return caseShell(
+    '<div class="mobile-info-bar"><div style="min-width:0"><p class="loc">' + esc(factRows()[0][1]) + '</p><p class="owed">' + esc(f.owed_amount ? "欠薪 " + fmtAmount(f.owed_amount, f.owed_amount_approx) : "欠薪金额待核实") + "</p></div>" +
+    '<button class="btn btn-outline btn-sm" data-action="open-info">' + icon("settings") + "案件信息</button></div>" +
+    '<div class="chat-grid"><div style="min-width:0"><div class="panel"><div class="chat-scroll">' + msgs + "</div>" +
+    '<p class="offline-note">离线演示快照：以上为已生成的对话记录。实时对话、语音输入与模型回复需运行本地完整版（前端 + 后端）。</p></div></div>' +
+    '<aside class="chat-aside"><div style="position:sticky;top:128px">' + factsPanel(false) + "</div></aside></div>"
+  );
+}
+function analysisView() {
+  const a = DATA.analysis;
+  const legalMap = new Map(a.legal_analysis.map(l => [l.id, l]));
+  const visible = state.showAllLegal ? a.legal_analysis : a.legal_analysis.slice(0, 4);
+  const facts = a.basic_info.map(b =>
+    '<div><p class="k">' + esc(b.label) + (b.status === "unknown" ? '<span style="color:var(--ink-400)">待核实</span>' : b.status === "approx" ? '<span style="color:var(--warn-fg)">约数</span>' : "") + "</p>" +
+    '<p class="v' + (b.status === "unknown" ? " unknown" : "") + '">' + esc(b.value) + "</p>" + (b.note ? '<p class="note">' + esc(b.note) + "</p>" : "") + "</div>").join("");
+  const rel = a.relationship.nodes.map((n, i) =>
+    '<div class="rel-node"><p class="k">' + esc(n.label) + '</p><p class="v' + (n.status === "unknown" ? " unknown" : "") + '">' + esc(n.name) + '</p><p class="n">' + esc(n.note) + "</p></div>" +
+    (i < a.relationship.nodes.length - 1 ? '<div class="rel-arrow">' + icon("right") + "</div>" : "")).join("");
+  const evGroup = (title, items, empty) =>
+    "<div><div class=\"row-between\"><h3 class=\"item-title\">" + esc(title) + '</h3><span class="muted">' + items.length + " 项</span></div>" +
+    (items.length ? '<ul class="plain">' + items.map(it => "<li><strong style=\"color:var(--ink-800)\">" + esc(it.label) + "</strong>" + (it.proves && it.proves.length ? "：" + esc(it.proves.join("、")) : "") + (it.reason ? "：" + esc(it.reason) : "") + (it.how_to_get ? '<span style="display:block;font-size:12px;color:var(--ink-500)">' + esc(it.how_to_get) + "</span>" : "") + "</li>").join("") + "</ul>" : '<p class="muted" style="margin-top:6px">' + esc(empty) + "</p>") + "</div>";
+  const rights = a.rights.map(r =>
+    "<li><div class=\"row-between\"><h3 class=\"item-title\">" + esc(r.title) + '</h3><span class="' + (r.status === "核心诉求" ? "tag-ok" : "tag-warn") + '">' + esc(r.status) + "</span></div>" +
+    '<p class="item-body">' + esc(r.description) + "</p>" +
+    (r.basis.length ? '<p class="item-meta">依据：' + esc(r.basis.map(b => { const l = legalMap.get(b); return l ? l.article + "（" + l.document_title.replace("中华人民共和国", "") + "）" : b; }).join("；")) + "</p>" : "") + "</li>").join("");
+  const legal = visible.map(l =>
+    "<li><div class=\"row-between\"><div><p class=\"item-title\">" + esc(l.document_title) + " · " + esc(l.article) + '</p><p class="item-sub">' + esc(l.heading) + "</p></div>" +
+    badge(l.verification_label || l.verification_status, l.verification_status === "pending" ? "warn" : "neutral") + "</div>" +
+    '<p class="item-body">' + esc(l.text) + "</p>" +
+    '<div class="two-col" style="gap:8px;margin-top:8px"><p class="item-meta"><span class="tag-ok">适用判断：</span>' + esc(l.applicability) + '</p><p class="item-meta"><span class="tag-warn">待核实：</span>' + esc(l.pending_verification.length ? l.pending_verification.join("；") : "暂无额外待核实事项") + "</p></div>" +
+    (l.supporting_facts.length ? '<p class="item-meta">已陈述事实：' + esc(l.supporting_facts.join(" ")) + "</p>" : "") +
+    '<p class="item-meta">' + esc(l.issuing_authority) + " · " + esc(l.document_number) + (l.official_url ? ' · <a href="' + esc(l.official_url) + '" target="_blank" rel="noreferrer noopener">官方来源</a>' : "") + "</p>" +
+    (l.source_note ? '<p class="item-meta">' + esc(l.source_note) + "</p>" : "") + "</li>").join("");
+  const risks = a.risk_flags.map(r => "<li><p class=\"item-title\" style=\"color:" + (r.level === "attention" ? "var(--warn-fg)" : "var(--ink-800)") + "\">" + esc(r.title) + '</p><p class="item-body">' + esc(r.detail) + "</p></li>").join("");
+  const j = a.jurisdiction;
+  return caseShell(
+    (a.preliminary ? '<p class="callout callout-warn" style="margin-bottom:16px"><strong>案件信息尚未确认。</strong>' + esc(a.preliminary_note || "") + "</p>" : "") +
+    '<div class="page-head"><div style="min-width:0"><h1>' + esc(a.title) + '</h1><p class="summary">' + esc(a.summary) + '</p><p class="muted" style="margin-top:8px">信息完整度 ' + a.completeness.percent + "%</p></div>" +
+    '<div class="page-actions"><button class="btn btn-outline btn-sm" data-action="export">' + icon("download") + "下载文本材料</button>" +
+    '<button class="btn btn-primary btn-sm" data-nav="action">行动指南' + icon("right") + "</button></div></div>" +
+    '<section class="section"><div class="section-head"><h2>基本情况</h2></div><p class="section-desc">未知信息保留为待核实，不会自动补全。</p><div class="section-body grid-facts">' + facts + "</div></section>" +
+    '<section class="section"><div class="section-head"><h2>可能的用工关系</h2></div><p class="section-desc">根据你的陈述生成，不据此认定最终责任。</p><div class="section-body"><div class="rel-chain">' + rel + "</div>" +
+    (a.relationship.confirmed_notes.length ? '<ul class="plain">' + a.relationship.confirmed_notes.map(n => "<li>" + esc(n) + "</li>").join("") + "</ul>" : "") +
+    '<p class="callout callout-warn" style="margin-top:12px">' + esc(a.relationship.disclaimer) + "</p></div></section>" +
+    '<section class="section"><div class="section-head"><h2>证据情况</h2></div><p class="section-desc">' + esc(a.evidence.summary) + '</p><div class="section-body two-col">' +
+    evGroup("已经拥有", a.evidence.have, "尚未整理出已有材料。") + evGroup("还需要寻找", a.evidence.needed, "暂无额外必补材料。") +
+    evGroup("可替代或辅助证明", a.evidence.alternatives, "暂无替代材料建议。") + evGroup("需要进一步核实", a.evidence.verify, "暂无待核实项。") + "</div>" +
+    '<p class="callout callout-brand" style="margin-top:16px">' + esc(a.evidence.disclaimer) + "</p></section>" +
+    '<section class="section"><div class="section-head"><h2>可能涉及的权益</h2></div><p class="section-desc">是否成立需结合事实和程序判断。</p><div class="section-body"><ul class="list-divide">' + rights + "</ul></div></section>" +
+    '<section class="section"><div class="section-head"><h2>法律分析</h2></div><p class="section-desc">共 ' + a.legal_analysis.length + " 条可能相关依据。" + esc(a.legal_sources.verification_summary.note) + '</p><div class="section-body"><ul class="list-divide">' + legal + "</ul>" +
+    (a.legal_analysis.length > 4 ? '<button class="btn btn-outline btn-sm" style="margin-top:16px" data-action="toggle-legal">' + (state.showAllLegal ? "收起" : "展开全部 " + a.legal_analysis.length + " 条") + "</button>" : "") + "</div></section>" +
+    '<div class="two-col" style="border-top:1px solid var(--ink-200);padding-top:24px;margin-top:32px"><section><h2 style="font-size:18px;font-weight:600">需要特别注意</h2><ul class="plain" style="margin-top:16px;gap:12px">' + risks + "</ul></section>" +
+    '<section><h2 style="font-size:18px;font-weight:600">去哪里办</h2><div style="margin-top:16px"><p class="muted">建议优先联系</p><p style="margin-top:2px;font-size:16px;font-weight:600">' + esc(j.primary_agency) + '</p><p class="item-body">' + esc(j.guidance) + '</p><p class="item-meta">' + esc([j.city, j.district].filter(Boolean).join(" · ") || "城市待确认") + " · 管辖信息" + (j.confidence === "high" ? "较明确" : "需核实") + '</p><p class="item-meta">' + esc(j.note) + '</p><div class="page-actions" style="margin-top:16px"><button class="btn btn-primary btn-sm" data-nav="action">分步行动指南' + icon("right") + '</button><button class="btn btn-outline btn-sm" data-nav="form">官方填报辅助</button></div></div></section></div>' +
+    '<p class="muted" style="border-top:1px solid var(--ink-200);padding-top:16px;margin-top:32px">' + esc(a.disclaimer) + "</p>"
+  );
+}
+function actionView() {
+  const a = DATA.action;
+  const done = state.steps.filter(s => s.done).length;
+  const pct = Math.round(done / state.steps.length * 100);
+  const channelsById = new Map(a.channels.map(c => [c.id, c]));
+  const primary = channelsById.get(a.primary_channel_id);
+  const steps = state.steps.map(s => {
+    const ch = s.channel_id ? channelsById.get(s.channel_id) : null;
+    return '<li class="step' + (s.done ? " done" : "") + '"><span class="step-num">' + (s.done ? icon("check") : s.position) + '</span><div class="step-body">' +
+      '<div class="row-between" style="align-items:flex-start"><div><h3 class="step-title">' + esc(s.title) + '</h3><p class="step-why">' + esc(s.why) + "</p></div>" +
+      '<button class="step-toggle" data-action="toggle-step" data-id="' + esc(s.id) + '">' + (s.done ? icon("check") + "已完成" : "标记完成") + "</button></div>" +
+      (s.prepare.length ? '<p class="prepare-label">需要准备</p><ul class="plain">' + s.prepare.map(p => "<li>" + esc(p) + "</li>").join("") + "</ul>" : "") +
+      (s.draft_text ? '<div class="draft"><div class="row-between"><span class="label">可复制沟通话术</span><button class="copy-btn" data-action="copy" data-copy="draft:' + esc(s.id) + '">' + icon("copy") + "复制话术</button></div><pre>" + esc(s.draft_text) + "</pre></div>" : "") +
+      ((s.deadline_note || s.risk_note) ? '<div class="step-notes">' + (s.deadline_note ? '<p class="deadline">期限：' + esc(s.deadline_note) + "</p>" : "") + (s.risk_note ? '<p class="risk">风险：' + esc(s.risk_note) + "</p>" : "") + "</div>" : "") +
+      (ch ? '<div class="step-channel"><span class="name">' + esc(ch.name) + "</span>" + (ch.official_url ? '<a href="' + esc(ch.official_url) + '" target="_blank" rel="noreferrer noopener">官方入口 ' + icon("external") + "</a>" : "") + "</div>" : "") +
+      "</div></li>";
+  }).join("");
+  const deadlines = a.deadlines.map(d => "<li><div class=\"row-between\"><p class=\"item-title\" style=\"color:var(--warn-fg)\">" + esc(d.title) + '</p><span class="tag-warn">' + esc(d.urgency) + "</span></div><p class=\"item-body\">" + esc(d.detail) + "</p></li>").join("");
+  const channels = a.channels.map(c =>
+    "<li><div class=\"row-between\"><p class=\"item-title\">" + esc(c.name) + "</p>" + badge(c.recommended ? "推荐" : c.verification_status === "transcribed" ? "来源待核验" : c.verification_status, c.recommended ? "ok" : c.verification_status === "pending" ? "warn" : "neutral") + "</div>" +
+    '<p class="item-sub">' + esc(c.category) + '</p><p class="item-body">' + esc(c.description) + "</p>" +
+    (c.reason ? '<p class="item-meta" style="color:var(--brand-800)">' + esc(c.reason) + "</p>" : "") +
+    '<p class="item-meta">' + (c.official_url ? '<a href="' + esc(c.official_url) + '" target="_blank" rel="noreferrer noopener">官方入口 ' + icon("external") + "</a>" : "") + (c.access_note ? " " + esc(c.access_note) : "") + "</p></li>").join("");
+  return caseShell(
+    (a.preliminary ? '<p class="callout callout-warn" style="margin-bottom:16px"><strong>案件信息尚未确认。</strong>' + esc(a.preliminary_note || "") + "</p>" : "") +
+    '<div class="page-head"><div style="min-width:0"><h1>行动指南</h1><p class="summary">按顺序做，勾选后自动保存。优先走劳动保障监察和全国欠薪线索平台，视情况再考虑仲裁、法律援助或诉讼。</p>' +
+    '<div style="margin-top:12px;display:flex;align-items:center;gap:12px;max-width:280px"><div class="progress" style="flex:1;width:auto"><i style="width:' + pct + '%"></i></div><span class="progress-label">' + done + "/" + state.steps.length + " 步</span></div></div>" +
+    '<div class="page-actions"><button class="btn btn-outline btn-sm" data-action="export">' + icon("download") + "下载文本材料</button><button class=\"btn btn-primary btn-sm\" data-nav=\"form\">官方填报" + icon("right") + "</button></div></div>" +
+    (primary ? '<div class="two-col" style="border-top:1px solid var(--ink-200);padding-top:24px;margin-top:24px"><div><p class="muted">优先渠道</p><p style="margin-top:2px;font-size:16px;font-weight:600">' + esc(primary.name) + '</p><p class="item-body">' + esc(primary.reason) + '</p><div class="page-actions" style="margin-top:12px"><a class="btn btn-primary btn-sm" href="' + esc(primary.official_url || "https://hrss.henan.gov.cn/") + '" target="_blank" rel="noreferrer noopener">官方入口 ' + icon("external") + '</a><span class="muted" style="align-self:center">12333 可确认受理机构</span></div></div>' +
+      '<div><div class="row-between" style="align-items:center"><p class="muted">正式事实陈述</p><button class="copy-btn" data-action="copy" data-copy="statement">' + icon("copy") + '复制陈述</button></div><p class="item-body" style="display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden">' + esc(a.formal_statement) + "</p></div></div>" : "") +
+    '<ol class="steps">' + steps + "</ol>" +
+    '<div class="two-col" style="border-top:1px solid var(--ink-200);padding-top:24px;margin-top:32px"><section><h2 style="font-size:18px;font-weight:600">时效与风险</h2><ul class="plain" style="margin-top:16px;gap:12px;list-style:none;margin-left:0">' + deadlines + a.risks.map(r => "<li>" + esc(r) + "</li>").join("") + "</ul></section>" +
+    '<section><h2 style="font-size:18px;font-weight:600">推荐渠道</h2><p class="section-desc">不同渠道可并行准备材料，具体受理以官方告知为准。</p><ul class="list-divide" style="margin-top:16px">' + channels + "</ul></section></div>" +
+    '<p class="muted" style="border-top:1px solid var(--ink-200);padding-top:16px;margin-top:32px">' + esc(a.disclaimer) + "</p>"
+  );
+}
+function formView() {
+  const f = DATA.form;
+  const step = f.steps[state.formStep];
+  const ready = f.steps.reduce((s, it) => s + it.fields.filter(x => x.status === "ready" || x.status === "official_only").length, 0);
+  const statusMap = { ready: ["可填写", "ok"], missing: ["待补充", "warn"], verify: ["需核对", "warn"], official_only: ["仅官方填写", "neutral"] };
+  const nav = f.steps.map((it, i) => {
+    const r = it.fields.filter(x => x.status === "ready" || x.status === "official_only").length;
+    return '<button class="' + (i === state.formStep ? "active" : "") + '" data-action="form-step" data-index="' + i + '"><span class="n">' + (i + 1) + '</span><span style="min-width:0;flex:1"><span class="t">' + esc(it.title) + '</span><span class="c">' + (it.fields.length ? r + "/" + it.fields.length + " 可用" : "操作步骤") + "</span></span></button>";
+  }).join("");
+  const fields = step.fields.map(fd => {
+    const st = statusMap[fd.status];
+    const value = fd.status === "official_only" ? (fd.placeholder || "请仅在官方平台填写") : fd.value ? fd.value : (fd.placeholder || "暂未整理出可用内容，补充后生成。");
+    const isEmpty = fd.status !== "official_only" && !fd.value;
+    return '<div class="field-row"><div class="row-between"><p class="item-title">' + esc(fd.label) + (fd.required ? '<span style="margin-left:6px;font-size:12px;font-weight:400;color:#b91c1c">必填</span>' : "") + "</p>" + badge(st[0], st[1]) + "</div>" +
+      '<p class="item-sub">' + esc(fd.explanation) + '</p><div class="field-value' + (isEmpty ? " empty" : "") + '">' + esc(value) + "</div>" +
+      (fd.note ? '<p class="item-meta">' + esc(fd.note) + "</p>" : "") +
+      '<div class="field-foot">' + (fd.source_facts.length ? '<p class="muted">来自：' + esc(fd.source_facts.join("、")) + "</p>" : "<span></span>") +
+      (fd.value && fd.status !== "official_only" ? '<button class="copy-btn" data-action="copy" data-copy="field:' + esc(fd.key) + '">' + icon("copy") + "复制此字段</button>" : fd.status === "missing" ? '<span class="tag-warn">补充后生成参考内容</span>' : "") + "</div></div>";
+  }).join("");
+  const lastChecklist = ["姓名、手机号和身份证号由你本人在官方平台填写", "项目所在地、项目名称和欠薪金额已核对", "证据图片清晰、能打开，且没有发给陌生人", "保存提交成功页面、查询码或受理编号"];
+  const body = step.fields.length
+    ? '<div class="list-divide" style="margin-top:16px">' + fields + "</div>"
+    : state.formStep === 0
+      ? '<div style="margin-top:16px"><p class="item-body">' + esc(f.platform.access_note) + '</p><a class="btn btn-primary btn-sm" style="margin-top:12px" href="' + esc(f.platform.official_url) + '" target="_blank" rel="noreferrer noopener">打开官方页面 ' + icon("external") + "</a></div>"
+      : state.formStep === f.steps.length - 1
+        ? '<div style="margin-top:16px"><div class="callout callout-ok"><p style="font-size:14px;font-weight:600">提交前最后核对</p><ul class="plain" style="margin-top:8px">' + lastChecklist.map(x => "<li>" + esc(x) + "</li>").join("") + '</ul></div><p class="item-title" style="margin-top:16px">全部字段参考</p><pre class="summary-pre">' + esc(f.copy_summary) + "</pre></div>"
+        : "";
+  const evidence = f.evidence_directory.map(e =>
+    "<tr><td class=\"label\">" + esc(e.label) + "</td><td>" + esc(e.proves) + "</td><td>" + badge(e.status, e.status === "已有" ? "ok" : e.status === "待补充" ? "warn" : "neutral") + "</td><td>" + esc(e.how_to_get) + "</td></tr>").join("");
+  return caseShell(
+    (f.preliminary ? '<p class="callout callout-warn" style="margin-bottom:16px"><strong>案件信息尚未确认。</strong>' + esc(f.preliminary_note || "") + "</p>" : "") +
+    '<div class="page-head"><div style="min-width:0"><h1>官方填报辅助</h1><p class="item-sub" style="margin-top:4px">' + esc(f.platform.name) + '</p><p class="summary">按官方填报顺序逐字段整理参考内容，复制后由你本人核对并提交。本产品不自动登录或代替提交。</p>' +
+    '<div style="margin-top:12px;display:flex;align-items:center;gap:12px;max-width:280px"><div class="progress" style="flex:1;width:auto"><i style="width:' + f.progress.percent + '%"></i></div><span class="progress-label">' + ready + "/" + f.progress.total + " 字段可用</span></div></div>" +
+    '<div class="page-actions"><button class="copy-btn" data-action="copy" data-copy="all">' + icon("copy") + "复制全部字段</button><button class=\"btn btn-outline btn-sm\" data-action=\"export\">" + icon("download") + "下载文本材料</button></div></div>" +
+    '<div class="form-grid"><div><div class="form-nav">' + nav + '</div><p class="muted" style="margin-top:16px;display:none" id="form-privacy">' + esc(f.privacy_notice) + "</p></div>" +
+    '<div style="min-width:0"><section><p class="muted">第 ' + (state.formStep + 1) + " 步 / 共 " + f.steps.length + ' 步</p><h2 style="margin-top:2px;font-size:18px;font-weight:600">' + esc(step.title) + '</h2><p class="section-desc">' + esc(step.goal) + "</p>" +
+    (step.tips.length ? '<ul class="plain">' + step.tips.map(t => "<li>" + esc(t) + "</li>").join("") + "</ul>" : "") + body +
+    '<div class="form-prevnext"><button class="btn btn-ghost btn-sm" data-action="form-prev"' + (state.formStep === 0 ? " disabled" : "") + ">" + icon("left") + "上一步</button>" +
+    (state.formStep < f.steps.length - 1 ? '<button class="btn btn-primary btn-sm" data-action="form-next">下一步' + icon("right") + "</button>" : '<button class="btn btn-primary btn-sm" data-nav="action">回到行动指南' + icon("right") + "</button>") + "</div></section>" +
+    '<section class="section"><div class="row-between" style="align-items:center"><h2>正式事实陈述</h2><button class="copy-btn" data-action="copy" data-copy="statement">' + icon("copy") + '复制陈述</button></div><p class="item-sub">带【】的内容需要你补充。</p><div class="field-value" style="margin-top:12px">' + esc(f.formal_statement) + "</div></section>" +
+    '<section class="section"><h2>证据目录</h2><p class="item-sub">官方平台上传由你本人操作；本产品不保存截图或证件照片。</p><div class="table-scroll"><table><thead><tr><th>材料</th><th>能证明什么</th><th>状态</th><th>获取方式</th></tr></thead><tbody>' + evidence + "</tbody></table></div>" +
+    '<p class="item-meta">上传优先使用原始截图和带时间地点信息的照片；聊天记录保留对方身份信息与完整上下文。</p></section>' +
+    '<p class="callout callout-warn">' + esc(f.submit_notice) + " " + esc(f.platform.source_note) + "</p></div></div>"
+  );
+}
+/* ---- modals ---- */
+function modalShell(title, desc, body, foot, wide) {
+  return '<div class="modal-overlay"><div class="modal-scrim" data-action="close-modal"></div><div class="modal' + (wide ? " wide" : "") + '" role="dialog" aria-modal="true" aria-labelledby="modal-title">' +
+    '<div class="modal-head"><div><h2 id="modal-title">' + esc(title) + "</h2>" + (desc ? '<p class="desc">' + esc(desc) + "</p>" : "") + "</div>" +
+    '<button class="modal-close" data-action="close-modal" aria-label="关闭">' + icon("x") + "</button></div>" +
+    '<div class="modal-body">' + body + "</div>" + (foot ? '<div class="modal-foot">' + foot + "</div>" : "") + "</div></div>";
+}
+function legalModal() {
+  const d = DATA.legal;
+  const items = d.provisions.map(p => {
+    const open = state.expandedLegal.has(p.id);
+    return '<div style="padding:14px 0;border-bottom:1px solid var(--ink-100)"><div class="row-between"><div style="min-width:0"><p class="item-title">' + esc(p.document.title) + " · " + esc(p.article) + '</p><p class="item-sub">' + esc(p.heading) + "</p></div>" + badge(p.verification_label, p.verification_status === "pending" ? "warn" : "neutral") + "</div>" +
+      '<p class="item-body" style="' + (open ? "" : "display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden") + '">' + esc(p.text) + "</p>" +
+      '<p class="item-meta" style="color:var(--brand-800)">' + esc(p.why_relevant) + "</p>" +
+      (open ? '<div class="callout" style="background:var(--ink-50);color:var(--ink-600);margin-top:8px"><p>发布机关：' + esc(p.document.issuing_authority) + "</p><p>文件编号：" + esc(p.document.doc_number) + "</p><p>效力状态：" + esc(p.document.validity) + "</p>" + (p.conditions.length ? "<p>适用条件：" + esc(p.conditions.join("；")) + "</p>" : "") + (p.source_note ? "<p>核验说明：" + esc(p.source_note) + "</p>" : "") + "</div>" : "") +
+      '<div style="margin-top:8px;display:flex;gap:16px"><button style="font-size:12px;font-weight:500;color:var(--brand-800)" data-action="toggle-provision" data-id="' + esc(p.id) + '">' + (open ? "收起详情" : "查看条文详情") + "</button>" +
+      (p.official_url ? '<a style="font-size:12px;color:var(--ink-500)" href="' + esc(p.official_url) + '" target="_blank" rel="noreferrer noopener">' + esc(p.official_source_name || "官方来源") + " " + icon("external") + "</a>" : "") + "</div></div>";
+  }).join("");
+  return modalShell("相关法律依据", "来自本地法律知识库，附来源与核验状态，以官方原文为准。",
+    '<p class="callout callout-warn">' + esc(d.verification_summary.note) + " 共 " + d.provisions.length + " 条：已核验 " + d.verification_summary.verified + "、待逐条核验 " + d.verification_summary.transcribed + "、待核验 " + d.verification_summary.pending + "。</p>" +
+    '<div style="margin-top:8px">' + items + "</div><p class=\"muted\" style=\"margin-top:12px\">" + esc(d.disclaimer) + "</p>", null, true);
+}
+function factsModal() {
+  const f = state.facts;
+  const cities = DATA.meta.cities || [];
+  return modalShell("修改案件信息", "离线快照：修改仅保存在本页，用于预览效果。只填写你知道的内容，不要编造金额或单位。",
+    '<label class="form-field"><span class="label">拖欠金额（元）</span><input type="number" inputmode="decimal" id="edit-owed" value="' + (f.owed_amount == null ? "" : f.owed_amount) + '"></label>' +
+    '<label class="form-field"><span class="label">已支付金额（元）</span><input type="number" inputmode="decimal" id="edit-paid" value="' + (f.paid_amount == null ? "" : f.paid_amount) + '"></label>' +
+    '<label class="form-field"><span class="label">工种</span><input id="edit-work" value="' + esc(f.work_type || "") + '"></label>' +
+    '<label class="form-field"><span class="label">城市</span><select id="edit-city"><option value="">请选择或留空</option>' + cities.map(c => '<option' + (c === f.location_city ? " selected" : "") + ">" + esc(c) + "</option>").join("") + "</select></label>" +
+    '<label class="form-field"><span class="label">补充说明</span><textarea id="edit-notes" rows="3">' + esc(f.notes || "") + "</textarea></label>",
+    '<button class="btn btn-ghost" data-action="close-modal">取消</button><button class="btn btn-primary" data-action="save-facts">保存修改</button>', true);
+}
+function infoModal() { return modalShell("案件信息", null, factsPanel(true), null, false); }
+function deleteModal(id) {
+  const c = state.cases.find(x => x.id === id);
+  return modalShell("删除这个案件？", "案件、聊天记录和行动步骤进度都会被删除，且无法恢复。",
+    '<p style="font-size:14px;font-weight:500;color:var(--ink-800)">' + esc(c ? c.title : "") + "</p>",
+    '<button class="btn btn-ghost" data-action="close-modal">取消</button><button class="btn btn-danger" data-action="confirm-delete" data-id="' + esc(id) + '">' + icon("trash") + "确认删除</button>", false);
+}
+function renderModal() {
+  const root = document.getElementById("modal-root");
+  if (!state.modal) { root.innerHTML = ""; document.body.style.overflow = ""; return; }
+  document.body.style.overflow = "hidden";
+  if (state.modal.type === "legal") root.innerHTML = legalModal();
+  else if (state.modal.type === "facts") root.innerHTML = factsModal();
+  else if (state.modal.type === "info") root.innerHTML = infoModal();
+  else if (state.modal.type === "delete") root.innerHTML = deleteModal(state.modal.id);
+}
+function render() {
+  const app = document.getElementById("app");
+  if (state.route === "home") app.innerHTML = homeView();
+  else if (state.route === "cases") app.innerHTML = casesView();
+  else if (state.route === "chat") app.innerHTML = chatView();
+  else if (state.route === "analysis") app.innerHTML = analysisView();
+  else if (state.route === "action") app.innerHTML = actionView();
+  else if (state.route === "form") app.innerHTML = formView();
+  renderModal();
+  const privacy = document.getElementById("form-privacy");
+  if (privacy && window.innerWidth >= 1024) privacy.style.display = "block";
+  window.scrollTo(0, 0);
+}
+function navigate(route) {
+  state.route = route; state.modal = null;
+  if (location.hash !== "#" + route) location.hash = route;
+  render();
+}
+const ROUTES = ["home", "cases", "chat", "analysis", "action", "form"];
+function routeFromHash() {
+  const r = (location.hash || "#home").slice(1);
+  return ROUTES.includes(r) ? r : "home";
+}
+window.addEventListener("hashchange", () => {
+  const r = routeFromHash();
+  if (r !== state.route) { state.route = r; state.modal = null; render(); }
+});
+/* ---- events ---- */
+document.addEventListener("click", (e) => {
+  const nav = e.target.closest("[data-nav]");
+  if (nav) { e.preventDefault(); navigate(nav.getAttribute("data-nav")); return; }
+  const el = e.target.closest("[data-action]");
+  if (!el) return;
+  const action = el.getAttribute("data-action");
+  if (action === "offline-start") { toast("离线快照不含接待服务；请运行本地完整版开始新咨询"); return; }
+  if (action === "close-modal") { state.modal = null; renderModal(); return; }
+  if (action === "open-legal") { state.modal = { type: "legal" }; renderModal(); return; }
+  if (action === "open-facts") { state.modal = { type: "facts" }; renderModal(); return; }
+  if (action === "open-info") { state.modal = { type: "info" }; renderModal(); return; }
+  if (action === "delete-case") { state.modal = { type: "delete", id: el.getAttribute("data-id") }; renderModal(); return; }
+  if (action === "confirm-delete") {
+    const id = el.getAttribute("data-id");
+    state.cases = state.cases.filter(c => c.id !== id);
+    state.modal = null; render(); toast("已删除（仅本页）"); return;
+  }
+  if (action === "save-facts") {
+    const num = (id) => { const v = document.getElementById(id).value.trim(); return v === "" ? null : (isFinite(Number(v)) ? Number(v) : null); };
+    state.facts.owed_amount = num("edit-owed");
+    state.facts.paid_amount = num("edit-paid");
+    state.facts.work_type = document.getElementById("edit-work").value.trim() || null;
+    state.facts.location_city = document.getElementById("edit-city").value || null;
+    state.facts.notes = document.getElementById("edit-notes").value.trim() || null;
+    state.modal = null; render(); toast("已保存（仅本页）"); return;
+  }
+  if (action === "toggle-legal") { state.showAllLegal = !state.showAllLegal; render(); return; }
+  if (action === "toggle-provision") {
+    const id = el.getAttribute("data-id");
+    if (state.expandedLegal.has(id)) state.expandedLegal.delete(id); else state.expandedLegal.add(id);
+    renderModal(); return;
+  }
+  if (action === "toggle-step") {
+    const id = el.getAttribute("data-id");
+    const s = state.steps.find(x => x.id === id);
+    if (s) { s.done = !s.done; persist(); render(); }
+    return;
+  }
+  if (action === "form-step") { state.formStep = Number(el.getAttribute("data-index")); render(); return; }
+  if (action === "form-prev") { state.formStep = Math.max(0, state.formStep - 1); render(); return; }
+  if (action === "form-next") { state.formStep = Math.min(DATA.form.steps.length - 1, state.formStep + 1); render(); return; }
+  if (action === "export") { downloadTxt(); return; }
+  if (action === "copy") {
+    const ref = el.getAttribute("data-copy");
+    let text = "";
+    if (ref === "statement") text = DATA.form.formal_statement;
+    else if (ref === "all") text = DATA.form.copy_summary;
+    else if (ref.startsWith("draft:")) { const s = state.steps.find(x => x.id === ref.slice(6)); text = s ? s.draft_text || "" : ""; }
+    else if (ref.startsWith("field:")) {
+      const key = ref.slice(6);
+      for (const st of DATA.form.steps) { const fd = st.fields.find(x => x.key === key); if (fd) { text = fd.value || ""; break; } }
+    }
+    copyText(text, el); return;
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && state.modal) { state.modal = null; renderModal(); }
+});
+window.addEventListener("resize", () => {
+  const privacy = document.getElementById("form-privacy");
+  if (privacy) privacy.style.display = window.innerWidth >= 1024 ? "block" : "none";
+});
+state.route = routeFromHash();
+render();
+</script>
+</body>
+</html>

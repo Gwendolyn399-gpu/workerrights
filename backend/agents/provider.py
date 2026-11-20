@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from abc import ABC, abstractmethod
 from urllib.parse import urlsplit
 
@@ -11,6 +12,20 @@ from backend.config import settings
 
 class ProviderError(RuntimeError):
     pass
+
+
+def normalize_no_proxy_env() -> None:
+    # httpx 0.28 turns a bracketed NO_PROXY entry like [::1] into an invalid
+    # "all://*[::1]" mount, making every request raise InvalidURL. Bare ::1 is
+    # the form httpx and urllib both understand.
+    for key in ("NO_PROXY", "no_proxy"):
+        raw = os.environ.get(key)
+        if not raw:
+            continue
+        entries = [entry.strip() for entry in raw.split(",")]
+        fixed = [entry[1:-1] if entry.startswith("[") and entry.endswith("]") else entry for entry in entries]
+        if fixed != entries:
+            os.environ[key] = ",".join(fixed)
 
 
 class AgentProvider(ABC):
@@ -51,6 +66,7 @@ class OpenAICompatibleProvider(AgentProvider):
     is_mock = False
 
     def __init__(self, *, api_key: str | None = None, base_url: str | None = None, model: str | None = None) -> None:
+        normalize_no_proxy_env()
         self.api_key = api_key if api_key is not None else settings.llm_api_key
         self.base_url = base_url if base_url is not None else settings.llm_base_url
         self.model = model if model is not None else settings.llm_model
@@ -127,6 +143,8 @@ class OpenAICompatibleProvider(AgentProvider):
             return {"message": message, "usage": usage}
         except httpx.HTTPStatusError as exc:
             raise ProviderError(f"模型服务返回 HTTP {exc.response.status_code}，请检查权限、余额与流式支持。") from exc
+        except httpx.InvalidURL as exc:
+            raise ProviderError("模型接口地址或本机代理环境变量（HTTP_PROXY/NO_PROXY）格式无效，请检查后重试。") from exc
         except (httpx.HTTPError, KeyError, TypeError, ValueError) as exc:
             raise ProviderError(f"读取模型数据流失败：{exc.__class__.__name__}") from exc
 
@@ -147,6 +165,8 @@ class OpenAICompatibleProvider(AgentProvider):
                     "usage": data.get("usage", {})}
         except httpx.HTTPStatusError as exc:
             raise ProviderError(f"模型服务返回 HTTP {exc.response.status_code}，请检查权限、余额与模型配置。") from exc
+        except httpx.InvalidURL as exc:
+            raise ProviderError("模型接口地址或本机代理环境变量（HTTP_PROXY/NO_PROXY）格式无效，请检查后重试。") from exc
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
             raise ProviderError(f"模型调用或响应解析失败：{exc.__class__.__name__}") from exc
 

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>工友权益助手 · 第三阶段视觉方向对比</title>
+<style>
+  :root {
+    --ink: #1c211f;
+    --muted: #68706b;
+    --line: #d9ddd8;
+    --paper: #f7f7f3;
+    --surface: #fff;
+    --soft: #eef0ec;
+    --accent: #2e6b52;
+    --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+    --serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.75 var(--sans); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  img { display: block; max-width: 100%; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 34px; }
+  .top { padding: 54px 0 28px; border-bottom: 1px solid var(--line); }
+  .topline { display: flex; justify-content: space-between; gap: 20px; align-items: baseline; color: var(--muted); font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+  h1 { max-width: 900px; margin: 24px 0 0; font-family: var(--serif); font-size: 48px; line-height: 1.23; letter-spacing: -.035em; font-weight: 600; }
+  .lede { max-width: 760px; margin: 16px 0 0; color: var(--muted); font-size: 16px; line-height: 1.85; }
+  .meta { display: flex; flex-wrap: wrap; gap: 12px 22px; margin-top: 22px; color: var(--muted); font-size: 12px; }
+  .meta b { color: var(--ink); font-weight: 700; }
+  .intro { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 44px; padding: 28px 0 34px; border-bottom: 1px solid var(--line); }
+  .intro h2 { margin: 0 0 8px; font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+  .intro p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.8; }
+  .rules { border-left: 1px solid var(--line); padding-left: 22px; }
+  .rules p + p { margin-top: 8px; }
+  .direction { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 36px; padding: 44px 0 48px; border-bottom: 1px solid var(--line); }
+  .dossier-row { background: linear-gradient(90deg, rgba(163,79,45,.035), transparent 48%); }
+  .primer-row { background: linear-gradient(90deg, rgba(194,59,42,.03), transparent 48%); }
+  .route-row { background: linear-gradient(90deg, rgba(46,111,142,.035), transparent 48%); }
+  .final-row { background: linear-gradient(90deg, rgba(46,107,79,.055), transparent 46%); }
+  .final-row .dlabel { color: var(--accent); }
+  .final-row h2 { max-width: 12em; }
+  .dlabel { display: flex; align-items: baseline; gap: 10px; color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+  .dlabel span:last-child { color: var(--muted); font-family: var(--sans); font-weight: 400; letter-spacing: 0; }
+  .direction h2 { margin: 8px 0 0; font-family: var(--serif); font-size: 30px; line-height: 1.25; font-weight: 600; letter-spacing: -.03em; }
+  .thesis { margin: 14px 0 20px; font-size: 14px; line-height: 1.85; }
+  .dmeta { margin: 0; border-top: 1px solid var(--line); }
+  .dmeta div { display: grid; grid-template-columns: 66px minmax(0,1fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .dmeta dt { color: var(--muted); font-size: 11px; }
+  .dmeta dd { margin: 0; font-size: 12px; line-height: 1.65; }
+  .palette { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .swatch { width: 58px; height: 26px; border-radius: 3px; border: 1px solid rgba(0,0,0,.08); position: relative; }
+  .swatch span { position: absolute; left: 4px; bottom: 3px; color: #fff; font-family: var(--mono); font-size: 8px; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+  .open { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; padding-bottom: 3px; border-bottom: 1px solid var(--ink); font-size: 12px; font-weight: 700; }
+  .shots { display: grid; grid-template-columns: minmax(0, 1fr) 252px; gap: 14px; align-items: start; }
+  figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  figure img { width: 100%; height: auto; }
+  figure.desktop { grid-column: 1; }
+  figure.mobile { grid-column: 2; }
+  figure.home-wide { grid-column: 1; }
+  figure.home-small { grid-column: 2; }
+  figcaption { display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px 9px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+  figcaption span:last-child { font-family: var(--mono); font-size: 9px; }
+  .home-wide img, .home-small img { height: 230px; object-fit: cover; object-position: top; }
+  .matrix { padding: 42px 0 8px; }
+  .matrix h2 { margin: 0 0 6px; font-family: var(--serif); font-size: 28px; font-weight: 600; letter-spacing: -.03em; }
+  .matrix > p { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+  th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-size: 11px; font-weight: 700; background: var(--soft); }
+  td:first-child { font-weight: 700; width: 170px; }
+  .score { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  .recommend { display: grid; grid-template-columns: 230px minmax(0,1fr); gap: 30px; margin: 34px 0 0; padding: 24px 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+  .recommend strong { display: block; font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+  .recommend span { display: block; margin-top: 5px; color: var(--accent); font-family: var(--mono); font-size: 10px; letter-spacing: .06em; }
+  .recommend p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.85; }
+  .recommend p + p { margin-top: 8px; }
+  .baseline { margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.8; }
+  .baseline b { color: var(--ink); }
+  footer { padding: 30px 0 44px; color: var(--muted); font-size: 11px; line-height: 1.8; }
+  footer b { color: var(--ink); }
+  .callout { padding: 2px 0 2px 12px; border-left: 2px solid var(--accent); }
+  @media (max-width: 980px) {
+    .wrap { padding: 0 22px; }
+    h1 { font-size: 38px; }
+    .intro, .direction { grid-template-columns: 1fr; gap: 24px; }
+    .rules { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 16px; }
+    .dmeta { max-width: 480px; }
+    .shots { grid-template-columns: minmax(0,1fr) 200px; }
+    .recommend { grid-template-columns: 1fr; gap: 10px; }
+  }
+  @media (max-width: 620px) {
+    .top { padding-top: 34px; }
+    h1 { font-size: 32px; }
+    .lede { font-size: 14px; }
+    .shots { grid-template-columns: minmax(0, 1fr) 136px; gap: 9px; }
+    figure.home-wide img, figure.home-small img { height: 150px; }
+    figure.mobile img, figure.home-small img { width: 100%; }
+    .matrix { overflow-x: auto; }
+    table { min-width: 720px; }
+    .direction h2 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="topline"><span>WorkerRights / Visual direction review</span><span>Phase 03</span></div>
+    <h1>同一件事，三种说法。</h1>
+    <p class="lede">三套方向使用同一份虚构案件、同一条任务路径和同一套信息架构，只改变视觉世界：字体、色彩、密度，以及一个能被记住的动作。用来判断“工友权益助手”应该以什么姿态出现在工友面前。</p>
+    <div class="meta">
+      <span><b>日期</b> 2026-11-19</span>
+      <span><b>范围</b> 首页 + 案件分析（含 390px 移动端）</span>
+      <span><b>状态</b> 已选定：B + A + C 混合方案</span>
+      <span><b>数据</b> 虚构演示案件</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <div>
+      <h2>比较的不是“哪个更漂亮”</h2>
+      <p>三套方向都被要求先完成同一个任务：让用户在两屏内看到“可能是什么、最缺什么、下一步做什么”，同时保留“信息完整度 / 办理进度”的区分、虚构演示标记和官方渠道边界。</p>
+      <p>因此可以把注意力放在：哪个世界更像工友会信任的入口，哪个在强光下和一只手里仍然可读，哪个能自然延伸到行动步骤和填报参考。</p>
+    </div>
+    <div class="rules">
+      <p><b>共同约束</b></p>
+      <p>不自动提交 · 不要求身份证号 · 不承诺结果</p>
+      <p>不把离线原型的 mock 数据带进正式实现。</p>
+      <p class="callout">当前蓝色工具感保留为安全基线，不作为第四个新方向。</p>
+    </div>
+  </section>
+
+  <section class="direction dossier-row">
+    <div>
+      <div class="dlabel"><span>方向 A</span><span>档案 / Dossier</span></div>
+      <h2>案卷档案袋</h2>
+      <p class="thesis">把案件当成一份会被核对、带走、提交的案卷：暖纸、墨字、陶土色标签，先事实，后解释。</p>
+      <dl class="dmeta">
+        <div><dt>视觉世界</dt><dd>牛皮纸案卷、文件夹标签、校对章、衬线标题。</dd></div>
+        <div><dt>签名动作</dt><dd>案卷目录的页签 + “已核对”章；结论、证据、依据像同一份卷宗的不同页。</dd></div>
+        <div><dt>最适合</dt><dd>建立“这不是聊天机器人，而是在帮我整理材料”的信任。</dd></div>
+        <div><dt>风险</dt><dd>容易显得像档案馆或旧式公文；移动端正文要防止过密。</dd></div>
+      </dl>
+      <div class="palette" aria-label="方向 A 色板">
+        <span class="swatch" style="background:#f2eee4"><span>PAPER</span></span>
+        <span class="swatch" style="background:#a34f2d"><span>CLAY</span></span>
+        <span class="swatch" style="background:#496354"><span>SAGE</span></span>
+        <span class="swatch" style="background:#22231f"><span>INK</span></span>
+      </div>
+      <a class="open" href="01-dossier.html">打开完整方向 →</a>
+    </div>
+    <div class="shots">
+      <figure class="desktop"><img src="screens/dossier-desktop-workspace.png" alt="案卷档案袋方向桌面案件分析"><figcaption><span>案件分析 · 桌面</span><span>1440 × 900</span></figcaption></figure>
+      <figure class="mobile"><img src="screens/dossier-mobile-workspace.png" alt="案卷档案袋方向移动案件分析"><figcaption><span>案件分析 · 移动</span><span>390 × 844</span></figcaption></figure>
+      <figure class="home-wide"><img src="screens/dossier-desktop-home.png" alt="案卷档案袋方向桌面首页"><figcaption><span>首页 · 桌面</span><span>1440</span></figcaption></figure>
+      <figure class="home-small"><img src="screens/dossier-mobile-home.png" alt="案卷档案袋方向移动首页"><figcaption><span>首页 · 移动</span><span>390</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="direction primer-row">
+    <div>
+      <div class="dlabel"><span>方向 B</span><span>读本 / Primer</span></div>
+      <h2>工人夜校读本</h2>
+      <p class="thesis">把法律整理变成工人夜校的一页读本：大字、短句、红笔批注，一屏只教一件事。</p>
+      <dl class="dmeta">
+        <div><dt>视觉世界</dt><dd>廉价新闻纸、粗黑标题、红色批注、放大的课时编号。</dd></div>
+        <div><dt>签名动作</dt><dd>每条结论像一课的“要点”；红色只用于当前问题、风险和下一步。</dd></div>
+        <div><dt>最适合</dt><dd>低读写门槛、手机强光、焦虑状态下的一次一问；最像“工友能看懂的读本”。</dd></div>
+        <div><dt>风险</dt><dd>要避免变成儿童教材或说教；成人语气、真实材料、不画卡通。</dd></div>
+      </dl>
+      <div class="palette" aria-label="方向 B 色板">
+        <span class="swatch" style="background:#f4efe2"><span>NEWSPRINT</span></span>
+        <span class="swatch" style="background:#c23b2a"><span>SIGNAL</span></span>
+        <span class="swatch" style="background:#171717"><span>INK</span></span>
+        <span class="swatch" style="background:#2e6b4f"><span>GREEN</span></span>
+      </div>
+      <a class="open" href="02-primer.html">打开完整方向 →</a>
+    </div>
+    <div class="shots">
+      <figure class="desktop"><img src="screens/primer-desktop-workspace.png" alt="工人夜校读本方向桌面案件分析"><figcaption><span>案件分析 · 桌面</span><span>1440 × 900</span></figcaption></figure>
+      <figure class="mobile"><img src="screens/primer-mobile-workspace.png" alt="工人夜校读本方向移动案件分析"><figcaption><span>案件分析 · 移动</span><span>390 × 844</span></figcaption></figure>
+      <figure class="home-wide"><img src="screens/primer-desktop-home.png" alt="工人夜校读本方向桌面首页"><figcaption><span>首页 · 桌面</span><span>1440</span></figcaption></figure>
+      <figure class="home-small"><img src="screens/primer-mobile-home.png" alt="工人夜校读本方向移动首页"><figcaption><span>首页 · 移动</span><span>390</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="direction route-row">
+    <div>
+      <div class="dlabel"><span>方向 C</span><span>路径 / Route</span></div>
+      <h2>办理路线图</h2>
+      <p class="thesis">把办理路径画成一张路线图：现在在哪、下一步去哪、哪些渠道可以并行。</p>
+      <dl class="dmeta">
+        <div><dt>视觉世界</dt><dd>深海军蓝外壳、瓷白站点、珊瑚色当前站、线路色区分渠道。</dd></div>
+        <div><dt>签名动作</dt><dd>结论和行动步骤是一条有站点的路线；当前站最亮，已完成站变成留痕。</dd></div>
+        <div><dt>最适合</dt><dd>让“被推来推去”的流程第一次变成可理解的路径，尤其适合行动步骤页。</dd></div>
+        <div><dt>风险</dt><dd>路线图语言有学习成本；不能让它盖过“大白话”和证据整理。</dd></div>
+      </dl>
+      <div class="palette" aria-label="方向 C 色板">
+        <span class="swatch" style="background:#122e3a"><span>NAVY</span></span>
+        <span class="swatch" style="background:#2e6f8e"><span>ROUTE</span></span>
+        <span class="swatch" style="background:#c54b31"><span>ACTIVE</span></span>
+        <span class="swatch" style="background:#f1f4f3"><span>GROUND</span></span>
+      </div>
+      <a class="open" href="03-route.html">打开完整方向 →</a>
+    </div>
+    <div class="shots">
+      <figure class="desktop"><img src="screens/route-desktop-workspace.png" alt="办理路线图方向桌面案件分析"><figcaption><span>案件分析 · 桌面</span><span>1440 × 900</span></figcaption></figure>
+      <figure class="mobile"><img src="screens/route-mobile-workspace.png" alt="办理路线图方向移动案件分析"><figcaption><span>案件分析 · 移动</span><span>390 × 844</span></figcaption></figure>
+      <figure class="home-wide"><img src="screens/route-desktop-home.png" alt="办理路线图方向桌面首页"><figcaption><span>首页 · 桌面</span><span>1440</span></figcaption></figure>
+      <figure class="home-small"><img src="screens/route-mobile-home.png" alt="办理路线图方向移动首页"><figcaption><span>首页 · 移动</span><span>390</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="direction final-row">
+    <div>
+      <div class="dlabel"><span>定稿组合</span><span>B + A + C</span></div>
+      <h2>工人读本 × 案卷事实 × 办理路线</h2>
+      <p class="thesis">以 B 的读本体量和低读写门槛为主骨架；用 A 的事实页签、案卷感和“已核对”章把事实变重；C 只进入行动步骤，用“现在 / 下一步 / 之后”的站点替代长清单。</p>
+      <dl class="dmeta">
+        <div><dt>主骨架</dt><dd>B 的新闻纸、粗黑标题、红色当前标记、一次一课的版面节奏。</dd></div>
+        <div><dt>吸收 A</dt><dd>案件档案的“事实 / 法律依据”页签、已核对章、案卷式事实面板。</dd></div>
+        <div><dt>吸收 C</dt><dd>只在行动步骤页使用路线站点；分析页不交通图化，避免增加学习成本。</dd></div>
+        <div><dt>边界</dt><dd>B 是默认语言，A 和 C 是局部语法；三者不能在同一屏争夺主视觉。</dd></div>
+      </dl>
+      <a class="open" href="04-hybrid.html">打开定稿组合 →</a>
+    </div>
+    <div class="shots">
+      <figure class="desktop"><img src="screens/hybrid-desktop-workspace.png" alt="定稿组合桌面案件分析"><figcaption><span>案件分析 · 桌面</span><span>1440 × 900</span></figcaption></figure>
+      <figure class="mobile"><img src="screens/hybrid-mobile-workspace.png" alt="定稿组合移动案件分析"><figcaption><span>案件分析 · 移动</span><span>390 × 844</span></figcaption></figure>
+      <figure class="home-wide"><img src="screens/hybrid-desktop-home.png" alt="定稿组合桌面首页"><figcaption><span>首页 · 桌面</span><span>1440</span></figcaption></figure>
+      <figure class="home-small"><img src="screens/hybrid-mobile-home.png" alt="定稿组合移动首页"><figcaption><span>首页 · 移动</span><span>390</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="matrix">
+    <h2>并排比较</h2>
+    <p>评分为本轮设计判断（1–5），不是用户测试结果。三套方向均通过 1440/390 无横向溢出检查。</p>
+    <table>
+      <thead>
+        <tr><th>维度</th><th>A · 案卷档案袋</th><th>B · 工人夜校读本</th><th>C · 办理路线图</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>一眼读懂</td><td class="score">4 / 5</td><td class="score">5 / 5</td><td class="score">3 / 5</td></tr>
+        <tr><td>低读写门槛</td><td class="score">3 / 5</td><td class="score">5 / 5</td><td class="score">3 / 5</td></tr>
+        <tr><td>可信 / 专业</td><td class="score">5 / 5</td><td class="score">4 / 5</td><td class="score">4 / 5</td></tr>
+        <tr><td>移动端舒适</td><td class="score">4 / 5</td><td class="score">5 / 5</td><td class="score">3 / 5</td></tr>
+        <tr><td>与“整理材料”匹配</td><td class="score">5 / 5</td><td class="score">4 / 5</td><td class="score">4 / 5</td></tr>
+        <tr><td>主要风险</td><td>像档案馆；正文易过密</td><td>像教材；需要成人语气</td><td>像交通图；需要解释站点</td></tr>
+      </tbody>
+    </table>
+    <div class="recommend">
+      <div><strong>已选定 B + A + C</strong><span>CONFIRMED</span></div>
+      <div>
+        <p>B 作为主方向：390px 首屏仍能先给结论，字号、对比和“一次只问一个问题”的版面节奏最适合工地/宿舍场景。</p>
+        <p>A 进入事实面板：案件档案的页签、案卷感和“已核对”章，让事实从一段信息变成可核对、可带走的材料。</p>
+        <p>C 只进入行动步骤：用“现在 / 下一步 / 之后”的站点替代全部展开的长清单，不把分析页交通图化。</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="baseline"><b>安全基线：</b>当前正式前端的蓝色工具感（纸白、系统无衬线、克制边线）可读、稳妥，但缺少“工友会信任的入口”和“我现在在哪一步”的识别度。它可以作为评审对照，不作为本轮新方向。</p>
+</main>
+
+<footer class="wrap">
+  <p><b>说明：</b>本页是第三阶段视觉方向概念稿，使用虚构演示案件；所有数值、结论、法条数量和渠道文案仅用于评审版面，不构成法律意见。方向已确认为 B + A + C；接下来写入 DESIGN.md，并进入第四阶段重构计划与实现。</p>
+  <p>三套方向均使用同一内容、同一信息架构；截图来自本地 Chrome，1440 × 900 与 390 × 844，无横向溢出。</p>
+</footer>
+</body>
+</html>

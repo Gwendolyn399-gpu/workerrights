@@ -93,6 +93,65 @@ def test_materials_are_refreshed_when_batch_changes_state_after_drafting():
     assert any(item.get("automatic_refresh") for item in result.trace)
 
 
+def test_document_reply_must_contain_saved_draft_verbatim():
+    from backend.services.statement import build_formal_statement
+    facts = {"owed_amount": 9000}
+    draft = build_formal_statement(facts)
+    model = Script(action("prepare_materials"),
+                   respond(reply="本人被拖欠工资九千元，望有关部门处理。", response_kind="document"),
+                   respond(reply="给你一版草稿：\n" + draft, response_kind="document"))
+    result = AgentRuntime(model, lambda q: []).run(AgentState(facts=facts), "给我写一份事实陈述草稿")
+    assert draft in result.reply
+    assert result.state.materials["draft"] == draft
+    failed = [step for step in result.trace if step["action"] == "respond" and not step["ok"]]
+    assert len(failed) == 1
+    assert any("原样包含" in json.loads(m["content"]).get("error", "") for m in model.inputs[-1] if m["role"] == "tool")
+
+
+def test_document_reply_verbatim_passes_first_attempt():
+    from backend.services.statement import build_formal_statement
+    facts = {"owed_amount": 9000}
+    draft = build_formal_statement(facts)
+    model = Script(action("prepare_materials"), respond(reply=draft, response_kind="document"))
+    result = AgentRuntime(model, lambda q: []).run(AgentState(facts=facts), "给我写一份事实陈述草稿")
+    assert result.reply == draft
+    assert all(step["ok"] for step in result.trace)
+
+
+def test_reply_cannot_doubt_contract_user_already_denied():
+    model = Script(respond(reply="目前未确认存在书面合同，先找找其他材料。"),
+                   respond(reply="你说过没签合同，先把聊天记录留好。"))
+    result = AgentRuntime(model, lambda q: []).run(AgentState(facts={"has_contract": "no"}), "我没签合同，怎么办")
+    assert result.reply == "你说过没签合同，先把聊天记录留好。"
+    assert any(step["action"] == "respond" and not step["ok"] for step in result.trace)
+
+
+def test_document_request_without_explicit_write_verb_is_accepted():
+    from backend.services.statement import build_formal_statement
+    facts = {"owed_amount": 7000}
+    draft = build_formal_statement(facts)
+    model = Script(action("prepare_materials"), respond(reply=draft, response_kind="document"))
+    result = AgentRuntime(model, lambda q: []).run(AgentState(facts=facts), "直接给我一版事实陈述和证据目录草稿，没说过的用待补充")
+    assert result.reply == draft
+    assert all(step["ok"] for step in result.trace)
+
+
+def test_document_kind_still_rejected_for_quick_correction():
+    model = Script(respond(reply="一份很长的文书" * 40, response_kind="document"),
+                   respond(reply="好，欠款按7000记。"))
+    result = AgentRuntime(model, lambda q: []).run(AgentState(facts={"owed_amount": 9000}), "还欠7000")
+    assert any(step["action"] == "respond" and not step["ok"] for step in result.trace)
+    assert result.reply == "好，欠款按7000记。"
+
+
+def test_only_one_question_per_turn():
+    model = Script(respond(reply="你在哪干的？欠多少？谁叫你来的？"),
+                   respond(reply="干了活拿不到钱，确实堵心。你是在哪个工地干的？知道这个，后面找谁要钱才不至于找错人。"))
+    result = AgentRuntime(model, lambda q: []).run(AgentState(), "我工资被欠了")
+    assert any(step["action"] == "respond" and not step["ok"] for step in result.trace)
+    assert result.reply.count("？") == 1
+
+
 def test_known_text_citations_need_no_duplicate_metadata_and_placeholders_are_not_citations():
     model = Script(respond(reply="按资料 [LAW-1]，缺项写[待补充]。"))
     result = AgentRuntime(model, lambda q: []).run(AgentState(citations={"law-1": {"id": "law-1"}}), "解释")

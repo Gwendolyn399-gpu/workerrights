@@ -51,7 +51,7 @@ export function CaseProvider({ children }: { children: React.ReactNode }) {
         setError(
           err instanceof ApiError
             ? err.message
-            : "无法连接本地服务，请确认后端已启动（http://127.0.0.1:8000）。",
+            : "暂时无法连接，请稍后重试。",
         );
       }
       if (metaResult.status === "fulfilled") setMeta(metaResult.value);

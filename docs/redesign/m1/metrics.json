@@ -1,0 +1,202 @@
+[
+  {
+    "size": "desktop",
+    "surface": "home",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      1048
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 1
+  },
+  {
+    "size": "desktop",
+    "surface": "chat",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      930
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "surface": "facts-modal",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      930
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "surface": "analysis",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      3648
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "surface": "action",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      4686
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "surface": "form",
+    "viewport": [
+      1440,
+      900
+    ],
+    "scroll": [
+      1440,
+      1729
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "desktop",
+    "errors": []
+  },
+  {
+    "size": "mobile",
+    "surface": "home",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      1283
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 1
+  },
+  {
+    "size": "mobile",
+    "surface": "chat",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      925
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "surface": "facts-modal",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      925
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "surface": "analysis",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      6479
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "surface": "action",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      7103
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "surface": "form",
+    "viewport": [
+      390,
+      844
+    ],
+    "scroll": [
+      390,
+      2439
+    ],
+    "horizontalOverflow": 0,
+    "bodyBackground": "rgb(244, 239, 226)",
+    "bodyColor": "rgb(23, 23, 23)",
+    "fixedOrSticky": 2
+  },
+  {
+    "size": "mobile",
+    "errors": []
+  }
+]

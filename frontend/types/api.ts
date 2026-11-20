@@ -92,6 +92,7 @@ export interface CaseRecord {
   status: CaseStatus;
   is_demo: boolean;
   facts: CaseFacts;
+  facts_revision: number;
   intake: {
     confirmed: boolean;
     unknowns: Record<string, string>;
@@ -318,6 +319,7 @@ export interface AnalysisResponse {
   summary: string;
   disclaimer: string;
   generated_at: string;
+  generated_from_revision: number;
   preliminary?: boolean;
   preliminary_note?: string;
 }
@@ -371,6 +373,7 @@ export interface ActionPlanResponse {
   }>;
   risks: string[];
   generated_at: string;
+  generated_from_revision: number;
   disclaimer: string;
   preliminary?: boolean;
   preliminary_note?: string;
@@ -424,6 +427,7 @@ export interface FormAssistantResponse {
   privacy_notice: string;
   submit_notice: string;
   generated_at: string;
+  generated_from_revision: number;
   preliminary?: boolean;
   preliminary_note?: string;
 }

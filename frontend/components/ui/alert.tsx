@@ -4,10 +4,10 @@ import { AlertTriangle, CheckCircle2, Info, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const styles = {
-  info: "border-brand-200 bg-brand-50/80 text-brand-950",
-  warning: "border-amber-200 bg-amber-50 text-amber-950",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-950",
-  danger: "border-red-200 bg-red-50 text-red-950",
+  info: "bg-sand text-ink",
+  warning: "bg-note-wash text-note",
+  success: "bg-field-wash text-field",
+  danger: "bg-signal-wash text-signal-deep",
 };
 
 const icons = {
@@ -32,11 +32,11 @@ export function Alert({
 }) {
   const Icon = icons[variant];
   return (
-    <div className={cn("flex gap-3 rounded-xl border px-4 py-3.5 text-sm", styles[variant], className)}>
+    <div className={cn("flex gap-2.5 rounded-card px-3.5 py-3 text-sm", styles[variant], className)}>
       <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        {title && <p className="font-semibold">{title}</p>}
-        {children && <div className={cn("leading-relaxed", title && "mt-1 opacity-90")}>{children}</div>}
+        {title && <p className="font-bold">{title}</p>}
+        {children && <div className={cn("leading-6", title && "mt-0.5")}>{children}</div>}
       </div>
       {action}
     </div>

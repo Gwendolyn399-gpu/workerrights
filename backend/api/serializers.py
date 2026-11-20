@@ -20,6 +20,7 @@ def serialize_case(case: Case, include_messages: bool = True) -> dict:
         "scene": case.scene,
         "status": case.status,
         "is_demo": case.is_demo,
+        "facts_revision": case.facts_revision,
         "facts": case.facts,
         "intake": {
             "confirmed": bool((case.intake or {}).get("confirmed")),
@@ -54,6 +55,7 @@ def serialize_case_brief(case: Case) -> dict:
         "scene": case.scene,
         "status": case.status,
         "is_demo": case.is_demo,
+        "facts_revision": case.facts_revision,
         "city": case.facts.get("location_city"),
         "district": case.facts.get("location_district"),
         "work_type": case.facts.get("work_type"),

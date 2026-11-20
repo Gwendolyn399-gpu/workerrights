@@ -132,13 +132,23 @@ cd frontend
 npm test
 ```
 
-浏览器流程检查脚本需要本机 Chrome，并临时安装 `playwright-core`（未写入 `package.json`）：
+浏览器流程检查脚本需要本机 Chrome，并临时安装 `playwright-core`（未写入 `package.json`）。`ui-flow.mjs` 会走通对话、事实编辑、分析、导出、行动勾选、填报复制与删除，并在桌面与移动视口截图、检查横向溢出：
 
 ```powershell
 cd frontend
 npm install --no-save playwright-core
 node scripts/ui-flow.mjs
-node scripts/visual-check.mjs
+```
+
+### 5.1 单文件离线演示（一个 HTML）
+
+`workerrights-offline.html` 是把当前前端界面打包成的**单个自包含 HTML**：双击即可打开，无需 Node/后端/网络。它内嵌虚构演示案件的真实接口快照（对话记录、事实、分析、行动、填报、法律依据），复刻当前设计系统，支持页签/哈希路由、行动勾选（本地持久化）、字段与陈述复制、法律/事实/信息模态、案件删除、文本材料导出，桌面与移动自适应。
+
+注意：单文件**不含后端**，因此实时对话、语音、模型回复、DOCX/PDF 导出不可用（页面已明确标注）；这些仍需本地完整版。重新生成：
+
+```powershell
+node scripts/build-single-file.mjs   # 优先用 .snapshot 缓存；缺失时自动从运行中的后端抓取
+node frontend/scripts/verify-single-file.mjs   # 真实浏览器桌面+移动验收
 ```
 
 ## 6. 环境变量

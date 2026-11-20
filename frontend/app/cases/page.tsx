@@ -2,28 +2,27 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  FolderOpen,
-  Loader2,
-  MapPin,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
+import { ArrowRight, Loader2, Trash2 } from "lucide-react";
 
-import { DemoCaseButton, StartCaseButton } from "@/components/home/start-actions";
+import { DemoCaseButton } from "@/components/home/start-actions";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/services/api";
 import type { CaseBrief } from "@/types/api";
-import { formatAmount, formatDate, statusLabel } from "@/lib/utils";
+import { cn, formatAmount, formatDate, statusLabel } from "@/lib/utils";
+
+const nextStep = (item: CaseBrief) =>
+  item.status === "collecting"
+    ? "补齐案件信息"
+    : item.status === "ready"
+      ? "查看案件分析"
+      : "按行动步骤继续办理";
 
 export default function CasesPage() {
   const [cases, setCases] = React.useState<CaseBrief[]>([]);
@@ -39,7 +38,7 @@ export default function CasesPage() {
       const result = await api.listCases();
       setCases(result.cases);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "无法读取案件列表。请确认本地后端已启动。");
+      setError(err instanceof Error ? err.message : "暂时无法读取案件，请稍后重试。");
     } finally {
       setLoading(false);
     }
@@ -64,29 +63,17 @@ export default function CasesPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <main className="mx-auto w-full max-w-[1180px] flex-1 px-4 py-10 sm:px-6">
+        <div className="flex flex-col gap-5 border-b border-rule pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-brand-700">
-              <FolderOpen className="h-4 w-4" />
-              本浏览器匿名会话
-            </div>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-ink-900">我的案件</h1>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-500">
-              案件记录与当前浏览器的匿名会话标识绑定。其他会话无法读取；清除浏览器数据后将无法恢复访问。
+            <h1 className="text-2xl font-extrabold tracking-[-0.03em] text-ink sm:text-3xl">我的案件</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+              案件与当前浏览器的匿名会话绑定，其他会话无法读取；清除浏览器数据后将无法恢复。
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <StartCaseButton size="default" />
-            <DemoCaseButton label="演示案件" size="default" />
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-start gap-2 rounded-xl border border-brand-200 bg-brand-50/70 px-4 py-3 text-xs leading-relaxed text-brand-950/80">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
-          本产品不要求身份证号，不在服务器保存身份证、银行卡或聊天截图原件。官方平台的材料提交由你本人完成。
+          <DemoCaseButton label="先看演示案件" variant="ghost" size="default" />
         </div>
 
         {error && (
@@ -100,87 +87,92 @@ export default function CasesPage() {
             <Spinner label="正在读取案件…" />
           </div>
         ) : cases.length === 0 ? (
-          <div className="mt-10 rounded-3xl border border-dashed border-ink-300 bg-white px-6 py-14 text-center">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-800">
-              <FolderOpen className="h-6 w-6" />
-            </span>
-            <h2 className="mt-4 text-lg font-bold text-ink-900">还没有案件</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-500">
-              用日常语言说说遇到的欠薪情况，Agent 会一次问一个问题，帮你整理成可用的维权材料。
+          <div className="mt-10 border-t border-rule pt-9">
+            <p className="text-lg font-extrabold text-ink">还没有案件</p>
+            <p className="mt-2 max-w-md text-sm leading-6 text-muted">
+              说说遇到的欠薪情况，一次回答一个问题，整理成可用的维权材料。也可以先看一份虚构演示，了解会得到什么。
             </p>
-            <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <StartCaseButton />
-              <DemoCaseButton />
-            </div>
+            <p className="mt-4 text-sm text-muted">
+              从上方“开始整理”新建案件，或
+              <span className="mx-1 font-bold text-signal-deep">先看演示案件</span>
+              熟悉流程。
+            </p>
           </div>
         ) : (
-          <div className="mt-6 space-y-3">
+          <ul className="mt-2 divide-y divide-rule">
             {cases.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition hover:border-brand-200 sm:p-5"
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={item.status === "collecting" ? "warning" : item.status === "ready" ? "success" : "default"}>
-                        {statusLabel(item.status)}
-                      </Badge>
-                      {item.is_demo && (
-                        <Badge variant="warning">
-                          <Sparkles className="h-3 w-3" />
-                          虚构演示
-                        </Badge>
-                      )}
-                      <span className="text-[10px] text-ink-400">{formatDate(item.updated_at)}</span>
-                    </div>
-                    <h2 className="mt-2 truncate text-base font-bold text-ink-900">{item.title}</h2>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-500">
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-ink-400" />
-                        {[item.city, item.district].filter(Boolean).join(" · ") || "地点待核实"}
-                      </span>
-                      <span>{item.work_type || "工种待核实"}</span>
-                      <span className={item.owed_amount ? "font-semibold text-brand-900" : ""}>
-                        {item.owed_amount
-                          ? `陈述欠薪 ${formatAmount(item.owed_amount, item.owed_amount_approx)}`
-                          : "欠薪金额待核实"}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex max-w-sm items-center gap-2">
-                      <Progress value={item.progress.percent} className="h-1.5" />
-                      <span className="shrink-0 text-[10px] font-medium text-ink-400">
-                        {item.progress.done}/{item.progress.total}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
+              <li key={item.id} className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={`/case/${item.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-brand-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-brand-800"
+                      className="max-w-full truncate text-base font-extrabold text-ink hover:text-signal-deep"
                     >
-                      继续
-                      <ArrowRight className="h-3.5 w-3.5" />
+                      {item.title}
                     </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeleteTarget(item)}
-                      aria-label={`删除案件：${item.title}`}
-                      className="text-ink-400 hover:bg-red-50 hover:text-red-600"
+                    <Badge
+                      variant={
+                        item.status === "collecting"
+                          ? "warning"
+                          : item.status === "ready"
+                            ? "success"
+                            : "default"
+                      }
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      {statusLabel(item.status)}
+                    </Badge>
+                    {item.is_demo && <Badge variant="neutral">虚构演示</Badge>}
                   </div>
+
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+                    <span>{[item.city, item.district].filter(Boolean).join(" · ") || "地点待核实"}</span>
+                    <span>{item.work_type || "工种待核实"}</span>
+                    <span className={cn("font-bold", item.owed_amount ? "text-signal-deep" : "text-muted")}>
+                      {item.owed_amount
+                        ? `欠薪 ${formatAmount(item.owed_amount, item.owed_amount_approx)}`
+                        : "欠薪金额待核实"}
+                    </span>
+                    <span>{formatDate(item.updated_at)}</span>
+                  </div>
+
+                  <div className="mt-3 flex max-w-sm items-center gap-3">
+                    <span className="shrink-0 text-[11px] text-muted">信息完整度</span>
+                    <Progress value={item.progress.percent} className="max-w-[180px]" />
+                    <span className="shrink-0 font-mono text-[11px] font-bold text-ink">
+                      {item.progress.done}/{item.progress.total}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-xs text-muted">
+                    下一步：<span className="font-bold text-signal-deep">{nextStep(item)}</span>
+                  </p>
                 </div>
-              </div>
+
+                <div className="flex shrink-0 items-center gap-2">
+                  <Link
+                    href={`/case/${item.id}`}
+                    className={cn(buttonVariants({ size: "sm" }), "min-w-20")}
+                  >
+                    继续
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeleteTarget(item)}
+                    aria-label={`删除案件：${item.title}`}
+                    className="h-11 w-11 text-muted hover:bg-signal-wash hover:text-signal-deep"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
 
-        <p className="mt-6 text-[11px] leading-relaxed text-ink-400">
-          删除案件会同时删除该案件的聊天记录和已勾选的行动步骤，且不可恢复。当前演示使用本地 SQLite，未上云。
+        <p className="mt-6 border-t border-rule pt-4 text-xs leading-6 text-muted">
+          删除案件会同时删除聊天记录和已勾选的行动步骤，且不可恢复。
         </p>
       </main>
       <SiteFooter />
@@ -196,15 +188,13 @@ export default function CasesPage() {
               取消
             </Button>
             <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
               确认删除
             </Button>
           </>
         }
       >
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {deleteTarget?.title}
-        </div>
+        <p className="text-sm font-bold text-ink">{deleteTarget?.title}</p>
       </Modal>
     </div>
   );
