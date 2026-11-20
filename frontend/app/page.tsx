@@ -21,7 +21,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       <SiteHeader />
       <main>
-        <section className="relative isolate overflow-hidden bg-brand-950 text-white">
+        <section className="relative isolate overflow-hidden bg-[#f2c8aa] text-white">
           <Image
             src="/images/hero-labor-rights.jpg"
             alt="插画：劳动权益，法律守护。劳动者与法律工作者站在天平与法槌前，白鸽掠过天际。"
@@ -31,34 +31,18 @@ export default function HomePage() {
             className="object-cover object-[58%_30%] sm:object-[50%_32%]"
           />
 
+          {/* 只在文字一侧压中性暗影，画面本身不加红色滤镜。 */}
           <div
-            className="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/45 to-transparent"
+            className="absolute inset-0 bg-[linear-gradient(100deg,rgba(30,13,10,0.72)_0%,rgba(30,13,10,0.44)_28%,rgba(30,13,10,0.1)_54%,transparent_70%)]"
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-gradient-to-r from-brand-950/65 via-brand-950/20 to-transparent"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute inset-0 bg-[radial-gradient(115%_90%_at_4%_96%,rgba(76,11,11,0.62)_0%,rgba(76,11,11,0.28)_45%,transparent_72%)]"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(76,11,11,0.22)_100%)]"
+            className="absolute inset-0 bg-[radial-gradient(80%_70%_at_8%_92%,rgba(30,13,10,0.42)_0%,rgba(30,13,10,0.18)_48%,transparent_74%)]"
             aria-hidden="true"
           />
 
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="hero-ribbon bottom-[-16%] left-[-12%] h-[36%] w-[78%] rounded-[100%] bg-gradient-to-r from-brand-500/45 via-brand-400/30 to-transparent" />
-            <div
-              className="hero-ribbon bottom-[-10%] right-[-18%] h-[30%] w-[62%] rounded-[100%] bg-gradient-to-l from-brand-400/40 via-brand-500/25 to-transparent"
-              style={{ animationDuration: "34s", animationDelay: "-9s" }}
-            />
-            <div
-              className="hero-ribbon left-[-8%] top-[-12%] h-[26%] w-[44%] rounded-[100%] bg-gradient-to-r from-brand-600/35 via-brand-500/20 to-transparent"
-              style={{ animationDuration: "30s", animationDelay: "-16s" }}
-            />
-            <div className="hero-sheen absolute inset-x-[-20%] bottom-0 h-1/2 bg-[linear-gradient(105deg,transparent_38%,rgba(255,247,237,0.16)_50%,transparent_62%)]" />
+            <div className="hero-sheen absolute inset-x-[-20%] bottom-0 h-1/2 bg-[linear-gradient(105deg,transparent_38%,rgba(255,247,237,0.14)_50%,transparent_62%)]" />
           </div>
 
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -78,10 +62,10 @@ export default function HomePage() {
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-brand-950 via-brand-950/70 to-transparent sm:h-32"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[clamp(104px,16vh,168px)] bg-[linear-gradient(180deg,transparent_0%,rgba(242,200,170,0.5)_52%,rgba(242,200,170,0.92)_86%,#f2c8aa_100%)]"
           />
 
-          <div className="relative z-10 mx-auto flex min-h-[82svh] max-w-6xl flex-col justify-end px-4 pb-12 pt-32 sm:px-6 sm:pb-16 lg:min-h-[calc(100svh-4rem)] lg:pb-20">
+          <div className="relative z-10 mx-auto flex min-h-[82svh] max-w-6xl flex-col justify-end px-4 pb-28 pt-32 sm:px-6 sm:pb-32 lg:min-h-[calc(100svh-4rem)] lg:pb-32">
             <div className="max-w-xl">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge className="border-white/25 bg-white/10 text-white backdrop-blur-sm">

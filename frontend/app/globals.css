@@ -99,27 +99,6 @@ body::before {
 }
 
 /* 首屏插画上的两处动效：飘带缓慢起伏，白鸽掠过天空并振翅。 */
-@keyframes ribbon-sway {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(-7deg) scaleX(1);
-  }
-  50% {
-    transform: translate3d(2.5%, -2%, 0) rotate(-4.5deg) scaleX(1.05);
-  }
-  100% {
-    transform: translate3d(-1.5%, 1%, 0) rotate(-9deg) scaleX(0.98);
-  }
-}
-
-.hero-ribbon {
-  position: absolute;
-  pointer-events: none;
-  filter: blur(26px);
-  transform-origin: 30% 60%;
-  will-change: transform;
-  animation: ribbon-sway 26s ease-in-out infinite alternate;
-}
-
 @keyframes dove-flight {
   0% {
     transform: translate3d(0, 0, 0);
@@ -177,7 +156,6 @@ body::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-ribbon,
   .hero-dove,
   .hero-dove .dove-wings,
   .hero-sheen {
@@ -358,7 +336,7 @@ body::before {
 }
 
 .nav-gallery__label {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -1045,40 +1023,33 @@ body::before {
   }
 }
 
-/* 首屏插画底部是深赭色；这一条把同一种深赭慢慢化进暖纸底色。
-   顶部必须与首屏底部同色（#4c0b0b），且不给顶边加光，否则会出现硬缝。 */
+/* 首屏底部已经化成暖杏色；这一条从同色继续亮到暖纸底色，只提亮不再压暗。 */
 .hero-horizon {
   position: relative;
-  height: clamp(144px, 16vw, 224px);
+  height: clamp(88px, 10vw, 140px);
   margin-top: -1px;
   overflow: hidden;
   background: linear-gradient(
     180deg,
-    #4c0b0b 0%,
-    #560d0c 10%,
-    #65120f 21%,
-    #7c1a13 33%,
-    #96261a 45%,
-    #b13b27 57%,
-    #c75938 68%,
-    #dc835e 78%,
-    #eeb198 88%,
-    #f7dccb 94%,
-    #f8f1e9 100%
+    #f2c8aa 0%,
+    #f5d3b8 28%,
+    #f8dfca 54%,
+    #fbeee1 80%,
+    #fcf6ee 100%
   );
 }
 
-/* 暖光只在下半段出现，并用 mask 保证不碰到顶边。 */
+/* 暖光贴着顶边出现，让过渡更通透。 */
 .hero-horizon::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(80% 120% at 26% 78%, rgba(255, 199, 152, 0.2), transparent 70%),
-    radial-gradient(70% 100% at 84% 66%, rgba(255, 224, 188, 0.16), transparent 72%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 40%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 40%);
+    radial-gradient(70% 130% at 34% 0%, rgba(255, 208, 164, 0.32), transparent 68%),
+    radial-gradient(60% 110% at 78% 0%, rgba(255, 232, 204, 0.28), transparent 70%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 62%);
+  mask-image: linear-gradient(180deg, #000 0%, transparent 62%);
 }
 
 /* 全页极细颗粒，压住大片渐变底色，避免“发灰的空场”。 */

@@ -67,53 +67,48 @@ export function NavGallery() {
         className="pointer-events-none absolute inset-x-0 -top-16 h-56 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(205,82,68,0.07),transparent_72%)]"
       />
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="hidden sm:block" onMouseLeave={() => setOpen(0)}>
-          {[ENTRIES.slice(0, 3), ENTRIES.slice(3)].map((row, rowIndex) => (
-            <div key={rowIndex} className={rowIndex === 0 ? "nav-gallery flex" : "nav-gallery mt-2.5 flex"}>
-              {row.map((entry, columnIndex) => {
-                const index = rowIndex * 3 + columnIndex;
-                const Icon = entry.icon;
-                const active = open === index;
-                const content = (
-                  <>
-                    <span className="nav-gallery__index" aria-hidden="true">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="nav-gallery__icon">
-                      <Icon className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
-                    </span>
-                    <span className="nav-gallery__text">
-                      <span className="nav-gallery__label">{entry.label}</span>
-                      <span className="nav-gallery__desc">{entry.description}</span>
-                    </span>
-                    <span className="nav-gallery__cta" aria-hidden="true">
-                      打开看看
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </span>
-                  </>
-                );
-                const shared = {
-                  className: "nav-gallery__panel text-left",
-                  "data-open": active ? "true" : "false",
-                  style: { flexGrow: active ? 2.6 : 1 },
-                  onMouseEnter: () => setOpen(index),
-                  onFocus: () => setOpen(index),
-                } as const;
-                return entry.guide ? (
-                  <button key={entry.label} type="button" {...shared} onClick={() => activate(entry)}>
-                    {content}
-                  </button>
-                ) : (
-                  <Link key={entry.label} href={entry.href ?? "/cases"} {...shared}>
-                    {content}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+        <div className="nav-gallery hidden lg:flex" onMouseLeave={() => setOpen(0)}>
+          {ENTRIES.map((entry, index) => {
+            const Icon = entry.icon;
+            const active = open === index;
+            const content = (
+              <>
+                <span className="nav-gallery__index" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="nav-gallery__icon">
+                  <Icon className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
+                </span>
+                <span className="nav-gallery__text">
+                  <span className="nav-gallery__label">{entry.label}</span>
+                  <span className="nav-gallery__desc">{entry.description}</span>
+                </span>
+                <span className="nav-gallery__cta" aria-hidden="true">
+                  打开看看
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </span>
+              </>
+            );
+            const shared = {
+              className: "nav-gallery__panel text-left",
+              "data-open": active ? "true" : "false",
+              style: { flexGrow: active ? 2.2 : 1 },
+              onMouseEnter: () => setOpen(index),
+              onFocus: () => setOpen(index),
+            } as const;
+            return entry.guide ? (
+              <button key={entry.label} type="button" {...shared} onClick={() => activate(entry)}>
+                {content}
+              </button>
+            ) : (
+              <Link key={entry.label} href={entry.href ?? "/cases"} {...shared}>
+                {content}
+              </Link>
+            );
+          })}
         </div>
 
-        <ul className="space-y-2 sm:hidden" role="list">
+        <ul className="space-y-2 lg:hidden" role="list">
           {ENTRIES.map((entry) => {
             const Icon = entry.icon;
             const content = (
