@@ -2,6 +2,7 @@ import { createDatabaseClient, createSiteContext, errorResponse, requireUser as 
 import { createCloudAgentsClient } from "./qca/cloud-agents.mjs";
 import { createCoordinator } from "./qca/coordinator.ts";
 import { ensureBindings, type QcaBindings } from "./qca/resources.ts";
+import { resolveOwnerId } from "./identity.ts";
 import { application } from "./routes.ts";
 
 // Trusted server-only configuration for the Qoder CN production region.
@@ -29,10 +30,9 @@ const qca = {
 
 const handle = application({
   db,
-  requireUser: (context) => {
-    const user = platformRequireUser(context) as { user_id?: string; id?: string };
-    return { user_id: (user.user_id ?? user.id) as string };
-  },
+  requireUser: (context) => ({
+    user_id: resolveOwnerId(context.request, () => platformRequireUser(context) as { user_id?: string; id?: string }),
+  }),
   qca,
 });
 

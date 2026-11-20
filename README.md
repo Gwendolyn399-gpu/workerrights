@@ -13,7 +13,7 @@
 ## 0. Qoder Sites 线上部署（QCA 真实咨询）
 
 - **正式地址**：<https://workerrights-4uqvdfi8onc.qoder.zone>
-- **访问范围**：公开（public），任何人无需登录即可访问；案件按浏览器匿名会话隔离。2026-11-20 经所有者确认由私有改为公开。
+- **访问范围**：公开（public），任何人无需登录即可访问；案件按浏览器匿名会话隔离。2026-11-20 经所有者确认由私有改为公开。服务端身份解析（`sites-functions/app/identity.ts`）：有平台登录态用平台 `user_id`；匿名访客用严格校验（`^[A-Za-z0-9_-]{8,64}$`）后的浏览器 `X-Session-Id` 派生 `anon:<session>` 身份，加前缀避免与平台 ID 碰撞；无会话头才返回 401。
 - **部署分支**：`deploy/sites-qca`。后端为 Sites Functions（Deno Edge，`sites-functions/app/`）+ 平台数据库；前端为 Vite 构建的 SPA（`frontend/sites/` 入口，`npm run build:sites`，构建模式 `sites` 自动指向 `/functions/v1/app/api/py`）。本地 Next.js + FastAPI 开发仍走 `/api/py`，不受影响。
 - **线上咨询由 QCA 驱动**：保留原有人设、范围与程序化边界，口语化回复、按案件记忆、流式输出；现有工具由站点服务端校验执行，并按调用 ID 向 QCA 回传结果。QCA 失败时返回可重试错误，不回退到 DeepSeek 或 mock 掩盖问题。
 - **隔离与幂等**：案件数据与 QCA 会话按用户（匿名会话）及案件隔离；消息以幂等键恢复同一持久意图，重试不重复入账。浏览器只收到业务数据与用户可见回复。
@@ -27,6 +27,7 @@
 - 案件深链直接打开、刷新后持久化；桌面与移动（386px 宽无横向溢出）布局；首页图片与路由正常。
 - 瞬时故障可自动恢复：QCA 事件读取偶发 404、传输中断时，服务端对事件读取做有限重试、前端按同一幂等键续传，实测第四轮咨询平滑完成、无重复入账。
 - 提速与撞锁恢复（2026-11-20）：回复先显示、范围审查改后台事后校验，回复首次可见约 15.8s（原约 30–60s）；停止后再发或确认撞锁（`lock_busy`）时按同一幂等键自动等锁续发，不再报错；确认按钮在回合进行中改为排队自动触发；流式驱动时限提至 90s，较重一轮约 36.6s 干净完成。
+- 公开匿名免登录（2026-11-20，正式地址、无登录态原始请求实测）：带合法 `X-Session-Id` 匿名新建案件、案件列表均 200；跨会话读取 404、本会话 200；匿名两轮 QCA 流式咨询真实回复、中文存储正常、第二轮复述第一轮事实并算账追问证据；无会话头返回 401。修复前匿名访客因后端只认平台登录态而被 401「请先登录后使用」拦下。
 
 ### 0.2 仍未通过 / 待确认
 
@@ -41,7 +42,7 @@ npm test                              # 前端 24 项（含流式幂等续传、
 npx tsc --noEmit                      # 类型检查
 npm run build:sites                   # 生成 frontend/dist（不提交）
 cd ..
-node --experimental-strip-types --test sites-functions/dev/*.test.mjs   # 后端 57 项
+node --experimental-strip-types --test sites-functions/dev/*.test.mjs   # 后端 71 项
 ```
 
 ## 1. 已实现能力
