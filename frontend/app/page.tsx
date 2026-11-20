@@ -138,15 +138,18 @@ export default function HomePage() {
 
         <div aria-hidden="true" className="hero-horizon" />
 
-        <section className="bg-[linear-gradient(180deg,rgba(248,241,233,0),rgba(255,252,248,0.55)_55%,rgba(250,236,226,0.35))]">
-          <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 sm:grid-cols-3 sm:px-6">
+        <section className="spec-band">
+          <div className="mx-auto grid max-w-6xl divide-y divide-ink-200/50 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
             {[
-              ["5 部", "首期国家法律知识库"],
-              ["18 个", "河南地级市，县区级选择"],
-              ["4 类", "证据缺口与替代材料提示"],
-            ].map(([value, label]) => (
-              <div key={label} className="flex items-baseline gap-3">
-                <span className="text-xl font-black tracking-tight text-brand-900">{value}</span>
+              ["5", "部", "首期国家法律知识库"],
+              ["18", "个", "河南地级市，县区级选择"],
+              ["4", "类", "证据缺口与替代材料提示"],
+            ].map(([value, unit, label]) => (
+              <div key={label} className="flex items-baseline gap-3 py-4 sm:px-6 sm:py-5 sm:first:pl-0">
+                <span className="flex items-baseline gap-1">
+                  <span className="font-mono text-xl font-black tracking-tight text-brand-900 tabular-nums">{value}</span>
+                  <span className="text-xs font-semibold text-brand-800">{unit}</span>
+                </span>
                 <span className="text-xs leading-snug text-ink-500">{label}</span>
               </div>
             ))}
@@ -155,9 +158,19 @@ export default function HomePage() {
 
         <NavGallery />
 
-        <section className="py-16 sm:py-20">
+        <section className="pb-16 pt-10 sm:pb-20 sm:pt-14" aria-labelledby="privacy-heading">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-700">隐私与边界</p>
+              <h2 id="privacy-heading" className="mt-2 text-2xl font-black tracking-tight text-ink-900 sm:text-3xl">
+                先把边界说清楚
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-ink-500">
+                下面四条是这个产品固定遵守的规则，不是可选项。
+              </p>
+            </div>
+
+            <div className="trust-panel mt-8">
               {[
                 {
                   icon: UserRoundCheck,
@@ -182,16 +195,18 @@ export default function HomePage() {
               ].map((item) => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.title} className="rounded-2xl border border-white/70 bg-white/70 p-5 shadow-card backdrop-blur-sm">
-                    <Icon className="h-5 w-5 text-brand-700" />
-                    <h3 className="mt-3 text-sm font-bold text-ink-900">{item.title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-ink-500">{item.text}</p>
+                  <div key={item.title} className="trust-item">
+                    <span className="trust-item__icon">
+                      <Icon className="h-[18px] w-[18px]" />
+                    </span>
+                    <h3>{item.title}</h3>
+                    <p>{item.text}</p>
                   </div>
                 );
               })}
             </div>
 
-            <div className="mt-10 overflow-hidden rounded-3xl bg-[linear-gradient(140deg,#3b1411_0%,#5f211d_52%,#782822_100%)] p-6 text-white shadow-lift sm:p-10">
+            <div className="mt-10 overflow-hidden rounded-[26px] bg-[linear-gradient(140deg,#3b1411_0%,#5f211d_52%,#782822_100%)] p-6 text-white shadow-lift sm:p-10">
               <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
                 <div>
                   <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-brand-100">
@@ -226,7 +241,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mt-8 rounded-2xl border border-white/70 bg-white/70 px-5 py-4 text-xs leading-relaxed text-ink-500 backdrop-blur-sm">
+            <div className="mt-8 rounded-[26px] border border-[#e3d8cf]/80 bg-white/60 px-5 py-4 text-xs leading-relaxed text-ink-500 backdrop-blur-sm">
               <strong className="font-semibold text-ink-700">法律辅助服务免责声明：</strong>
               本产品不是律师事务所，不提供正式法律意见，不承诺追回工资或胜诉。案件分析、法律引用和行动建议仅供参考，
               最终以行政机关、仲裁机构或人民法院认定为准。遇到复杂、紧急或人身安全风险，请及时拨打 110、12348 或联系专业律师。

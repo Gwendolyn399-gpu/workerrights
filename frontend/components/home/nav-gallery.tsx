@@ -49,7 +49,7 @@ export function NavGallery() {
   };
 
   return (
-    <section aria-label="快速入口" className="relative py-10 sm:py-12">
+    <section aria-label="快速入口" className="relative pb-6 pt-10 sm:pb-8 sm:pt-12">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 -top-16 h-56 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(205,82,68,0.07),transparent_72%)]"
@@ -61,6 +61,9 @@ export function NavGallery() {
             const active = open === index;
             const content = (
               <>
+                <span className="nav-gallery__index" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 <span className="nav-gallery__icon">
                   <Icon className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
                 </span>
