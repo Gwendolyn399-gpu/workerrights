@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CheckCircle2, Download, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Download, ExternalLink, Loader2 } from "lucide-react";
 
 import { useCase } from "@/components/case/case-provider";
 import { StaleResultNotice } from "@/components/case/stale-result-notice";
@@ -28,6 +28,7 @@ export default function FormAssistantPage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [activeStep, setActiveStep] = React.useState(0);
+  const [tipsOpen, setTipsOpen] = React.useState(false);
   const [attempt, setAttempt] = React.useState(0);
   const [exporting, setExporting] = React.useState<"docx" | "pdf" | null>(null);
   const [actionError, setActionError] = React.useState("");
@@ -42,6 +43,7 @@ export default function FormAssistantPage() {
     setError("");
     setActionError("");
     setActiveStep(0);
+    setTipsOpen(false);
     focusStep.current = false;
     api.getFormAssistant(caseId)
       .then((result) => { if (active) setData(result); })
@@ -70,6 +72,7 @@ export default function FormAssistantPage() {
   const changeStep = (index: number) => {
     if (index === activeStep) return;
     focusStep.current = true;
+    setTipsOpen(false);
     setActiveStep(index);
   };
 
@@ -172,111 +175,83 @@ export default function FormAssistantPage() {
         </div>
       </nav>
 
-      <div className="min-w-0 space-y-8">
-          {step ? (
-            <section role="tabpanel" id="form-step-panel" aria-labelledby={`form-step-tab-${activeStep}`}
-              data-current-step={activeStep + 1} data-step-count={data.steps.length}>
-              <h2 ref={stepHeading} tabIndex={-1} id="form-step-heading"
-                className="scroll-mt-24 rounded-control text-xl font-extrabold leading-8 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-signal lg:scroll-mt-32">{step.title}</h2>
-              <p className="mt-1 text-xs font-bold tabular-nums text-muted" aria-live="polite" data-step-progress>
-                第 {activeStep + 1} 步 / 共 {data.steps.length} 步 · {step.fields.length ? `${step.fields.length} 个字段` : "操作说明"}
-              </p>
-              <p className="mt-3 max-w-[36em] text-muted">{step.goal}</p>
-
-              {activeStep === 0 && (
-                <div className="mt-5 space-y-3 rounded-card border border-rule bg-surface p-4" data-official-entry>
-                  <p className="font-bold">{data.platform.name}</p>
-                  <Badge variant="warning" className="text-xs" data-verification-status={data.platform.verification_status}>
-                    {data.platform.verification_status === "pending" ? "入口待核验（pending）" : `入口核验状态：${data.platform.verification_status}`}
-                  </Badge>
-                  <p>当前链接为人社部机构首页，不是核验过的直接办理页。</p>
-                  <p className="text-muted">{data.platform.access_note}</p>
-                  <p className="text-muted">{data.platform.source_note}</p>
-                  <a href={data.platform.official_url} target="_blank" rel="noreferrer noopener" className={cn(buttonVariants(), "min-h-11 max-w-full whitespace-normal text-center")}>
-                    去官方平台（本人提交）<ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
-                  </a>
-                  <p className="text-muted">入口不清楚时，可拨打 12333 咨询办理渠道，或拨打 12348 咨询法律问题。</p>
-                </div>
-              )}
-
-              {step.tips.length > 0 && (
-                <details className="mt-4 border-y border-rule py-1">
-                  <summary className="min-h-11 cursor-pointer py-2 font-bold focus-visible:outline focus-visible:outline-signal">本步填写提醒（{step.tips.length} 条）</summary>
-                  <ul className="mb-3 list-disc space-y-2 pl-5 text-muted">{step.tips.map((tip) => <li key={tip}>{tip}</li>)}</ul>
-                </details>
-              )}
-              {step.fields.length > 0 && <div className="mt-5 space-y-4">{step.fields.map((field) => <FormFieldRow key={field.key} field={field} />)}</div>}
-
-              {lastStep && (
-                <div className="mt-5 space-y-4">
-                  <div className="rounded-card border border-rule bg-surface p-4">
-                    <h3 className="text-lg font-bold">提交前最后核对</h3>
-                    <ul className="mt-3 space-y-3">
-                      {[
-                        "姓名、手机号和身份证号由你本人在官方平台填写",
-                        "项目所在地、项目名称和欠薪金额已核对",
-                        "证据图片清晰、能打开，且没有发给陌生人",
-                        "保存提交成功页面、查询码或受理编号",
-                      ].map((item) => <li key={item} className="flex gap-2"><CheckCircle2 aria-hidden="true" className="mt-1.5 h-4 w-4 shrink-0 text-field" /><span>{item}</span></li>)}
-                    </ul>
-                  </div>
-                  <details className="border-y border-rule py-1">
-                    <summary className="min-h-11 cursor-pointer py-2 font-bold focus-visible:outline focus-visible:outline-signal">查看全部字段参考</summary>
-                    <div className="whitespace-pre-wrap break-words py-3 text-muted">{data.copy_summary}</div>
-                  </details>
-                </div>
-              )}
-
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-4" data-step-actions>
-                <Button variant="outline" disabled={activeStep === 0} onClick={() => changeStep(activeStep - 1)}><ArrowLeft aria-hidden="true" className="h-4 w-4" />上一步</Button>
-                {!lastStep ? (
-                  <Button onClick={() => changeStep(activeStep + 1)} data-primary-action>下一步<ArrowRight aria-hidden="true" className="h-4 w-4" /></Button>
-                ) : (
-                  <Link href={`/case/${caseId}/action-plan`} className={buttonVariants()} data-primary-action>回到行动步骤<ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
-                )}
+      <div className="min-w-0">
+        {step ? (
+          <section role="tabpanel" id="form-step-panel" aria-labelledby={`form-step-tab-${activeStep}`}
+            data-current-step={activeStep + 1} data-step-count={data.steps.length}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 ref={stepHeading} tabIndex={-1} id="form-step-heading"
+                  className="scroll-mt-24 rounded-control text-xl font-extrabold leading-8 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-signal lg:scroll-mt-32">{step.title}</h2>
+                <p className="mt-1 text-xs font-bold tabular-nums text-muted" aria-live="polite" data-step-progress>
+                  第 {activeStep + 1} 步 / 共 {data.steps.length} 步 · {step.fields.length ? `${step.fields.length} 个字段` : "操作说明"}
+                </p>
               </div>
-            </section>
-          ) : <Alert variant="warning" title="暂无填报步骤">请返回对话补充案件信息后重新加载。</Alert>}
-
-          <aside className="border-t border-rule pt-5 text-muted" aria-label="隐私说明" data-privacy-notice>
-            <h2 className="text-lg font-bold text-ink">只整理参考，不收集身份资料</h2>
-            <p className="mt-2">{data.privacy_notice}</p>
-            <p className="mt-2">上传由本人操作，产品不保存截图或证件照片</p>
-          </aside>
-
-          <section className="border-t border-rule pt-5" aria-labelledby="statement-heading">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 id="statement-heading" className="text-xl font-extrabold">事实陈述参考</h2>
-              <CopyButton text={data.formal_statement} label="复制陈述" />
+              {step.tips.length > 0 && (
+                <Button variant="outline" size="sm" aria-expanded={tipsOpen} aria-controls="step-tips"
+                  onClick={() => setTipsOpen((open) => !open)}>
+                  本步填写提醒（{step.tips.length} 条）
+                  <ChevronDown aria-hidden="true" className={cn("h-4 w-4 transition-transform", tipsOpen && "rotate-180")} />
+                </Button>
+              )}
             </div>
-            <p className="mt-2 text-muted">带【】的内容需要你补充；请核对后再使用。</p>
-            <details className="mt-3 rounded-card border border-rule bg-surface px-4">
-              <summary className="min-h-11 cursor-pointer py-2 font-bold focus-visible:outline focus-visible:outline-signal">展开陈述全文</summary>
-              <div className="whitespace-pre-wrap break-words border-t border-rule py-4" data-formal-statement>{data.formal_statement}</div>
-            </details>
-          </section>
 
-          <section className="border-t border-rule pt-5" aria-labelledby="evidence-heading" data-evidence-directory>
-            <h2 id="evidence-heading" className="text-xl font-extrabold">证据目录</h2>
-            <p className="mt-2 text-muted">上传由本人操作，产品不保存截图或证件照片</p>
-            <div className="mt-4 divide-y divide-rule rounded-card border border-rule bg-surface">
-              {data.evidence_directory.map((item, index) => (
-                <article key={`${item.label}-${index}`} className="min-w-0 break-words p-4" data-evidence-card>
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <h3 className="text-lg font-bold">{item.label}</h3>
-                    <Badge className="text-xs" variant={item.status === "已有" ? "success" : item.status === "待补充" ? "warning" : "neutral"}>{item.status}</Badge>
-                  </div>
-                  <dl className="mt-3 grid gap-3 sm:grid-cols-2 sm:gap-6">
-                    <div className="min-w-0"><dt className="text-xs font-bold text-muted">能证明什么</dt><dd className="mt-1">{item.proves}</dd></div>
-                    <div className="min-w-0"><dt className="text-xs font-bold text-muted">获取方式</dt><dd className="mt-1">{item.how_to_get}</dd></div>
-                  </dl>
-                </article>
-              ))}
-              {data.evidence_directory.length === 0 && <p className="p-4 text-muted">暂无材料目录。请先在对话中补充已有材料，不要编造。</p>}
+            {tipsOpen && step.tips.length > 0 && (
+              <ul id="step-tips" className="mt-3 list-disc space-y-2 rounded-card border border-rule bg-surface p-4 pl-8 text-muted">
+                {step.tips.map((tip) => <li key={tip}>{tip}</li>)}
+              </ul>
+            )}
+
+            <p className="mt-3 max-w-[36em] text-muted">{step.goal}</p>
+
+            {activeStep === 0 && (
+              <div className="mt-5 space-y-3 rounded-card border border-rule bg-surface p-4" data-official-entry>
+                <p className="font-bold">{data.platform.name}</p>
+                <Badge variant="warning" className="text-xs" data-verification-status={data.platform.verification_status}>
+                  {data.platform.verification_status === "pending" ? "入口待核验（pending）" : `入口核验状态：${data.platform.verification_status}`}
+                </Badge>
+                <p>当前链接为人社部机构首页，不是核验过的直接办理页。</p>
+                <p className="text-muted">{data.platform.access_note}</p>
+                <p className="text-muted">{data.platform.source_note}</p>
+                <a href={data.platform.official_url} target="_blank" rel="noreferrer noopener" className={cn(buttonVariants(), "min-h-11 max-w-full whitespace-normal text-center")}>
+                  去官方平台（本人提交）<ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
+                </a>
+                <p className="text-muted">入口不清楚时，可拨打 12333 咨询办理渠道，或拨打 12348 咨询法律问题。</p>
+              </div>
+            )}
+
+            {step.fields.length > 0 && <div className="mt-5 space-y-4">{step.fields.map((field) => <FormFieldRow key={field.key} field={field} />)}</div>}
+
+            {lastStep && (
+              <div className="mt-5 space-y-4">
+                <div className="rounded-card border border-rule bg-surface p-4">
+                  <h3 className="text-lg font-bold">提交前最后核对</h3>
+                  <ul className="mt-3 space-y-3">
+                    {[
+                      "姓名、手机号和身份证号由你本人在官方平台填写",
+                      "项目所在地、项目名称和欠薪金额已核对",
+                      "证据图片清晰、能打开，且没有发给陌生人",
+                      "保存提交成功页面、查询码或受理编号",
+                    ].map((item) => <li key={item} className="flex gap-2"><CheckCircle2 aria-hidden="true" className="mt-1.5 h-4 w-4 shrink-0 text-field" /><span>{item}</span></li>)}
+                  </ul>
+                </div>
+                <details className="border-y border-rule py-1">
+                  <summary className="min-h-11 cursor-pointer py-2 font-bold focus-visible:outline focus-visible:outline-signal">查看全部字段参考</summary>
+                  <div className="whitespace-pre-wrap break-words py-3 text-muted">{data.copy_summary}</div>
+                </details>
+              </div>
+            )}
+
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-4" data-step-actions>
+              <Button variant="outline" disabled={activeStep === 0} onClick={() => changeStep(activeStep - 1)}><ArrowLeft aria-hidden="true" className="h-4 w-4" />上一步</Button>
+              {!lastStep ? (
+                <Button onClick={() => changeStep(activeStep + 1)} data-primary-action>下一步<ArrowRight aria-hidden="true" className="h-4 w-4" /></Button>
+              ) : (
+                <Link href={`/case/${caseId}/action-plan`} className={buttonVariants()} data-primary-action>回到行动步骤<ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+              )}
             </div>
-            <p className="mt-3 text-muted">上传优先使用原始截图和带时间地点信息的照片；聊天记录保留对方身份信息与完整上下文。</p>
           </section>
-          <p className="rounded-card border border-rule bg-sand p-4 text-muted">{data.submit_notice}</p>
+        ) : <Alert variant="warning" title="暂无填报步骤">请返回对话补充案件信息后重新加载。</Alert>}
       </div>
     </div>
   );
