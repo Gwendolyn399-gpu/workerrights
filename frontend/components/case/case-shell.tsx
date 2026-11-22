@@ -8,6 +8,7 @@ import { useCase } from "@/components/case/case-provider";
 import { StartCaseButton } from "@/components/home/start-actions";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { caseDisplayTitle } from "@/lib/case-title";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -72,7 +73,7 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
                 <span className="hidden sm:inline">我的案件</span>
               </Link>
               <div className="flex min-w-0 items-center gap-2">
-                <h1 className="truncate text-sm font-extrabold text-ink sm:text-base">{caseData.title}</h1>
+                <h1 className="truncate text-sm font-extrabold text-ink sm:text-base">{caseDisplayTitle(caseData)}</h1>
                 {caseData.is_demo && <Badge variant="neutral">虚构演示</Badge>}
               </div>
             </div>

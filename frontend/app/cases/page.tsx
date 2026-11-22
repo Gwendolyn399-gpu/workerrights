@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { api } from "@/services/api";
 import type { CaseBrief } from "@/types/api";
+import { caseDisplayTitle } from "@/lib/case-title";
 import { cn, formatAmount, formatDate, statusLabel } from "@/lib/utils";
 
 const nextStep = (item: CaseBrief) =>
@@ -108,7 +109,7 @@ export default function CasesPage() {
                       href={`/case/${item.id}`}
                       className="max-w-full truncate text-base font-extrabold text-ink hover:text-signal-deep"
                     >
-                      {item.title}
+                      {caseDisplayTitle(item)}
                     </Link>
                     <Badge
                       variant={
@@ -160,7 +161,7 @@ export default function CasesPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setDeleteTarget(item)}
-                    aria-label={`删除案件：${item.title}`}
+                    aria-label={`删除案件：${caseDisplayTitle(item)}`}
                     className="h-11 w-11 text-muted hover:bg-signal-wash hover:text-signal-deep"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -194,7 +195,7 @@ export default function CasesPage() {
           </>
         }
       >
-        <p className="text-sm font-bold text-ink">{deleteTarget?.title}</p>
+        <p className="text-sm font-bold text-ink">{deleteTarget ? caseDisplayTitle(deleteTarget) : ""}</p>
       </Modal>
     </div>
   );
