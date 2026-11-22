@@ -32,6 +32,8 @@ export default function FormAssistantPage() {
   const [exporting, setExporting] = React.useState<"docx" | "pdf" | null>(null);
   const [actionError, setActionError] = React.useState("");
   const stepHeading = React.useRef<HTMLHeadingElement>(null);
+  const nav = React.useRef<HTMLElement>(null);
+  const tabRow = React.useRef<HTMLOListElement>(null);
   const focusStep = React.useRef(false);
 
   React.useEffect(() => {
@@ -54,7 +56,15 @@ export default function FormAssistantPage() {
     if (!focusStep.current || !stepHeading.current) return;
     focusStep.current = false;
     stepHeading.current.focus({ preventScroll: true });
-    stepHeading.current.scrollIntoView({ block: "start", behavior: "instant" });
+    nav.current?.scrollIntoView({ block: "start", behavior: "instant" });
+  }, [activeStep]);
+
+  React.useEffect(() => {
+    const row = tabRow.current;
+    const tab = row?.querySelector<HTMLElement>(`[data-step-index="${activeStep}"]`);
+    if (!row || !tab) return;
+    const left = tab.offsetLeft - (row.clientWidth - tab.offsetWidth) / 2;
+    row.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
   }, [activeStep]);
 
   const changeStep = (index: number) => {
@@ -98,13 +108,24 @@ export default function FormAssistantPage() {
   return (
     <div className="space-y-6 pb-24 text-base leading-7 text-ink lg:pb-10" data-form-assistant>
       <StaleResultNotice generatedFromRevision={data.generated_from_revision} />
-      <header>
-        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">填报参考</h1>
-        <p className="mt-3 max-w-[36em]">本人去官方平台填写，本产品不登录、不代填、不自动提交。</p>
-        <p className="mt-1 max-w-[36em] text-muted">参考常见填报顺序整理，具体以官方页面为准</p>
-        <p className="mt-3 text-xs leading-5 text-muted" data-field-progress>
-          填报准备：共 {fields.length} 个字段，{readyFields} 项可参考，{officialFields} 项仅由本人在官方填写；其余请补充或核对。
-        </p>
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">填报参考</h1>
+          <p className="mt-3 max-w-[36em]">本人去官方平台填写，本产品不登录、不代填、不自动提交。</p>
+          <p className="mt-1 max-w-[36em] text-muted">参考常见填报顺序整理，具体以官方页面为准</p>
+          <p className="mt-3 text-xs leading-5 text-muted" data-field-progress>
+            填报准备：共 {fields.length} 个字段，{readyFields} 项可参考，{officialFields} 项仅由本人在官方填写；其余请补充或核对。
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2" aria-label="带走参考材料">
+          <CopyButton text={data.copy_summary} label="复制全部字段" />
+          {(["docx", "pdf"] as const).map((format) => (
+            <Button key={format} variant="outline" onClick={() => download(format)} disabled={Boolean(exporting)}>
+              {exporting === format ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <Download aria-hidden="true" className="h-4 w-4" />}
+              {format.toUpperCase()}
+            </Button>
+          ))}
+        </div>
       </header>
 
       {data.preliminary && (
@@ -113,49 +134,39 @@ export default function FormAssistantPage() {
         }><span className="text-base leading-7">{data.preliminary_note}</span></Alert>
       )}
 
-      <div className="flex flex-wrap gap-2" aria-label="带走参考材料">
-        <CopyButton text={data.copy_summary} label="复制全部字段" />
-        {(["docx", "pdf"] as const).map((format) => (
-          <Button key={format} variant="outline" onClick={() => download(format)} disabled={Boolean(exporting)}>
-            {exporting === format ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <Download aria-hidden="true" className="h-4 w-4" />}
-            {format.toUpperCase()}
-          </Button>
-        ))}
-      </div>
       {actionError && <div role="alert"><Alert variant="danger"><span className="text-base">{actionError} 请重试下载。</span></Alert></div>}
 
-      <div className="grid min-w-0 gap-6 border-t border-rule pt-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
-        <div className="min-w-0">
-          <div className="lg:hidden">
-            <label htmlFor="form-step-select" className="mb-2 block text-sm font-bold">选择填报步骤</label>
-            <select id="form-step-select" value={activeStep} onChange={(event) => changeStep(Number(event.target.value))}
-              className="min-h-11 w-full min-w-0 rounded-control border border-rule bg-surface px-3 text-base text-ink focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-signal">
-              {data.steps.map((item, index) => <option key={item.id} value={index}>{index + 1}. {item.title}</option>)}
-            </select>
-          </div>
-          <nav aria-label="填报参考步骤" className="hidden lg:block">
-            <ol className="space-y-1">
-              {data.steps.map((item, index) => (
-                <li key={item.id}>
-                  <button type="button" data-step-index={index} aria-current={activeStep === index ? "step" : undefined}
-                    onClick={() => changeStep(index)}
-                    className={cn("flex min-h-11 w-full items-start gap-3 rounded-control border px-3 py-3 text-left focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-signal",
-                      activeStep === index ? "border-rule bg-surface font-bold text-signal-deep" : "border-transparent text-muted hover:bg-sand hover:text-ink")}>
-                    <span className="tabular-nums">{index + 1}.</span>
-                    <span className="min-w-0">{item.title}<span className="mt-1 block text-xs font-normal text-muted">{item.fields.length ? `${item.fields.length} 个字段` : "操作说明"}</span></span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </nav>
-        </div>
+      <nav ref={nav} aria-label="填报参考步骤" className="min-w-0 scroll-mt-20 border-y border-rule lg:scroll-mt-32">
+        <ol ref={tabRow} role="tablist" aria-orientation="horizontal" className="flex gap-1.5 overflow-x-auto py-2">
+          {data.steps.map((item, index) => {
+            const active = activeStep === index;
+            return (
+              <li key={item.id} role="presentation" className="shrink-0">
+                <button type="button" role="tab" id={`form-step-tab-${index}`} aria-controls="form-step-panel"
+                  aria-selected={active} data-step-index={index}
+                  onClick={() => changeStep(index)}
+                  className={cn(
+                    "flex min-h-11 items-center gap-2 rounded-control border px-2.5 py-2 text-left text-sm transition focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-signal",
+                    active ? "border-rule bg-surface font-bold text-signal-deep" : "border-transparent text-muted hover:bg-sand hover:text-ink",
+                  )}>
+                  <span className="font-mono text-xs font-bold tabular-nums">{index + 1}</span>
+                  <span className="whitespace-nowrap">{item.title}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
-        <div className="min-w-0 space-y-8">
+      <div className="min-w-0 space-y-8">
           {step ? (
-            <section aria-labelledby="form-step-heading" data-current-step={activeStep + 1} data-step-count={data.steps.length}>
+            <section role="tabpanel" id="form-step-panel" aria-labelledby={`form-step-tab-${activeStep}`}
+              data-current-step={activeStep + 1} data-step-count={data.steps.length}>
               <h2 ref={stepHeading} tabIndex={-1} id="form-step-heading"
                 className="scroll-mt-24 rounded-control text-xl font-extrabold leading-8 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-signal lg:scroll-mt-32">{step.title}</h2>
-              <p className="mt-1 text-xs font-bold tabular-nums text-muted" aria-live="polite" data-step-progress>第 {activeStep + 1} 步 / 共 {data.steps.length} 步</p>
+              <p className="mt-1 text-xs font-bold tabular-nums text-muted" aria-live="polite" data-step-progress>
+                第 {activeStep + 1} 步 / 共 {data.steps.length} 步 · {step.fields.length ? `${step.fields.length} 个字段` : "操作说明"}
+              </p>
               <p className="mt-3 max-w-[36em] text-muted">{step.goal}</p>
 
               {activeStep === 0 && (
@@ -252,7 +263,6 @@ export default function FormAssistantPage() {
             <p className="mt-3 text-muted">上传优先使用原始截图和带时间地点信息的照片；聊天记录保留对方身份信息与完整上下文。</p>
           </section>
           <p className="rounded-card border border-rule bg-sand p-4 text-muted">{data.submit_notice}</p>
-        </div>
       </div>
     </div>
   );
