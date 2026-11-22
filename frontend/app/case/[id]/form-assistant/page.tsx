@@ -202,21 +202,25 @@ export default function FormAssistantPage() {
               </ul>
             )}
 
-            <p className="mt-3 max-w-[36em] text-muted">{step.goal}</p>
+            <p className="mt-3 text-muted">{step.goal}</p>
 
             {activeStep === 0 && (
               <div className="mt-5 space-y-3 rounded-card border border-rule bg-surface p-4" data-official-entry>
-                <p className="font-bold">{data.platform.name}</p>
-                <Badge variant="warning" className="text-xs" data-verification-status={data.platform.verification_status}>
-                  {data.platform.verification_status === "pending" ? "入口待核验（pending）" : `入口核验状态：${data.platform.verification_status}`}
-                </Badge>
-                <p>当前链接为人社部机构首页，不是核验过的直接办理页。</p>
-                <p className="text-muted">{data.platform.access_note}</p>
-                <p className="text-muted">{data.platform.source_note}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-bold">{data.platform.name}</p>
+                  <Badge variant="warning" className="text-xs" data-verification-status={data.platform.verification_status}>
+                    {data.platform.verification_status === "pending" ? "入口待核验（pending）" : `入口核验状态：${data.platform.verification_status}`}
+                  </Badge>
+                </div>
+                <div className="space-y-1.5 text-sm leading-6 text-muted">
+                  <p>当前链接为人社部机构首页，不是核验过的直接办理页。</p>
+                  <p>{data.platform.access_note}</p>
+                  <p>{data.platform.source_note}</p>
+                  <p>入口不清楚时，可拨打 12333 咨询办理渠道，或拨打 12348 咨询法律问题。</p>
+                </div>
                 <a href={data.platform.official_url} target="_blank" rel="noreferrer noopener" className={cn(buttonVariants(), "min-h-11 max-w-full whitespace-normal text-center")}>
                   去官方平台（本人提交）<ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
                 </a>
-                <p className="text-muted">入口不清楚时，可拨打 12333 咨询办理渠道，或拨打 12348 咨询法律问题。</p>
               </div>
             )}
 
@@ -266,13 +270,13 @@ function FormFieldRow({ field }: { field: FormField }) {
         <h3 className="text-lg font-bold">{field.label}{field.required && <span className="ml-2 text-xs font-normal text-signal-deep">必填</span>}</h3>
         <Badge variant={style.variant} className="text-xs">{style.label}</Badge>
       </div>
-      <p className="mt-2 text-muted">{field.explanation}</p>
+      <p className="mt-2 text-sm leading-6 text-muted">{field.explanation}</p>
       <div className="mt-3 border-y border-rule py-3">
         {officialOnly ? <p className="text-muted">由本人在官方平台填写，本产品不收集此字段。</p>
           : field.value ? <p className="whitespace-pre-wrap break-words" data-field-value>{field.value}</p>
             : <p className="text-note">补充后生成参考内容。{field.placeholder}</p>}
       </div>
-      {field.note && <p className="mt-3 text-muted">{field.note}</p>}
+      {field.note && <p className="mt-3 text-sm leading-6 text-muted">{field.note}</p>}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <p className="min-w-0 break-words text-xs leading-5 text-muted">来源事实：{officialOnly ? "本人在官方平台填写" : field.source_facts.length ? field.source_facts.join("、") : "暂无已提供的来源事实"}</p>
         {!officialOnly && field.value && <CopyButton text={field.value} label="复制此字段" />}
