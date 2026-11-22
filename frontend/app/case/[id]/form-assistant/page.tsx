@@ -33,7 +33,7 @@ export default function FormAssistantPage() {
   const [actionError, setActionError] = React.useState("");
   const stepHeading = React.useRef<HTMLHeadingElement>(null);
   const nav = React.useRef<HTMLElement>(null);
-  const tabRow = React.useRef<HTMLOListElement>(null);
+  const tabRow = React.useRef<HTMLDivElement>(null);
   const focusStep = React.useRef(false);
 
   React.useEffect(() => {
@@ -137,25 +137,39 @@ export default function FormAssistantPage() {
       {actionError && <div role="alert"><Alert variant="danger"><span className="text-base">{actionError} 请重试下载。</span></Alert></div>}
 
       <nav ref={nav} aria-label="填报参考步骤" className="min-w-0 scroll-mt-20 border-y border-rule lg:scroll-mt-32">
-        <ol ref={tabRow} role="tablist" aria-orientation="horizontal" className="flex gap-1.5 overflow-x-auto py-2">
+        <div ref={tabRow} role="tablist" aria-orientation="horizontal" className="flex gap-2 overflow-x-auto py-3 md:overflow-visible">
           {data.steps.map((item, index) => {
             const active = activeStep === index;
             return (
-              <li key={item.id} role="presentation" className="shrink-0">
-                <button type="button" role="tab" id={`form-step-tab-${index}`} aria-controls="form-step-panel"
-                  aria-selected={active} data-step-index={index}
-                  onClick={() => changeStep(index)}
-                  className={cn(
-                    "flex min-h-11 items-center gap-2 rounded-control border px-2.5 py-2 text-left text-sm transition focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-signal",
-                    active ? "border-rule bg-surface font-bold text-signal-deep" : "border-transparent text-muted hover:bg-sand hover:text-ink",
+              <button key={item.id} type="button" role="tab" id={`form-step-tab-${index}`} aria-controls="form-step-panel"
+                aria-selected={active} data-step-index={index}
+                onClick={() => changeStep(index)}
+                className={cn(
+                  "flex h-[104px] w-[152px] shrink-0 flex-col justify-between overflow-hidden rounded-card border px-3 py-3 text-left transition-[flex-grow,background-color,border-color] duration-500 ease-out focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-signal md:w-auto md:min-w-0 md:shrink md:basis-0",
+                  active
+                    ? "border-signal bg-surface md:grow-[3.6]"
+                    : "border-rule bg-sand/50 hover:border-signal/40 hover:bg-sand md:grow",
+                )}>
+                <span className={cn("font-mono font-bold tabular-nums", active ? "text-base text-signal-deep" : "text-sm text-route")}>
+                  {index + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className={cn(
+                    "block leading-5 transition-colors",
+                    active ? "text-lg font-extrabold text-ink" : "line-clamp-2 text-[13px] font-bold text-muted",
                   )}>
-                  <span className="font-mono text-xs font-bold tabular-nums">{index + 1}</span>
-                  <span className="whitespace-nowrap">{item.title}</span>
-                </button>
-              </li>
+                    {item.title}
+                  </span>
+                  {active && (
+                    <span className="mt-1 block text-xs text-muted">
+                      {item.fields.length ? `${item.fields.length} 个字段` : "操作说明"}
+                    </span>
+                  )}
+                </span>
+              </button>
             );
           })}
-        </ol>
+        </div>
       </nav>
 
       <div className="min-w-0 space-y-8">
