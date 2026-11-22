@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BookOpenCheck, ExternalLink, PencilLine } from "lucide-react";
+import { ExternalLink, PencilLine } from "lucide-react";
 
 import { useCase } from "@/components/case/case-provider";
 import { FactsEditor } from "@/components/case/facts-editor";
@@ -59,12 +59,13 @@ export function CaseInfoPanel({ bare = false }: { bare?: boolean }) {
   return (
     <div
       className={cn(
+        "flex min-h-0 flex-col",
         bare
-          ? "border-t-[3px] border-ink"
-          : "rounded-card border border-rule border-t-[3px] border-t-ink bg-surface",
+          ? "border-t border-rule"
+          : "h-full overflow-hidden rounded-card border border-rule bg-surface",
       )}
     >
-      <div className="flex items-center justify-between gap-3 px-4 pb-2.5 pt-3">
+      <div className="flex shrink-0 items-center justify-between gap-3 px-4 pb-2.5 pt-3">
         {bare ? (
           <p className="text-[11px] text-muted">所有页面都引用这一份事实</p>
         ) : (
@@ -83,7 +84,21 @@ export function CaseInfoPanel({ bare = false }: { bare?: boolean }) {
         </span>
       </div>
 
-      <div role="tablist" aria-label="案件档案页签" className="flex gap-5 border-y border-rule bg-sand px-4">
+      {tab === "facts" && (
+        <div className="shrink-0 px-4 pb-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 w-full justify-start"
+            onClick={() => setEditOpen(true)}
+          >
+            <PencilLine className="h-3.5 w-3.5" />
+            核对或修改档案
+          </Button>
+        </div>
+      )}
+
+      <div role="tablist" aria-label="案件档案页签" className="flex shrink-0 gap-5 border-y border-rule bg-sand px-4">
         <button
           type="button"
           role="tab"
@@ -114,119 +129,110 @@ export function CaseInfoPanel({ bare = false }: { bare?: boolean }) {
         </button>
       </div>
 
-      {tab === "facts" ? (
-        <div className="px-4">
-          <dl className="divide-y divide-rule">
-            {rows.map((row) => (
-              <div key={row.key} className="flex items-start justify-between gap-3 py-2.5">
-                <dt className="w-20 shrink-0 text-xs leading-6 text-muted">{row.label}</dt>
-                <dd
-                  className={cn(
-                    "min-w-0 flex-1 text-right text-base leading-6",
-                    row.highlight
-                      ? "font-bold text-signal-deep"
-                      : row.known
-                        ? "font-medium text-ink"
-                        : "text-muted",
-                  )}
-                >
-                  {row.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {tab === "facts" ? (
+          <div className="px-4">
+            <dl className="divide-y divide-rule">
+              {rows.map((row) => (
+                <div key={row.key} className="flex items-start justify-between gap-3 py-2.5">
+                  <dt className="w-20 shrink-0 text-xs leading-6 text-muted">{row.label}</dt>
+                  <dd
+                    className={cn(
+                      "min-w-0 flex-1 text-right text-base leading-6",
+                      row.highlight
+                        ? "font-bold text-signal-deep"
+                        : row.known
+                          ? "font-medium text-ink"
+                          : "text-muted",
+                    )}
+                  >
+                    {row.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
 
-          {missing.length > 0 && (
-            <p className="mb-3 border-l-2 border-note bg-note-wash px-2.5 py-2 text-xs leading-5 text-note">
-              还没整理：{missing.join("、")}
-            </p>
-          )}
-          {unknownEntries.length > 0 && (
-            <p className="mb-3 text-xs leading-5 text-muted">
-              已标记待核实：{unknownEntries.map(([key]) => CHECK_LABELS[key] || key).join("、")}
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="px-4 py-3">
-          {legalLoading && <Spinner label="正在检索法律资料…" />}
-          {legalError && (
-            <div className="text-xs leading-5 text-signal-deep">
-              <p>{legalError}</p>
-              <button type="button" onClick={() => void loadLegal()} className="mt-2 font-bold underline">
-                重试
-              </button>
-            </div>
-          )}
-          {legal && (
-            <>
-              <p className="text-xs leading-5 text-muted">
-                共 {legal.provisions.length} 条：已核验 {legal.verification_summary.verified}、待核验{" "}
-                {legal.verification_summary.transcribed + legal.verification_summary.pending}。
+            {missing.length > 0 && (
+              <p className="mb-3 border-l-2 border-note bg-note-wash px-2.5 py-2 text-xs leading-5 text-note">
+                还没整理：{missing.join("、")}
               </p>
-              {legal.provisions.length > 0 ? (
-                <ul className="mt-2 divide-y divide-rule border-y border-rule">
-                  {legal.provisions.slice(0, 3).map((item) => (
-                    <li key={item.id} className="py-3">
-                      <p className="text-sm font-bold leading-5 text-ink">
-                        {item.document.title} · {item.article}
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-muted">{item.heading}</p>
-                      <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-ink">{item.text}</p>
-                      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
-                        <Badge
-                          variant={
-                            item.verification_status === "verified"
-                              ? "success"
-                              : item.verification_status === "pending"
-                                ? "warning"
-                                : "neutral"
-                          }
-                        >
-                          {verificationLabel(item.verification_status)}
-                        </Badge>
-                        {item.official_url && (
-                          <a
-                            href={item.official_url}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="inline-flex items-center gap-1 text-xs text-muted underline-offset-4 hover:text-signal-deep hover:underline"
-                          >
-                            {item.official_source_name || "官方原文"}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 border-y border-rule py-3 text-sm text-muted">
-                  现在的事实还不足以匹配具体条文。可以继续补充工作地点、时间和工资约定。
+            )}
+            {unknownEntries.length > 0 && (
+              <p className="mb-3 text-xs leading-5 text-muted">
+                已标记待核实：{unknownEntries.map(([key]) => CHECK_LABELS[key] || key).join("、")}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="px-4 py-3">
+            {legalLoading && <Spinner label="正在检索法律资料…" />}
+            {legalError && (
+              <div className="text-xs leading-5 text-signal-deep">
+                <p>{legalError}</p>
+                <button type="button" onClick={() => void loadLegal()} className="mt-2 font-bold underline">
+                  重试
+                </button>
+              </div>
+            )}
+            {legal && (
+              <>
+                <p className="text-xs leading-5 text-muted">
+                  共 {legal.provisions.length} 条：已核验 {legal.verification_summary.verified}、待核验{" "}
+                  {legal.verification_summary.transcribed + legal.verification_summary.pending}。
                 </p>
-              )}
-              <button
-                type="button"
-                onClick={() => setLegalOpen(true)}
-                className="mt-3 inline-flex min-h-11 items-center text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
-              >
-                查看全部依据与核验状态
-              </button>
-              <p className="mt-2 text-[11px] leading-5 text-muted">{legal.disclaimer}</p>
-            </>
-          )}
-        </div>
-      )}
-
-      <div className="grid gap-2 border-t border-rule px-4 py-3">
-        <Button variant="outline" size="sm" className="h-11 justify-start" onClick={() => setEditOpen(true)}>
-          <PencilLine className="h-3.5 w-3.5" />
-          核对或修改档案
-        </Button>
-        <Button variant="ghost" size="sm" className="h-11 justify-start" onClick={showLegal}>
-          <BookOpenCheck className="h-3.5 w-3.5" />
-          查阅相关法律条文
-        </Button>
+                {legal.provisions.length > 0 ? (
+                  <ul className="mt-2 divide-y divide-rule border-y border-rule">
+                    {legal.provisions.slice(0, 3).map((item) => (
+                      <li key={item.id} className="py-3">
+                        <p className="text-sm font-bold leading-5 text-ink">
+                          {item.document.title} · {item.article}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-muted">{item.heading}</p>
+                        <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-ink">{item.text}</p>
+                        <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+                          <Badge
+                            variant={
+                              item.verification_status === "verified"
+                                ? "success"
+                                : item.verification_status === "pending"
+                                  ? "warning"
+                                  : "neutral"
+                            }
+                          >
+                            {verificationLabel(item.verification_status)}
+                          </Badge>
+                          {item.official_url && (
+                            <a
+                              href={item.official_url}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className="inline-flex items-center gap-1 text-xs text-muted underline-offset-4 hover:text-signal-deep hover:underline"
+                            >
+                              {item.official_source_name || "官方原文"}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 border-y border-rule py-3 text-sm text-muted">
+                    现在的事实还不足以匹配具体条文。可以继续补充工作地点、时间和工资约定。
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setLegalOpen(true)}
+                  className="mt-3 inline-flex min-h-11 items-center text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
+                >
+                  查看全部依据与核验状态
+                </button>
+                <p className="mt-2 text-[11px] leading-5 text-muted">{legal.disclaimer}</p>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <FactsEditor open={editOpen} onClose={() => setEditOpen(false)} />

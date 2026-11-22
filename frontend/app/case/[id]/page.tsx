@@ -303,7 +303,7 @@ export default function ChatPage() {
                   }}
                   rows={1}
                   placeholder={showOpening ? "说说你想咨询的事…" : "输入消息…"}
-                  className="min-h-12 max-h-32 resize-none py-3 pr-12 leading-6"
+                  className="block min-h-12 max-h-32 resize-none py-3 pr-14 leading-6"
                   aria-label="输入你的回答"
                 />
                 <button
@@ -311,7 +311,7 @@ export default function ChatPage() {
                   onClick={() => (speech.listening ? speech.stop() : speech.start())}
                   title={speech.supported ? "语音输入" : "当前浏览器不支持语音输入"}
                   className={cn(
-                    "absolute bottom-0.5 right-0.5 inline-flex h-11 w-11 items-center justify-center rounded-control transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90",
+                    "absolute bottom-0 right-0 inline-flex h-12 w-12 items-center justify-center rounded-control transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90",
                     speech.listening
                       ? "bg-signal-wash text-signal-deep"
                       : "text-muted hover:bg-sand hover:text-ink",
@@ -356,7 +356,7 @@ export default function ChatPage() {
       </div>
 
       <aside className="hidden lg:block">
-        <div className="sticky top-36 max-h-[calc(100vh-10rem)] overflow-y-auto">
+        <div className="sticky top-36 h-[calc(100vh-13rem)]">
           <CaseInfoPanel />
         </div>
       </aside>
