@@ -348,7 +348,7 @@ export default function ActionPlanPage() {
                 >
                   <span
                     className={cn(
-                      "mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold",
+                      "mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-extrabold",
                       state === "done"
                         ? "border-field bg-field text-surface"
                         : state === "current"
@@ -385,12 +385,12 @@ export default function ActionPlanPage() {
                           {index < group.steps.length - 1 && (
                             <span
                               aria-hidden="true"
-                              className="absolute bottom-0 left-[13px] top-7 w-px bg-rule"
+                              className="absolute bottom-0 left-4 top-7 w-px bg-rule"
                             />
                           )}
                           <span
                             className={cn(
-                              "absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-extrabold",
+                              "absolute left-0 top-0 flex h-6 w-8 items-center justify-center rounded-[3px] border font-mono text-[10px] font-bold",
                               isDone
                                 ? "border-field bg-field text-surface"
                                 : isCurrent
@@ -398,7 +398,7 @@ export default function ActionPlanPage() {
                                   : "border-route bg-surface text-route",
                             )}
                           >
-                            {isDone ? <Check className="h-4 w-4" strokeWidth={3} /> : step.position}
+                            {isDone ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : `${groupIndex + 1}.${index + 1}`}
                           </span>
 
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -535,34 +535,46 @@ export default function ActionPlanPage() {
 
       {otherChannels.length > 0 && (
         <section className="order-7 mt-8 border-t border-rule pt-6 lg:order-none">
-          <h2 className="text-xl font-extrabold text-ink">还可以咨询</h2>
-          <p className="mt-1.5 text-sm leading-6 text-muted">
-            以下渠道不在上面 8 步中，但可以并行了解；具体以官方告知为准。
-          </p>
-          <ul className="mt-3 divide-y divide-rule border-y border-rule">
-            {otherChannels.map((channel) => (
-              <li key={channel.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="text-base font-bold text-ink">{channel.name}</p>
-                  <p className="mt-0.5 text-xs text-muted">{channel.category}</p>
-                  <ChannelVerification channel={channel} />
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 className="text-xl font-extrabold text-ink">还可以咨询</h2>
+            <p className="text-xs leading-5 text-muted">
+              不在上面 {plan.progress.total} 步中，可并行了解；入口以官方页面为准。
+            </p>
+          </div>
+          <ul className="mt-4 grid divide-y divide-rule border-y border-rule md:grid-cols-3 md:divide-y-0 md:border-y-0">
+            {otherChannels.map((channel, index) => (
+              <li
+                key={channel.id}
+                className={cn(
+                  "flex flex-col gap-2 py-3 md:py-1 md:pl-5",
+                  index === 0 ? "md:pl-0" : "md:border-l md:border-rule",
+                )}
+              >
+                <div>
+                  <p className="text-base font-bold leading-6 text-ink">{channel.name}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-muted">
+                    {channelCategoryLabel(channel.category)} · {verificationLabel(channel.verification_status)}
+                  </p>
                 </div>
                 {channel.official_url ? (
                   <a
                     href={channel.official_url}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
+                    className="mt-auto inline-flex min-h-9 w-fit items-center gap-1 text-xs font-bold text-signal-deep underline-offset-4 hover:underline"
                   >
                     官方入口
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 ) : (
-                  <span className="text-xs text-note">入口待核实</span>
+                  <span className="mt-auto text-xs text-note">入口待核实</span>
                 )}
               </li>
             ))}
           </ul>
+          <p className="mt-2 text-[11px] leading-5 text-muted">
+            链接仅用于查找官方渠道，不代表已核验的直接办理页；具体以当地官方告知为准。
+          </p>
         </section>
       )}
 
@@ -592,4 +604,18 @@ function deadlinesForStep(
     return deadlines.filter((deadline) => deadline.title.includes("仲裁"));
   }
   return [];
+}
+
+const CHANNEL_CATEGORY_LABELS: Record<string, string> = {
+  official_platform: "国家级线上平台",
+  hotline: "服务热线",
+  labor_supervision: "劳动保障监察",
+  industry_authority: "行业主管部门",
+  arbitration: "劳动仲裁",
+  legal_aid: "法律援助",
+  litigation: "司法途径",
+};
+
+function channelCategoryLabel(category: string) {
+  return CHANNEL_CATEGORY_LABELS[category] || "其他渠道";
 }
