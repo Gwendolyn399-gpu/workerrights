@@ -14,14 +14,6 @@ import { api } from "@/services/api";
 import type { AnalysisResponse, EvidenceItem, LegalAnalysisItem, RelationshipNode } from "@/types/api";
 import { cn, shortDate, verificationLabel } from "@/lib/utils";
 
-const NAV = [
-  { href: "#conclusions", label: "结论" },
-  { href: "#evidence", label: "证据" },
-  { href: "#rights", label: "权益" },
-  { href: "#legal", label: "依据" },
-  { href: "#channels", label: "渠道" },
-];
-
 export default function AnalysisPage() {
   const { caseId } = useCase();
   const [analysis, setAnalysis] = React.useState<AnalysisResponse | null>(null);
@@ -30,6 +22,10 @@ export default function AnalysisPage() {
   const [showAllLegal, setShowAllLegal] = React.useState(false);
   const [exporting, setExporting] = React.useState<"docx" | "pdf" | null>(null);
   const [exportError, setExportError] = React.useState("");
+  const [activeTab, setActiveTab] = React.useState(0);
+  const navRef = React.useRef<HTMLElement>(null);
+  const tabRowRef = React.useRef<HTMLDivElement>(null);
+  const jumpedRef = React.useRef(false);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -46,6 +42,22 @@ export default function AnalysisPage() {
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  React.useEffect(() => {
+    const row = tabRowRef.current;
+    const tab = row?.querySelector<HTMLElement>(`[role="tab"]:nth-child(${activeTab + 1})`);
+    if (row && tab) {
+      const left = tab.offsetLeft - (row.clientWidth - tab.offsetWidth) / 2;
+      row.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+    }
+    if (jumpedRef.current) navRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
+  }, [activeTab]);
+
+  const selectTab = (index: number) => {
+    if (index === activeTab) return;
+    jumpedRef.current = true;
+    setActiveTab(index);
+  };
 
   const download = async (format: "docx" | "pdf") => {
     setExporting(format);
@@ -87,6 +99,251 @@ export default function AnalysisPage() {
   const visibleLegal = showAllLegal ? analysis.legal_analysis : analysis.legal_analysis.slice(0, 4);
   const conclusions = buildConclusions(analysis);
   const needed = analysis.evidence.needed.slice(0, 3);
+
+  const riskCount = analysis.risk_flags.length;
+  const modules = [
+    {
+      id: "conclusions",
+      tab: "结论先行",
+      title: "结论先行",
+      description: "先看三件事：可能主张什么、现在最缺什么、先去哪里问。",
+      meta: `${conclusions.length} 条`,
+      content: (
+        <ol>
+          {conclusions.map((item, index) => (
+            <li
+              key={item.label}
+              className="grid grid-cols-[2.2rem_1fr] gap-3 border-t border-rule py-5 first:border-t-0 first:pt-0"
+            >
+              <span className="font-mono text-[20px] font-extrabold leading-7 text-signal-deep">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-muted">{item.label}</p>
+                <h3 className="mt-1 text-lg font-bold leading-6 text-ink">{item.title}</h3>
+                <p className="mt-1.5 text-base leading-7 text-ink">{item.body}</p>
+                {item.note && <p className="mt-1.5 text-xs leading-5 text-muted">{item.note}</p>}
+              </div>
+            </li>
+          ))}
+        </ol>
+      ),
+    },
+    {
+      id: "relationship",
+      tab: "用工关系",
+      title: "可能的用工关系",
+      description: "根据你的陈述整理，关系图不等于责任认定。",
+      meta: `${analysis.relationship.nodes.length} 方`,
+      content: (
+        <>
+          {analysis.relationship.nodes.length > 0 ? (
+            <ul className="divide-y divide-rule border-y border-rule">
+              {analysis.relationship.nodes.map((node) => (
+                <RelationshipRow key={node.id} node={node} />
+              ))}
+            </ul>
+          ) : (
+            <p className="border-y border-rule py-4 text-sm text-muted">
+              用工关系还缺少足够信息。先补充谁招用你、谁安排日常工作、谁发工资。
+            </p>
+          )}
+          {analysis.relationship.confirmed_notes.length > 0 && (
+            <ul className="mt-3 space-y-1 text-xs leading-5 text-muted">
+              {analysis.relationship.confirmed_notes.map((note) => (
+                <li key={note}>· {note}</li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 text-xs leading-5 text-muted">{analysis.relationship.disclaimer}</p>
+        </>
+      ),
+    },
+    {
+      id: "evidence",
+      tab: "证据情况",
+      title: "证据情况",
+      description: analysis.evidence.summary,
+      meta: `${analysis.evidence.have.length} 项已有`,
+      content: (
+        <>
+          {needed.length > 0 && (
+            <div className="border-l-2 border-note bg-note-wash px-4 py-3">
+              <p className="text-sm font-extrabold text-note">优先补充这几项</p>
+              <ul className="mt-2 space-y-3">
+                {needed.map((item) => (
+                  <li key={item.key}>
+                    <p className="text-base font-bold text-ink">{item.label}</p>
+                    {item.reason && <p className="mt-0.5 text-sm leading-6 text-ink">{item.reason}</p>}
+                    {item.how_to_get && <p className="mt-0.5 text-xs leading-5 text-muted">怎么找：{item.how_to_get}</p>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-5 grid gap-6 md:grid-cols-2">
+            <EvidenceGroup title="已经拥有" items={analysis.evidence.have} empty="尚未整理出已有材料。" />
+            <EvidenceGroup
+              title="可替代或辅助证明"
+              items={analysis.evidence.alternatives}
+              empty="暂无替代材料建议。"
+            />
+            <div className="md:col-span-2">
+              <EvidenceGroup
+                title="需要进一步核实"
+                items={analysis.evidence.verify}
+                empty="暂无待核实项。"
+              />
+            </div>
+          </div>
+          <p className="mt-4 border-t border-rule pt-3 text-xs leading-5 text-muted">
+            {analysis.evidence.disclaimer}
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "rights",
+      tab: "涉及权益",
+      title: "可能涉及的权益",
+      description: "是否成立要结合事实和程序判断，不是最终法律结论。",
+      meta: `${analysis.rights.length} 项`,
+      content: analysis.rights.length > 0 ? (
+        <ul className="divide-y divide-rule border-y border-rule">
+          {analysis.rights.map((right) => (
+            <li key={right.id} className="py-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-base font-bold leading-6 text-ink">{right.title}</h3>
+                <Badge variant={right.status === "核心诉求" ? "default" : "neutral"}>{right.status}</Badge>
+              </div>
+              <p className="mt-1.5 text-base leading-7 text-ink">{right.description}</p>
+              {right.basis.length > 0 && (
+                <p className="mt-1.5 text-xs leading-5 text-muted">
+                  依据：
+                  {right.basis
+                    .map((basis) => {
+                      const item = legalMap.get(basis);
+                      return item ? `${item.article}（${item.document_title.replace("中华人民共和国", "")}）` : basis;
+                    })
+                    .join("；")}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="border-y border-rule py-4 text-sm text-muted">
+          现在还没有足够事实判断具体权益。先把工作地点、时间、工资约定和欠薪金额核实清楚。
+        </p>
+      ),
+    },
+    {
+      id: "legal",
+      tab: "法律依据",
+      title: "法律依据",
+      description: `共 ${analysis.legal_analysis.length} 条可能相关依据；默认收起，展开可看原文、适用条件与来源。`,
+      meta: `${analysis.legal_analysis.length} 条`,
+      content: (
+        <>
+          <div className="border-l-2 border-note bg-note-wash px-3 py-2.5 text-xs leading-5 text-note">
+            {analysis.legal_sources.verification_summary.note} 已核验{" "}
+            {analysis.legal_sources.verification_summary.verified} 条，待核验{" "}
+            {analysis.legal_sources.verification_summary.transcribed +
+              analysis.legal_sources.verification_summary.pending}{" "}
+            条。
+          </div>
+          <div className="mt-3 divide-y divide-rule border-y border-rule">
+            {visibleLegal.map((item) => (
+              <LegalEntry key={item.id} item={item} />
+            ))}
+          </div>
+          {analysis.legal_analysis.length > 4 && (
+            <Button variant="outline" className="mt-4 h-11" onClick={() => setShowAllLegal((value) => !value)}>
+              {showAllLegal ? "收起，只看前 4 条" : `展开全部 ${analysis.legal_analysis.length} 条`}
+            </Button>
+          )}
+        </>
+      ),
+    },
+    {
+      id: "channels",
+      tab: "注意与渠道",
+      title: "需要特别注意与去哪里办",
+      description: "风险提示只代表需要核对的方向，办理单位以当地告知为准。",
+      meta: `${riskCount} 项提醒`,
+      content: (
+        <div className="grid gap-8 lg:grid-cols-2">
+          <section>
+            <h3 className="text-base font-extrabold text-ink">需要特别注意</h3>
+            {analysis.risk_flags.length > 0 ? (
+              <ul className="mt-4 space-y-4">
+                {analysis.risk_flags.map((risk) => (
+                  <li
+                    key={risk.title}
+                    className={cn(
+                      "pl-3",
+                      risk.level === "attention" ? "border-l-2 border-note" : "border-l-2 border-rule",
+                    )}
+                  >
+                    <p className={cn("text-sm font-bold", risk.level === "attention" ? "text-note" : "text-ink")}>
+                      {risk.title}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-ink">{risk.detail}</p>
+                    {risk.legal_basis && risk.legal_basis.length > 0 && (
+                      <p className="mt-1 text-xs leading-5 text-muted">
+                        依据：
+                        {risk.legal_basis
+                          .map((basis) => {
+                            const item = legalMap.get(basis);
+                            return item ? `${item.article}（${item.document_title.replace("中华人民共和国", "")}）` : basis;
+                          })
+                          .join("；")}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm text-muted">暂无额外风险提示。</p>
+            )}
+          </section>
+
+          <section>
+            <h3 className="text-base font-extrabold text-ink">去哪里办</h3>
+            <p className="mt-4 text-xs font-bold text-muted">建议优先联系</p>
+            <p className="mt-1 text-lg font-extrabold leading-7 text-ink">{analysis.jurisdiction.primary_agency}</p>
+            <p className="mt-2 text-base leading-7 text-ink">{analysis.jurisdiction.guidance}</p>
+            <p className="mt-2 text-xs leading-5 text-muted">
+              {[analysis.jurisdiction.city, analysis.jurisdiction.district].filter(Boolean).join(" · ") ||
+                "城市待确认"}{" "}
+              · 管辖信息{analysis.jurisdiction.confidence === "high" ? "较明确" : "需核实"}
+            </p>
+            <p className="mt-1.5 text-xs leading-5 text-muted">{analysis.jurisdiction.note}</p>
+            <p className="mt-3 border-l-2 border-field bg-field-wash px-3 py-2 text-xs leading-5 text-field">
+              拿不准受理窗口和材料清单时，先拨 12333 确认，再动身。
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <Link
+                href={`/case/${caseId}/action-plan`}
+                className={cn(buttonVariants({ size: "default" }), "h-11 justify-center")}
+              >
+                看分步行动
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href={`/case/${caseId}/form-assistant`}
+                className={cn(buttonVariants({ variant: "outline", size: "default" }), "h-11 justify-center")}
+              >
+                填报参考
+              </Link>
+            </div>
+          </section>
+        </div>
+      ),
+    },
+  ];
+  const activeModule = modules[activeTab] ?? modules[0];
 
   return (
     <div className="pb-2">
@@ -164,232 +421,43 @@ export default function AnalysisPage() {
         {exportError && <p className="mt-2 text-xs text-signal-deep">{exportError}</p>}
       </header>
 
-      <nav
-        className="sticky top-16 z-30 -mx-4 border-b border-rule bg-paper px-4 py-2 sm:-mx-6 sm:px-6 lg:hidden"
-        aria-label="分析页内导航"
-      >
-        <div className="flex flex-wrap gap-2">
-          {NAV.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="inline-flex min-h-11 items-center rounded-control border border-rule bg-surface px-3 text-xs font-bold text-ink hover:bg-sand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-signal/90"
-            >
-              {item.label}
-            </a>
-          ))}
+<nav ref={navRef} aria-label="案件分析模块" className="mt-6 scroll-mt-20 border-y border-rule lg:scroll-mt-32">
+        <div ref={tabRowRef} role="tablist" aria-orientation="horizontal" className="flex gap-2 overflow-x-auto py-3 md:overflow-visible">
+          {modules.map((module, index) => {
+            const isActive = activeTab === index;
+            return (
+              <button key={module.id} type="button" role="tab" id={`analysis-tab-${index}`} aria-controls="analysis-panel"
+                aria-selected={isActive}
+                onClick={() => selectTab(index)}
+                className={cn(
+                  "flex h-[104px] w-[152px] shrink-0 flex-col justify-between overflow-hidden rounded-card border px-3 py-3 text-left transition-[flex-grow,background-color,border-color] duration-500 ease-out focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-signal md:w-auto md:min-w-0 md:shrink md:basis-0",
+                  isActive
+                    ? "border-signal bg-surface md:grow-[3.6]"
+                    : "border-rule bg-sand/50 hover:border-signal/40 hover:bg-sand md:grow",
+                )}>
+                <span className={cn("font-mono font-bold tabular-nums", isActive ? "text-base text-signal-deep" : "text-sm text-route")}>
+                  {index + 1}
+                </span>
+                <span className="min-w-0">
+                  <span className={cn(
+                    "block leading-5 transition-colors",
+                    isActive ? "text-lg font-extrabold text-ink" : "line-clamp-2 text-[13px] font-bold text-muted",
+                  )}>
+                    {module.tab}
+                  </span>
+                  {isActive && <span className="mt-1 block text-xs text-muted">{module.meta}</span>}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </nav>
 
-      <SectionBlock
-        id="conclusions"
-        title="结论先行"
-        description="先看三件事：可能主张什么、现在最缺什么、先去哪里问。"
-      >
-        <ol>
-          {conclusions.map((item, index) => (
-            <li
-              key={item.label}
-              className="grid grid-cols-[2.2rem_1fr] gap-3 border-t border-rule py-5 first:border-t-0 first:pt-0"
-            >
-              <span className="font-mono text-[20px] font-extrabold leading-7 text-signal-deep">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold text-muted">{item.label}</p>
-                <h3 className="mt-1 text-lg font-bold leading-6 text-ink">{item.title}</h3>
-                <p className="mt-1.5 text-base leading-7 text-ink">{item.body}</p>
-                {item.note && <p className="mt-1.5 text-xs leading-5 text-muted">{item.note}</p>}
-              </div>
-            </li>
-          ))}
-        </ol>
-      </SectionBlock>
-
-      <SectionBlock
-        id="relationship"
-        title="可能的用工关系"
-        description="根据你的陈述整理，关系图不等于责任认定。"
-      >
-        {analysis.relationship.nodes.length > 0 ? (
-          <ul className="divide-y divide-rule border-y border-rule">
-            {analysis.relationship.nodes.map((node) => (
-              <RelationshipRow key={node.id} node={node} />
-            ))}
-          </ul>
-        ) : (
-          <p className="border-y border-rule py-4 text-sm text-muted">
-            用工关系还缺少足够信息。先补充谁招用你、谁安排日常工作、谁发工资。
-          </p>
-        )}
-        {analysis.relationship.confirmed_notes.length > 0 && (
-          <ul className="mt-3 space-y-1 text-xs leading-5 text-muted">
-            {analysis.relationship.confirmed_notes.map((note) => (
-              <li key={note}>· {note}</li>
-            ))}
-          </ul>
-        )}
-        <p className="mt-3 text-xs leading-5 text-muted">{analysis.relationship.disclaimer}</p>
-      </SectionBlock>
-
-      <SectionBlock id="evidence" title="证据情况" description={analysis.evidence.summary}>
-        {needed.length > 0 && (
-          <div className="border-l-2 border-note bg-note-wash px-4 py-3">
-            <p className="text-sm font-extrabold text-note">优先补充这几项</p>
-            <ul className="mt-2 space-y-3">
-              {needed.map((item) => (
-                <li key={item.key}>
-                  <p className="text-base font-bold text-ink">{item.label}</p>
-                  {item.reason && <p className="mt-0.5 text-sm leading-6 text-ink">{item.reason}</p>}
-                  {item.how_to_get && <p className="mt-0.5 text-xs leading-5 text-muted">怎么找：{item.how_to_get}</p>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div className="mt-5 grid gap-6 md:grid-cols-2">
-          <EvidenceGroup title="已经拥有" items={analysis.evidence.have} empty="尚未整理出已有材料。" />
-          <EvidenceGroup
-            title="可替代或辅助证明"
-            items={analysis.evidence.alternatives}
-            empty="暂无替代材料建议。"
-          />
-          <div className="md:col-span-2">
-            <EvidenceGroup
-              title="需要进一步核实"
-              items={analysis.evidence.verify}
-              empty="暂无待核实项。"
-            />
-          </div>
-        </div>
-        <p className="mt-4 border-t border-rule pt-3 text-xs leading-5 text-muted">
-          {analysis.evidence.disclaimer}
-        </p>
-      </SectionBlock>
-
-      <SectionBlock id="rights" title="可能涉及的权益" description="是否成立要结合事实和程序判断，不是最终法律结论。">
-        {analysis.rights.length > 0 ? (
-          <ul className="divide-y divide-rule border-y border-rule">
-            {analysis.rights.map((right) => (
-              <li key={right.id} className="py-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-base font-bold leading-6 text-ink">{right.title}</h3>
-                  <Badge variant={right.status === "核心诉求" ? "default" : "neutral"}>{right.status}</Badge>
-                </div>
-                <p className="mt-1.5 text-base leading-7 text-ink">{right.description}</p>
-                {right.basis.length > 0 && (
-                  <p className="mt-1.5 text-xs leading-5 text-muted">
-                    依据：
-                    {right.basis
-                      .map((basis) => {
-                        const item = legalMap.get(basis);
-                        return item ? `${item.article}（${item.document_title.replace("中华人民共和国", "")}）` : basis;
-                      })
-                      .join("；")}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="border-y border-rule py-4 text-sm text-muted">
-            现在还没有足够事实判断具体权益。先把工作地点、时间、工资约定和欠薪金额核实清楚。
-          </p>
-        )}
-      </SectionBlock>
-
-      <SectionBlock
-        id="legal"
-        title="法律依据"
-        description={`共 ${analysis.legal_analysis.length} 条可能相关依据；默认收起，展开可看原文、适用条件与来源。`}
-      >
-        <div className="border-l-2 border-note bg-note-wash px-3 py-2.5 text-xs leading-5 text-note">
-          {analysis.legal_sources.verification_summary.note} 已核验{" "}
-          {analysis.legal_sources.verification_summary.verified} 条，待核验{" "}
-          {analysis.legal_sources.verification_summary.transcribed +
-            analysis.legal_sources.verification_summary.pending}{" "}
-          条。
-        </div>
-        <div className="mt-3 divide-y divide-rule border-y border-rule">
-          {visibleLegal.map((item) => (
-            <LegalEntry key={item.id} item={item} />
-          ))}
-        </div>
-        {analysis.legal_analysis.length > 4 && (
-          <Button variant="outline" className="mt-4 h-11" onClick={() => setShowAllLegal((value) => !value)}>
-            {showAllLegal ? "收起，只看前 4 条" : `展开全部 ${analysis.legal_analysis.length} 条`}
-          </Button>
-        )}
-      </SectionBlock>
-
-      <div className="mt-8 grid gap-8 border-t border-rule pt-6 lg:grid-cols-2">
-        <section>
-          <h2 className="text-xl font-extrabold text-ink">需要特别注意</h2>
-          {analysis.risk_flags.length > 0 ? (
-            <ul className="mt-4 space-y-4">
-              {analysis.risk_flags.map((risk) => (
-                <li
-                  key={risk.title}
-                  className={cn(
-                    "pl-3",
-                    risk.level === "attention" ? "border-l-2 border-note" : "border-l-2 border-rule",
-                  )}
-                >
-                  <p className={cn("text-sm font-bold", risk.level === "attention" ? "text-note" : "text-ink")}>
-                    {risk.title}
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-ink">{risk.detail}</p>
-                  {risk.legal_basis && risk.legal_basis.length > 0 && (
-                    <p className="mt-1 text-xs leading-5 text-muted">
-                      依据：
-                      {risk.legal_basis
-                        .map((basis) => {
-                          const item = legalMap.get(basis);
-                          return item ? `${item.article}（${item.document_title.replace("中华人民共和国", "")}）` : basis;
-                        })
-                        .join("；")}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 text-sm text-muted">暂无额外风险提示。</p>
-          )}
-        </section>
-
-        <section id="channels" className="scroll-mt-36">
-          <h2 className="text-xl font-extrabold text-ink">去哪里办</h2>
-          <p className="mt-4 text-xs font-bold text-muted">建议优先联系</p>
-          <p className="mt-1 text-lg font-extrabold leading-7 text-ink">{analysis.jurisdiction.primary_agency}</p>
-          <p className="mt-2 text-base leading-7 text-ink">{analysis.jurisdiction.guidance}</p>
-          <p className="mt-2 text-xs leading-5 text-muted">
-            {[analysis.jurisdiction.city, analysis.jurisdiction.district].filter(Boolean).join(" · ") ||
-              "城市待确认"}{" "}
-            · 管辖信息{analysis.jurisdiction.confidence === "high" ? "较明确" : "需核实"}
-          </p>
-          <p className="mt-1.5 text-xs leading-5 text-muted">{analysis.jurisdiction.note}</p>
-          <p className="mt-3 border-l-2 border-field bg-field-wash px-3 py-2 text-xs leading-5 text-field">
-            拿不准受理窗口和材料清单时，先拨 12333 确认，再动身。
-          </p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <Link
-              href={`/case/${caseId}/action-plan`}
-              className={cn(buttonVariants({ size: "default" }), "h-11 justify-center")}
-            >
-              看分步行动
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href={`/case/${caseId}/form-assistant`}
-              className={cn(buttonVariants({ variant: "outline", size: "default" }), "h-11 justify-center")}
-            >
-              填报参考
-            </Link>
-          </div>
-        </section>
-      </div>
+      <section role="tabpanel" id="analysis-panel" aria-labelledby={`analysis-tab-${activeTab}`} className="mt-6">
+        <h2 className="text-xl font-extrabold tracking-[-0.02em] text-ink">{activeModule.title}</h2>
+        <p className="mt-1.5 text-sm leading-6 text-muted">{activeModule.description}</p>
+        <div className="mt-4">{activeModule.content}</div>
+      </section>
 
       <div className="mt-8 flex flex-col gap-3 border-y border-rule bg-surface px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
@@ -448,26 +516,6 @@ function buildConclusions(analysis: AnalysisResponse) {
       note: `动身前先整理：${neededLabels.join("、") || "已有材料"}；不确定窗口时拨 12333 确认。`,
     },
   ];
-}
-
-function SectionBlock({
-  id,
-  title,
-  description,
-  children,
-}: {
-  id: string;
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section id={id} className="mt-8 scroll-mt-36 border-t border-rule pt-6">
-      <h2 className="text-xl font-extrabold tracking-[-0.02em] text-ink">{title}</h2>
-      {description && <p className="mt-1.5 text-sm leading-6 text-muted">{description}</p>}
-      <div className="mt-4">{children}</div>
-    </section>
-  );
 }
 
 function RelationshipRow({ node }: { node: RelationshipNode }) {
