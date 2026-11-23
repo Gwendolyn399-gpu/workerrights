@@ -473,7 +473,7 @@ export default function AnalysisPage() {
         </Link>
       </div>
 
-      <p className="mt-6 text-xs leading-6 text-muted">{analysis.disclaimer}</p>
+      <p className="mt-4 text-xs leading-5 text-muted">{analysis.disclaimer}</p>
     </div>
   );
 }

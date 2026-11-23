@@ -137,7 +137,7 @@ export function CaseShell({ children }: { children: React.ReactNode }) {
 
       <main className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6">{children}</main>
 
-      <footer className="mx-auto max-w-[1180px] px-4 pb-8 pt-2 text-xs leading-6 text-muted sm:px-6">
+      <footer className="mx-auto max-w-[1180px] px-4 pb-8 pt-2 text-xs leading-5 text-muted sm:px-6">
         内容仅供参考，重要信息请核实。需要专业帮助可拨打 12348。
       </footer>
 

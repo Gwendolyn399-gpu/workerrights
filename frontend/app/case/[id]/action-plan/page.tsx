@@ -572,13 +572,15 @@ export default function ActionPlanPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-[11px] leading-5 text-muted">
-            链接仅用于查找官方渠道，不代表已核验的直接办理页；具体以当地官方告知为准。
-          </p>
         </section>
       )}
 
-      <p className="order-8 mt-6 text-xs leading-6 text-muted lg:order-none">{plan.disclaimer}</p>
+      <div className="order-8 mt-5 space-y-1 text-xs leading-5 text-muted lg:order-none">
+        {otherChannels.length > 0 && (
+          <p>链接仅用于查找官方渠道，不代表已核验的直接办理页；具体以当地官方告知为准。</p>
+        )}
+        <p>{plan.disclaimer}</p>
+      </div>
     </div>
   );
 }
